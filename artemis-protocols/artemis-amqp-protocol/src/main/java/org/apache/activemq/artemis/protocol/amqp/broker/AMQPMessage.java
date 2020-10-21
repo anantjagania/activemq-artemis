@@ -320,6 +320,18 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
       ensureMessageDataScanned();
    }
 
+   public Object getDeliveryAnnotationProperty(Symbol symbol) {
+      DeliveryAnnotations daToUse = deliveryAnnotations;
+      if (daToUse == null) {
+         daToUse = getDeliveryAnnotations();
+      }
+      if (daToUse == null) {
+         return null;
+      } else {
+         return daToUse.getValue().get(symbol);
+      }
+   }
+
    /**
     * Returns a copy of the MessageAnnotations in the message if present or null.  Changes to the
     * returned DeliveryAnnotations instance do not affect the original Message.
@@ -327,13 +339,8 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
     * @return a copy of the {@link DeliveryAnnotations} present in the message or null if non present.
     */
    public final DeliveryAnnotations getDeliveryAnnotations() {
-
-      if (deliveryAnnotations != null) {
-         return deliveryAnnotations;
-      } else {
-         ensureScanning();
-         return scanForMessageSection(deliveryAnnotationsPosition, DeliveryAnnotations.class);
-      }
+      ensureScanning();
+      return scanForMessageSection(deliveryAnnotationsPosition, DeliveryAnnotations.class);
    }
 
    /**

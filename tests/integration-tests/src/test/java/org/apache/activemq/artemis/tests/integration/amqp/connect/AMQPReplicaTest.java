@@ -75,7 +75,6 @@ public class AMQPReplicaTest extends AmqpClientTestSupport {
       return createServer(AMQP_PORT, false);
    }
 
-   @Ignore
    @Test
    public void testReplicaCatchupOnQueueCreates() throws Exception {
       server.setIdentity("Server1");

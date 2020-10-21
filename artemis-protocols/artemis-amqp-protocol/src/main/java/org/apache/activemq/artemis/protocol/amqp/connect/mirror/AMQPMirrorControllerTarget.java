@@ -322,13 +322,10 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
          message.setMessageID(server.getStorageManager().generateID());
       }
 
-      DeliveryAnnotations deliveryAnnotations = message.getDeliveryAnnotations();
+      Long internalID = (Long)message.getDeliveryAnnotationProperty(INTERNAL_ID);
 
-      if (deliveryAnnotations != null) {
-         Long internalID = (Long) deliveryAnnotations.getValue().get(INTERNAL_ID);
-         if (internalID != null) {
-            message.setBrokerProperty(INTERNAL_ID_EXTRA_PROPERTY, internalID);
-         }
+      if (internalID != null) {
+         message.setBrokerProperty(INTERNAL_ID_EXTRA_PROPERTY, internalID);
       }
 
       routingContext.clear();
