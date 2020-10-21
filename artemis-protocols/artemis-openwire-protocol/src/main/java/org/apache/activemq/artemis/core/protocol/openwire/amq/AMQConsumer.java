@@ -297,18 +297,14 @@ public class AMQConsumer {
 
       final MessageId startID, lastID;
 
-      {
-         MessageId first = ack.getFirstMessageId();
-         MessageId last = ack.getLastMessageId();
-
-         if (first == null) {
-            first = last;
-         }
-
-         startID = first;
-         lastID = last;
+      if (ack.getFirstMessageId() == null) {
+         startID = ack.getLastMessageId();
+         lastID = ack.getLastMessageId();
+      } else {
+         startID = ack.getFirstMessageId();
+         lastID = ack.getLastMessageId();
       }
-
+      
       boolean removeReferences = !serverConsumer.isBrowseOnly(); // if it's browse only, nothing to be acked, we just remove the lists
       if (serverConsumer.getQueue().isNonDestructive()) {
          removeReferences = false;
