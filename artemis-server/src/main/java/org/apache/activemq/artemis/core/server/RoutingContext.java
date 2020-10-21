@@ -36,7 +36,7 @@ public interface RoutingContext {
    */
    boolean isReusable();
 
-   /** If the routing is from MirrorController, we don't redo remoteController
+   /** If the routing is from MirrorController, we don't redo mirrorController
     *  to avoid*/
    boolean isMirrorController();
 

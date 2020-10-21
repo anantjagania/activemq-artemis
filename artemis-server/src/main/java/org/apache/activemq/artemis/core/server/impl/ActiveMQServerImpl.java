@@ -3084,7 +3084,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
 
    @Override
    public void scanAddresses(MirrorController mirrorController) throws Exception {
-      logger.debug("Scanning addresses to send on remote control");
+      logger.debug("Scanning addresses to send on mirror controller");
       postOffice.scanAddresses(mirrorController);
    }
 

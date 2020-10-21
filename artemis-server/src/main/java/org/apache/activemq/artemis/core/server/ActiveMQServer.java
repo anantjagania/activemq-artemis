@@ -137,7 +137,7 @@ public interface ActiveMQServer extends ServiceComponent {
    void installMirrorController(MirrorController mirrorController);
 
    /** This method will scan all queues and addresses.
-    * it is supposed to be called before the remoteControl is started */
+    * it is supposed to be called before the mirrorController is started */
    void scanAddresses(MirrorController mirrorController) throws Exception;
 
    MirrorController getMirrorController();

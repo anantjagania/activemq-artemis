@@ -68,10 +68,10 @@ public class AMQPMirrorControllerSource implements MirrorController, ActiveMQCom
    public static final Symbol ADDRESS_SCAN_END = Symbol.getSymbol("AddressScanEnd");
    public static final Symbol POST_ACK = Symbol.getSymbol("postAck");
 
-   // Delivery annotation property used on remote control routing and Ack
+   // Delivery annotation property used on mirror control routing and Ack
    public static final Symbol INTERNAL_ID = Symbol.getSymbol("x-opt-ativemq-internal-id");
 
-   private static final ThreadLocal<MirrorControlRouting> remoteControlRouting = ThreadLocal.withInitial(() -> new MirrorControlRouting(null));
+   private static final ThreadLocal<MirrorControlRouting> mirrorControlRouting = ThreadLocal.withInitial(() -> new MirrorControlRouting(null));
 
    final Queue snfQueue;
    final ActiveMQServer server;
@@ -222,7 +222,7 @@ public class AMQPMirrorControllerSource implements MirrorController, ActiveMQCom
 
    public static void route(ActiveMQServer server, Message message) throws Exception {
       message.setMessageID(server.getStorageManager().generateID());
-      MirrorControlRouting ctx = remoteControlRouting.get();
+      MirrorControlRouting ctx = mirrorControlRouting.get();
       ctx.clear();
       server.getPostOffice().route(message, ctx, false);
    }

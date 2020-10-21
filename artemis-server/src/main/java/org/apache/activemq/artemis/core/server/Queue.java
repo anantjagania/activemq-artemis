@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.function.ToLongFunction;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.Message;
@@ -35,7 +36,6 @@ import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.apache.activemq.artemis.core.transaction.Transaction;
 import org.apache.activemq.artemis.utils.ReferenceCounter;
-import org.apache.activemq.artemis.utils.collections.IDSupplier;
 import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.apache.activemq.artemis.utils.critical.CriticalComponent;
 
@@ -73,8 +73,11 @@ public interface Queue extends Bindable,CriticalComponent {
 
    void refDown(MessageReference messageReference);
 
-   /** Remove item with ID */
-   MessageReference removeWithSuppliedID(long id, IDSupplier<MessageReference> idSupplier);
+   /** Remove item with a supplied positivie (>= 0) ID.
+    *  if the idSupplier return <0 the ID is considered a non value (null) and it will be ignored
+    *  
+    *  @see org.apache.activemq.artemis.utils.collections.LinkedList#setIDSupplier(ToLongFunction) */
+   MessageReference removeWithSuppliedID(long id, ToLongFunction<MessageReference> idSupplier);
 
    /**
     * The queue definition could be durable, but the messages could eventually be considered non durable.
@@ -171,7 +174,7 @@ public interface Queue extends Bindable,CriticalComponent {
       return false;
    }
 
-   default void setMirrorController(boolean remoteControl) {
+   default void setMirrorController(boolean mirrorController) {
    }
 
     /**

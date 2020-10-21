@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.ToLongFunction;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -104,7 +105,6 @@ import org.apache.activemq.artemis.utils.ReferenceCounter;
 import org.apache.activemq.artemis.utils.ReusableLatch;
 import org.apache.activemq.artemis.utils.actors.ArtemisExecutor;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
-import org.apache.activemq.artemis.utils.collections.IDSupplier;
 import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.apache.activemq.artemis.utils.collections.PriorityLinkedList;
 import org.apache.activemq.artemis.utils.collections.PriorityLinkedListImpl;
@@ -181,7 +181,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    private volatile boolean printErrorExpiring = false;
 
-   private boolean remoteControl;
+   private boolean mirrorController;
 
    // Messages will first enter intermediateMessageReferences
    // Before they are added to messageReferences
@@ -191,9 +191,9 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    // This is where messages are stored
    private final PriorityLinkedList<MessageReference> messageReferences = new PriorityLinkedListImpl<>(QueueImpl.NUM_PRIORITIES, MessageReferenceImpl.getIDComparator());
 
-   private IDSupplier<MessageReference> idSupplier;
+   private ToLongFunction<MessageReference> idSupplier;
 
-   private void checkIDSupplier(IDSupplier<MessageReference> idSupplier) {
+   private void checkIDSupplier(ToLongFunction<MessageReference> idSupplier) {
       if (this.idSupplier != idSupplier) {
          this.idSupplier = idSupplier;
          messageReferences.setIDSupplier(idSupplier);
@@ -721,12 +721,12 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    @Override
    public boolean isMirrorController() {
-      return remoteControl;
+      return mirrorController;
    }
 
    @Override
    public void setMirrorController(boolean remoteControl) {
-      this.remoteControl = remoteControl;
+      this.mirrorController = remoteControl;
    }
 
    public SimpleString getRoutingName() {
@@ -3206,7 +3206,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    }
 
    @Override
-   public MessageReference removeWithSuppliedID(long id, IDSupplier<MessageReference> idSupplier) {
+   public MessageReference removeWithSuppliedID(long id, ToLongFunction<MessageReference> idSupplier) {
       checkIDSupplier(idSupplier);
       return messageReferences.removeWithID(id);
    }

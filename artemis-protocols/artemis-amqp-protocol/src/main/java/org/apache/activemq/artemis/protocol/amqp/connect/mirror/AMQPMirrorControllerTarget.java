@@ -19,6 +19,7 @@ package org.apache.activemq.artemis.protocol.amqp.connect.mirror;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
 import org.apache.activemq.artemis.api.core.Message;
@@ -40,10 +41,8 @@ import org.apache.activemq.artemis.protocol.amqp.broker.AMQPSessionCallback;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonAbstractReceiver;
-import org.apache.activemq.artemis.utils.collections.IDSupplier;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton.amqp.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton.engine.Delivery;
 import org.apache.qpid.proton.engine.Receiver;
@@ -93,9 +92,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
 
 
       if (logger.isDebugEnabled()) {
-         logger.debug("*******************************************************************************************************************************\n" +
-                      server.getIdentity() + "::Received " + message + "\n" +
-                      "*******************************************************************************************************************************");
+         logger.debug(server.getIdentity() + "::Received " + message);
       }
       try {
          Object eventType = message.getMessageAnnotationProperty(EVENT_TYPE);
@@ -237,8 +234,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
    @Override
    public void addAddress(AddressInfo addressInfo) throws Exception {
       if (logger.isDebugEnabled()) {
-         logger.debug("*******************************************************************************************************************************\n" +
-                         "Adding address " + addressInfo);
+         logger.debug("Adding address " + addressInfo);
       }
       server.addAddressInfo(addressInfo);
    }
@@ -246,8 +242,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
    @Override
    public void deleteAddress(AddressInfo addressInfo) throws Exception {
       if (logger.isDebugEnabled()) {
-         logger.debug("*******************************************************************************************************************************\n" +
-                         "delete address " + addressInfo);
+         logger.debug("delete address " + addressInfo);
       }
       try {
          server.removeAddressInfo(addressInfo.getName(), null, true);
@@ -259,8 +254,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
    @Override
    public void createQueue(QueueConfiguration queueConfiguration) throws Exception {
       if (logger.isDebugEnabled()) {
-         logger.debug("*******************************************************************************************************************************\n" +
-            "Adding queue " + queueConfiguration);
+         logger.debug("Adding queue " + queueConfiguration);
       }
       server.createQueue(queueConfiguration, true);
 
@@ -272,19 +266,16 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
    @Override
    public void deleteQueue(SimpleString addressName, SimpleString queueName) throws Exception {
       if (logger.isDebugEnabled()) {
-         logger.debug("*******************************************************************************************************************************\n" +
-                         "destroy queue " + queueName + " on address = " + addressName);
+         logger.debug("destroy queue " + queueName + " on address = " + addressName);
       }
       server.destroyQueue(queueName);
    }
 
-   private static IDSupplier<MessageReference> referenceIDSupplier = new IDSupplier<MessageReference>() {
-      @Override
-      public long getID(MessageReference source) {
-         Long id = (Long) source.getMessage().getBrokerProperty(INTERNAL_ID_EXTRA_PROPERTY);
-         if (id == null) {
-            return -1;
-         }
+   private static ToLongFunction<MessageReference> referenceIDSupplier = (source) -> {
+      Long id = (Long) source.getMessage().getBrokerProperty(INTERNAL_ID_EXTRA_PROPERTY);
+      if (id == null) {
+         return -1;
+      } else {
          return id;
       }
    };

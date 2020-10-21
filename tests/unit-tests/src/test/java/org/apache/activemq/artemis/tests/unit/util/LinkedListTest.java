@@ -24,7 +24,6 @@ import java.util.NoSuchElementException;
 
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
 import org.apache.activemq.artemis.tests.util.RandomUtil;
-import org.apache.activemq.artemis.utils.collections.IDSupplier;
 import org.apache.activemq.artemis.utils.collections.LinkedListImpl;
 import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.junit.Assert;
@@ -188,12 +187,7 @@ public class LinkedListTest extends ActiveMQTestBase {
       LinkedListImpl<ObservableNode> objs = new LinkedListImpl<>();
 
       if (!deferSupplier) {
-         objs.setIDSupplier(new IDSupplier<ObservableNode>() {
-            @Override
-            public long getID(ObservableNode source) {
-               return source.id;
-            }
-         });
+         objs.setIDSupplier(source -> source.id);
       }
 
       // Initial add
@@ -207,12 +201,7 @@ public class LinkedListTest extends ActiveMQTestBase {
 
       if (deferSupplier) {
          Assert.assertEquals(0, objs.getSizeOfSuppliedIDs());
-         objs.setIDSupplier(new IDSupplier<ObservableNode>() {
-            @Override
-            public long getID(ObservableNode source) {
-               return source.id;
-            }
-         });
+         objs.setIDSupplier(source -> source.id);
       }
 
       Assert.assertEquals(1000, objs.getSizeOfSuppliedIDs());

@@ -55,7 +55,6 @@ import org.apache.activemq.artemis.protocol.amqp.broker.ProtonProtocolManager;
 import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AMQPMirrorControllerAggregation;
 import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AMQPMirrorControllerSource;
 import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolLogger;
-import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonServerSenderContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.SenderInitializer;
@@ -174,11 +173,11 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
 
    public void createLink(Queue queue, AMQPBrokerConnectionElement connectionElement) {
       if (connectionElement.getType() == AMQPBrokerConnectionAddressType.peer) {
-         connectSender(false, queue, queue.getAddress().toString(), Symbol.valueOf("qd.waypoint"));
+         connectSender(queue, queue.getAddress().toString(), Symbol.valueOf("qd.waypoint"));
          connectReceiver(protonRemotingConnection, session, sessionContext, queue, Symbol.valueOf("qd.waypoint"));
       } else {
          if (connectionElement.getType() == AMQPBrokerConnectionAddressType.sender) {
-            connectSender(false, queue, queue.getAddress().toString());
+            connectSender(queue, queue.getAddress().toString());
          }
          if (connectionElement.getType() == AMQPBrokerConnectionAddressType.receiver) {
             connectReceiver(protonRemotingConnection, session, sessionContext, queue);
@@ -256,7 +255,7 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
                   AMQPMirrorBrokerConnectionElement replica = (AMQPMirrorBrokerConnectionElement)connectionElement;
                   Queue queue = server.locateQueue(replica.getSourceMirrorAddress());
 
-                  connectSender(true, queue, protonProtocolManager.getMirrorAddress());
+                  connectSender(queue, protonProtocolManager.getMirrorAddress());
                }
             }
          }
@@ -305,13 +304,13 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
          throw new IllegalArgumentException("sourceMirrorAddress is not ANYCAST");
       }
 
-      Queue remoteControlQueue = server.locateQueue(replicaConfig.getSourceMirrorAddress());
+      Queue mirrorControlQueue = server.locateQueue(replicaConfig.getSourceMirrorAddress());
 
-      if (remoteControlQueue == null) {
-         remoteControlQueue = server.createQueue(new QueueConfiguration(replicaConfig.getSourceMirrorAddress()).setAddress(replicaConfig.getSourceMirrorAddress()).setRoutingType(RoutingType.ANYCAST).setDurable(replicaConfig.isDurable()), true);
+      if (mirrorControlQueue == null) {
+         mirrorControlQueue = server.createQueue(new QueueConfiguration(replicaConfig.getSourceMirrorAddress()).setAddress(replicaConfig.getSourceMirrorAddress()).setRoutingType(RoutingType.ANYCAST).setDurable(replicaConfig.isDurable()), true);
       }
 
-      remoteControlQueue.setMirrorController(true);
+      mirrorControlQueue.setMirrorController(true);
 
       QueueBinding snfReplicaQueueBinding = (QueueBinding)server.getPostOffice().getBinding(replicaConfig.getSourceMirrorAddress());
       if (snfReplicaQueueBinding == null) {
@@ -337,7 +336,7 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
       } else {
          // Replace a standard implementation by an aggregated supporting multiple targets
          if (currentMirrorController instanceof AMQPMirrorControllerSource) {
-            // replacing the simple remote control for an aggregator
+            // replacing the simple mirror control for an aggregator
             AMQPMirrorControllerAggregation remoteAggregation = new AMQPMirrorControllerAggregation();
             remoteAggregation.addPartition((AMQPMirrorControllerSource) currentMirrorController);
             currentMirrorController = remoteAggregation;
@@ -397,11 +396,9 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
       });
    }
 
-   private void connectSender(boolean remoteControl,
-                                Queue queue,
-                                String targetName,
-                                Symbol... capabilities) {
-      // TODO: Adding log.debug here
+   private void connectSender(Queue queue,
+                              String targetName,
+                              Symbol... capabilities) {
       if (logger.isDebugEnabled()) {
          logger.debug("Connecting outbound for " + queue);
       }
@@ -433,14 +430,7 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
 
       AMQPOutgoingInitializer outgoingInitializer = new AMQPOutgoingInitializer(queue, sender, sessionContext.getSessionSPI());
 
-
-      ProtonServerSenderContext senderContext;
-      if (remoteControl) {
-         // TODO: this can probably just use the ProtonServerSenderContext
-         senderContext = new MirrorControlServerSenderContext(protonRemotingConnection.getAmqpConnection(), sender, sessionContext, sessionContext.getSessionSPI(), outgoingInitializer);
-      } else {
-         senderContext = new ProtonServerSenderContext(protonRemotingConnection.getAmqpConnection(), sender, sessionContext, sessionContext.getSessionSPI(), outgoingInitializer);
-      }
+      ProtonServerSenderContext senderContext = new ProtonServerSenderContext(protonRemotingConnection.getAmqpConnection(), sender, sessionContext, sessionContext.getSessionSPI(), outgoingInitializer);
 
       senders.put(queue, sender);
 
@@ -454,24 +444,7 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
       });
    }
 
-
-   // TODO: this class can probably go
-   //       I am keeping this now to make sure I don't need it any in any other case.
-   static class MirrorControlServerSenderContext extends ProtonServerSenderContext {
-
-      MirrorControlServerSenderContext(AMQPConnectionContext connection,
-                                       Sender sender,
-                                       AMQPSessionContext protonSession,
-                                       AMQPSessionCallback server,
-                                       SenderInitializer senderInitializer) {
-         super(connection, sender, protonSession, server, senderInitializer);
-      }
-   }
-
    protected void error(Throwable e) {
-      e.printStackTrace();
-      // TODO: Make this async
-      //       and make this retry
    }
 
    private class AMQPOutgoingInitializer implements SenderInitializer {

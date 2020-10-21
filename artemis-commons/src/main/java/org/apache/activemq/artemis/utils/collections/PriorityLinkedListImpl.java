@@ -20,6 +20,7 @@ import java.lang.reflect.Array;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.ToLongFunction;
 
 /**
  * A priority linked list implementation
@@ -96,7 +97,7 @@ public class PriorityLinkedListImpl<T> implements PriorityLinkedList<T> {
    }
 
    @Override
-   public void setIDSupplier(IDSupplier<T> supplier) {
+   public void setIDSupplier(ToLongFunction<T> supplier) {
       for (LinkedList<T> list : levels) {
          list.setIDSupplier(supplier);
       }

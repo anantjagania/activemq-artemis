@@ -20,7 +20,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 
-import org.apache.activemq.artemis.utils.collections.IDSupplier;
 import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.apache.activemq.artemis.utils.collections.PriorityLinkedListImpl;
 import org.junit.Assert;
@@ -883,12 +882,7 @@ public final class PriorityLinkedListTest extends Assert {
          list.addHead(new Wibble("" + i, i), i % 10);
       }
 
-      list.setIDSupplier(new IDSupplier<Wibble>() {
-         @Override
-         public long getID(Wibble source) {
-            return source.id;
-         }
-      });
+      list.setIDSupplier(source -> source.id);
 
       // remove every 3rd
       for (int i = 0; i < 3000; i += 3) {

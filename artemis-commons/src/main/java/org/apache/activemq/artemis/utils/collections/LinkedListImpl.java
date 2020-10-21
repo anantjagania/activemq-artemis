@@ -20,6 +20,7 @@ import java.lang.reflect.Array;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.ToLongFunction;
 
 import io.netty.util.collection.LongObjectHashMap;
 
@@ -48,7 +49,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
 
    private final Comparator<E> comparator;
 
-   private IDSupplier<E> idSupplier;
+   private ToLongFunction<E> idSupplier;
 
    LongObjectHashMap<Node<E>> nodeMap;
 
@@ -69,7 +70,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    @Override
-   public void setIDSupplier(IDSupplier<E> supplier) {
+   public void setIDSupplier(ToLongFunction<E> supplier) {
       this.idSupplier = supplier;
       nodeMap = new LongObjectHashMap<>(this.size);
 
@@ -86,13 +87,13 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    private void putID(E value, Node<E> position) {
-      long id = idSupplier.getID(value);
+      long id = idSupplier.applyAsLong(value);
       if (id >= 0) {
          nodeMap.put(id, position);
       }
    }
 
-   public LinkedListImpl(Comparator<E> comparator, IDSupplier<E> supplier) {
+   public LinkedListImpl(Comparator<E> comparator, ToLongFunction<E> supplier) {
       iters = createIteratorArray(INITIAL_ITERATOR_ARRAY_SIZE);
       this.comparator = comparator;
       this.idSupplier = supplier;
@@ -148,7 +149,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
 
    private void itemRemoved(Node node) {
       if (nodeMap != null) {
-         Object id = idSupplier.getID((E)node.val());
+         Object id = idSupplier.applyAsLong((E)node.val());
          if (id != null) {
             nodeMap.remove(id);
          }
