@@ -883,7 +883,7 @@ public final class PriorityLinkedListTest extends Assert {
          list.addHead(new Wibble("" + i, i), i % 10);
       }
 
-      list.installIDSupplier(new IDSupplier<Wibble>() {
+      list.setIDSupplier(new IDSupplier<Wibble>() {
          @Override
          public long getID(Wibble source) {
             return source.id;

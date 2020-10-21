@@ -18,7 +18,6 @@ package org.apache.activemq.artemis.utils.collections;
 
 import java.lang.reflect.Array;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -31,9 +30,6 @@ import io.netty.util.collection.LongObjectHashMap;
  * This class is not thread safe.
  */
 public class LinkedListImpl<E> implements LinkedList<E> {
-
-   // TODO: use an object placement for fast delete messages with an id from the linkes list
-   Map<Object, Node<E>> objectPlacement;
 
    private static final int INITIAL_ITERATOR_ARRAY_SIZE = 10;
 
@@ -129,6 +125,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
       size++;
    }
 
+   @Override
    public E removeWithID(long id) {
       if (nodeMap == null) {
          return null;
@@ -261,8 +258,8 @@ public class LinkedListImpl<E> implements LinkedList<E> {
       return size;
    }
 
-   /** for tests */
-   public int nodeMapSize() {
+   /** Return the number of elements we have on suppliedIDs */
+   public int getSizeOfSuppliedIDs() {
       return nodeMap == null ? 0 : nodeMap.size();
    }
 

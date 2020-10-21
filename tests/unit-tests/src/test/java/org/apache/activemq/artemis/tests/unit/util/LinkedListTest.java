@@ -206,7 +206,7 @@ public class LinkedListTest extends ActiveMQTestBase {
 
 
       if (deferSupplier) {
-         Assert.assertEquals(0, objs.nodeMapSize());
+         Assert.assertEquals(0, objs.getSizeOfSuppliedIDs());
          objs.setIDSupplier(new IDSupplier<ObservableNode>() {
             @Override
             public long getID(ObservableNode source) {
@@ -215,7 +215,7 @@ public class LinkedListTest extends ActiveMQTestBase {
          });
       }
 
-      Assert.assertEquals(1000, objs.nodeMapSize());
+      Assert.assertEquals(1000, objs.getSizeOfSuppliedIDs());
 
 
       /** remove all even items */
@@ -224,7 +224,7 @@ public class LinkedListTest extends ActiveMQTestBase {
       }
 
       Assert.assertEquals(500, objs.size());
-      Assert.assertEquals(500, objs.nodeMapSize());
+      Assert.assertEquals(500, objs.getSizeOfSuppliedIDs());
 
       Iterator<ObservableNode> iterator = objs.iterator();
 
@@ -241,7 +241,7 @@ public class LinkedListTest extends ActiveMQTestBase {
          objs.removeWithID(i);
       }
 
-      Assert.assertEquals(0, objs.nodeMapSize());
+      Assert.assertEquals(0, objs.getSizeOfSuppliedIDs());
       Assert.assertEquals(0, objs.size());
 
 

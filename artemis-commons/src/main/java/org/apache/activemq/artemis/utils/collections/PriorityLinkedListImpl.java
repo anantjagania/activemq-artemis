@@ -96,7 +96,7 @@ public class PriorityLinkedListImpl<T> implements PriorityLinkedList<T> {
    }
 
    @Override
-   public void installIDSupplier(IDSupplier<T> supplier) {
+   public void setIDSupplier(IDSupplier<T> supplier) {
       for (LinkedList<T> list : levels) {
          list.setIDSupplier(supplier);
       }

@@ -466,7 +466,7 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
    }
 
    @SuppressWarnings("unchecked")
-   public Map<String, Object> getApplicationPropertiesMap(boolean createIfAbsent) {
+   protected Map<String, Object> getApplicationPropertiesMap(boolean createIfAbsent) {
       ApplicationProperties appMap = lazyDecodeApplicationProperties();
       Map<String, Object> map = null;
 
@@ -486,8 +486,17 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
       return map;
    }
 
+   public Object getMessageAnnotationProperty(Symbol symbol) {
+      Map<Symbol, Object> annotations = getMessageAnnotationsMap(false);
+      if (annotations == null) {
+         return null;
+      } else {
+         return annotations.get(symbol);
+      }
+   }
+
    @SuppressWarnings("unchecked")
-   public Map<Symbol, Object> getMessageAnnotationsMap(boolean createIfAbsent) {
+   protected Map<Symbol, Object> getMessageAnnotationsMap(boolean createIfAbsent) {
       Map<Symbol, Object> map = null;
 
       if (messageAnnotations != null) {
@@ -763,7 +772,6 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
       final ByteBuf result = PooledByteBufAllocator.DEFAULT.heapBuffer(getEncodeSize());
       result.writeBytes(duplicate.limit(encodedHeaderSize).byteBuffer());
 
-      // TODO to get the delivery annotations from the reference
       writeDeliveryAnnotationsForSendBuffer(result, deliveryAnnotations);
       duplicate.clear();
       // skip existing delivery annotations of the original message
@@ -796,7 +804,6 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
       TLSEncode.getEncoder().writeObject(header);
       TLSEncode.getEncoder().setByteBuffer((WritableBuffer) null);
 
-      // TODO get dleivery annotations from the reference
       writeDeliveryAnnotationsForSendBuffer(result, deliveryAnnotations);
       // skip existing delivery annotations of the original message
       getData().position(encodedHeaderSize + encodedDeliveryAnnotationsSize);

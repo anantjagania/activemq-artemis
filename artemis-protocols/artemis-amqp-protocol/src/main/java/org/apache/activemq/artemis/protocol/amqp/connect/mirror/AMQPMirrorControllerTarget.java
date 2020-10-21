@@ -41,7 +41,6 @@ import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonAbstractReceiver;
 import org.apache.activemq.artemis.utils.collections.IDSupplier;
-import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.DeliveryAnnotations;
@@ -93,7 +92,6 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
 
    @Override
    protected void actualDelivery(AMQPMessage message, Delivery delivery, Receiver receiver, Transaction tx) {
-      Map<Symbol, Object> annotationsMap = message.getMessageAnnotationsMap(false);
       incrementSettle();
 
 
@@ -103,7 +101,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
                       "*******************************************************************************************************************************");
       }
       try {
-         Object eventType = annotationsMap.get(EVENT_TYPE);
+         Object eventType = message.getMessageAnnotationProperty(EVENT_TYPE);
          if (eventType != null) {
             // I'm not using fancy switch with strings for JDK compatibility, just in case
             if (eventType.equals(ADDRESS_SCAN_START)) {
@@ -131,15 +129,15 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
                }
                createQueue(queueConfiguration);
             } else if (eventType.equals(DELETE_QUEUE)) {
-               String address = (String) annotationsMap.get(ADDRESS);
-               String queueName = (String) annotationsMap.get(QUEUE);
+               String address = (String) message.getMessageAnnotationProperty(ADDRESS);
+               String queueName = (String) message.getMessageAnnotationProperty(QUEUE);
                if (logger.isDebugEnabled()) {
                   logger.debug("Deleting queue " + queueName + " on address " + address);
                }
                deleteQueue(SimpleString.toSimpleString(address), SimpleString.toSimpleString(queueName));
             } else if (eventType.equals(POST_ACK)) {
-               String address = (String) annotationsMap.get(ADDRESS);
-               String queueName = (String) annotationsMap.get(QUEUE);
+               String address = (String) message.getMessageAnnotationProperty(ADDRESS);
+               String queueName = (String) message.getMessageAnnotationProperty(QUEUE);
                AmqpValue value = (AmqpValue) message.getBody();
                Long messageID = (Long) value.getValue();
                if (logger.isDebugEnabled()) {

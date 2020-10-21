@@ -16,13 +16,11 @@
  */
 package org.apache.activemq.artemis.protocol.amqp.connect;
 
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.group.ChannelGroup;
-import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.protocol.amqp.proton.handler.ProtonHandler;
 
 /**
@@ -34,20 +32,15 @@ public class AMQPBrokerConnectionChannelHandler extends ChannelDuplexHandler {
 
    private final ProtonHandler handler;
 
-   // private final BaseConnectionLifeCycleListener<?> listener;
-
    volatile boolean active;
 
-   //private final Executor listenerExecutor;
-
-   protected AMQPBrokerConnectionChannelHandler(final ChannelGroup group,
-                                                final ProtonHandler handler/*,
-                                  final BaseConnectionLifeCycleListener<?> listener,
-                                  final Executor listenerExecutor */) {
+   protected AMQPBrokerConnectionChannelHandler(final ChannelGroup group, final ProtonHandler handler) {
       this.group = group;
       this.handler = handler;
-      //this.listener = listener;
-      //this.listenerExecutor = listenerExecutor;
+   }
+
+   protected static Object channelId(Channel channel) {
+      return channel.id();
    }
 
    @Override
@@ -58,7 +51,6 @@ public class AMQPBrokerConnectionChannelHandler extends ChannelDuplexHandler {
 
    @Override
    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-      //listener.connectionReadyForWrites(channelId(ctx.channel()), ctx.channel().isWritable());
    }
 
    @Override
@@ -70,50 +62,5 @@ public class AMQPBrokerConnectionChannelHandler extends ChannelDuplexHandler {
       } finally {
          buffer.release();
       }
-   }
-
-   @Override
-   public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-      super.channelReadComplete(ctx);
-      //handler.endOfBatch(channelId(ctx.channel()));
-   }
-
-   @Override
-   public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-      /*synchronized (this) {
-         if (active) {
-            listenerExecutor.execute(() -> listener.connectionDestroyed(channelId(ctx.channel())));
-
-            active = false;
-         }
-      } */
-
-      super.channelInactive(ctx);
-   }
-
-   @Override
-   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
-      if (!active) {
-         return;
-      }
-      // We don't want to log this - since it is normal for this to happen during failover/reconnect
-      // and we don't want to spew out stack traces in that event
-      // The user has access to this exeception anyway via the ActiveMQException initial cause
-
-      ActiveMQException me = new ActiveMQException(cause.getMessage());
-      me.initCause(cause);
-
-      /* synchronized (listener) {
-         try {
-            listenerExecutor.execute(() -> listener.connectionException(channelId(ctx.channel()), me));
-            active = false;
-         } catch (Exception ex) {
-            ActiveMQClientLogger.LOGGER.errorCallingLifeCycleListener(ex);
-         }
-      } */
-   }
-
-   protected static Object channelId(Channel channel) {
-      return channel.id();
    }
 }

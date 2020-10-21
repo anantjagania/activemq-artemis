@@ -33,4 +33,6 @@ public interface LinkedList<E> {
    void clearID();
 
    void setIDSupplier(IDSupplier<E> idSupplier);
+
+   E removeWithID(long id);
 }

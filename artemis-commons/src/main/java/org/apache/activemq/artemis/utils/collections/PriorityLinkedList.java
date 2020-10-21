@@ -33,7 +33,7 @@ public interface PriorityLinkedList<T> {
 
    void clear();
 
-   void installIDSupplier(IDSupplier<T> supplier);
+   void setIDSupplier(IDSupplier<T> supplier);
 
    T removeWithID(long id);
 

@@ -196,7 +196,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    private void checkIDSupplier(IDSupplier<MessageReference> idSupplier) {
       if (this.idSupplier != idSupplier) {
          this.idSupplier = idSupplier;
-         messageReferences.installIDSupplier(idSupplier);
+         messageReferences.setIDSupplier(idSupplier);
       }
    }
 

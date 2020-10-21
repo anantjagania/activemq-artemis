@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -55,7 +54,6 @@ import org.apache.activemq.artemis.protocol.amqp.broker.ActiveMQProtonRemotingCo
 import org.apache.activemq.artemis.protocol.amqp.broker.ProtonProtocolManager;
 import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AMQPMirrorControllerAggregation;
 import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AMQPMirrorControllerSource;
-import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPIllegalStateException;
 import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolLogger;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
@@ -373,23 +371,22 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
          return;
       }
 
-      Receiver receiver = session.receiver(queue.getName().toString() + UUIDGenerator.getInstance().generateStringUUID());
-      Target target = new Target();
-      target.setAddress(queue.getAddress().toString());
-      receiver.setTarget(target);
-
-      Source source = new Source();
-      source.setAddress(queue.getName().toString());
-      receiver.setSource(source);
-
-
-      if (capabilities != null) {
-         source.setCapabilities(capabilities);
-      }
-
-      receivers.put(queue, receiver);
 
       protonRemotingConnection.getAmqpConnection().runLater(() -> {
+         Receiver receiver = session.receiver(queue.getName().toString() + UUIDGenerator.getInstance().generateStringUUID());
+         Target target = new Target();
+         target.setAddress(queue.getAddress().toString());
+         receiver.setTarget(target);
+
+         Source source = new Source();
+         source.setAddress(queue.getName().toString());
+         receiver.setSource(source);
+
+         if (capabilities != null) {
+            source.setCapabilities(capabilities);
+         }
+
+         receivers.put(queue, receiver);
          receiver.open();
          protonRemotingConnection.getAmqpConnection().flush();
          try {
@@ -439,6 +436,7 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
 
       ProtonServerSenderContext senderContext;
       if (remoteControl) {
+         // TODO: this can probably just use the ProtonServerSenderContext
          senderContext = new MirrorControlServerSenderContext(protonRemotingConnection.getAmqpConnection(), sender, sessionContext, sessionContext.getSessionSPI(), outgoingInitializer);
       } else {
          senderContext = new ProtonServerSenderContext(protonRemotingConnection.getAmqpConnection(), sender, sessionContext, sessionContext.getSessionSPI(), outgoingInitializer);
@@ -456,6 +454,9 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
       });
    }
 
+
+   // TODO: this class can probably go
+   //       I am keeping this now to make sure I don't need it any in any other case.
    static class MirrorControlServerSenderContext extends ProtonServerSenderContext {
 
       MirrorControlServerSenderContext(AMQPConnectionContext connection,
@@ -464,11 +465,6 @@ public class AMQPBrokerConnection implements ClientConnectionLifeCycleListener, 
                                        AMQPSessionCallback server,
                                        SenderInitializer senderInitializer) {
          super(connection, sender, protonSession, server, senderInitializer);
-      }
-
-      @Override
-      protected void doAck(Message message) throws ActiveMQAMQPIllegalStateException {
-         super.doAck(message);
       }
    }
 
