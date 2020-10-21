@@ -112,7 +112,7 @@ public class AMQPMirrorControllerAggregation implements MirrorController, Active
    @Override
    public void endAddressScan() throws Exception {
       for (MirrorController partition : partitions) {
-         partition.startAddressScan();
+         partition.endAddressScan();
       }
    }
 }

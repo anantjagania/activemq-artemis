@@ -655,8 +655,6 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
                   expiration = System.currentTimeMillis() + header.getTtl().intValue();
                }
             } else if (DeliveryAnnotations.class.equals(constructor.getTypeClass())) {
-               // Don't decode these as they are not used by the broker at all and are
-               // discarded on send, mark for lazy decode if ever needed.
                try {
                   deliveryAnnotationsPosition = constructorPos;
                   this.deliveryAnnotations = (DeliveryAnnotations) constructor.readValue();
@@ -737,7 +735,7 @@ public abstract class AMQPMessage extends RefCountMessage implements org.apache.
 
       DeliveryAnnotations deliveryAnnotations;
 
-      if (reference != null && reference.getProtocolData() != null && reference.getProtocolData() instanceof DeliveryAnnotations) {
+      if (reference != null && reference.getProtocolData() instanceof DeliveryAnnotations) {
          deliveryAnnotations = (DeliveryAnnotations) reference.getProtocolData();
       } else {
          deliveryAnnotations = null;

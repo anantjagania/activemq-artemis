@@ -26,7 +26,6 @@ import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.postoffice.impl.LocalQueueBinding;
-import org.apache.activemq.artemis.core.protocol.core.Packet;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
@@ -211,7 +210,9 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
             Map<SimpleString, QueueConfiguration> scannedQueues = scannedAddresses.get(localQueueBinding.getQueue().getAddress());
 
             if (scannedQueues == null) {
-               System.out.println("There's no address " + localQueueBinding.getQueue().getAddress() + " so, removing queue");
+               if (logger.isDebugEnabled()) {
+                  logger.debug("There's no address " + localQueueBinding.getQueue().getAddress() + " so, removing queue");
+               }
                try {
                   deleteQueue(localQueueBinding.getQueue().getAddress(), localQueueBinding.getQueue().getName());
                } catch (Exception e) {
@@ -220,7 +221,9 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
             } else {
                QueueConfiguration queueConfg = scannedQueues.get(localQueueBinding.getQueue().getName());
                if (queueConfg == null) {
-                  System.out.println("There no queue for " + localQueueBinding.getQueue().getName() + " so, removing queue");
+                  if (logger.isDebugEnabled()) {
+                     logger.debug("There no queue for " + localQueueBinding.getQueue().getName() + " so, removing queue");
+                  }
                   try {
                      deleteQueue(localQueueBinding.getQueue().getAddress(), localQueueBinding.getQueue().getName());
                   } catch (Exception e) {

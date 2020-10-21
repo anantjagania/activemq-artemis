@@ -87,7 +87,7 @@ public class AMQPConnectionContext extends ProtonInitializable implements EventH
 
    protected final ProtonHandler handler;
 
-   public AMQPConnectionCallback connectionCallback;
+   private AMQPConnectionCallback connectionCallback;
    private final String containerId;
    private final boolean isIncomingConnection;
    private final ClientSASLFactory saslClientFactory;

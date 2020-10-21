@@ -692,8 +692,8 @@ public class NettyConnector extends AbstractConnector {
 
             if (handler != null) {
                pipeline.addLast(new ActiveMQClientChannelHandler(channelGroup, handler, new Listener(), closeExecutor));
+               logger.debugf("Added ActiveMQClientChannelHandler to Channel with id = %s ", channel.id());
             }
-            logger.debugf("Added ActiveMQClientChannelHandler to Channel with id = %s ", channel.id());
          }
       });
 
