@@ -55,9 +55,9 @@ public class AMQPMirrorControllerSource implements MirrorController, ActiveMQCom
 
    private static final Logger logger = Logger.getLogger(AMQPMirrorControllerSource.class);
 
-   public static final Symbol EVENT_TYPE = Symbol.getSymbol("ma.EVENT_TYPE");
-   public static final Symbol ADDRESS = Symbol.getSymbol("ma.ADDRESS");
-   public static final Symbol QUEUE = Symbol.getSymbol("ma.QUEUE");
+   public static final Symbol EVENT_TYPE = Symbol.getSymbol("x-opt-activemq-mirror-type");
+   public static final Symbol ADDRESS = Symbol.getSymbol("x-opt-activemq-mirror-address");
+   public static final Symbol QUEUE = Symbol.getSymbol("x-opt-activemq-mirror-queue");
 
    // Events:
    public static final Symbol ADD_ADDRESS = Symbol.getSymbol("addAddress");
@@ -69,7 +69,7 @@ public class AMQPMirrorControllerSource implements MirrorController, ActiveMQCom
    public static final Symbol POST_ACK = Symbol.getSymbol("postAck");
 
    // Delivery annotation property used on remote control routing and Ack
-   public static final Symbol INTERNAL_ID = Symbol.getSymbol("ma.INTERNAL_ID");
+   public static final Symbol INTERNAL_ID = Symbol.getSymbol("x-opt-ativemq-internal-id");
 
    private static final ThreadLocal<MirrorControlRouting> remoteControlRouting = ThreadLocal.withInitial(() -> new MirrorControlRouting(null));
 

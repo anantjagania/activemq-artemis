@@ -239,7 +239,6 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
    /**
     * create the actual underlying ActiveMQ Artemis Server Consumer
     */
-   @SuppressWarnings("unchecked")
    @Override
    public void initialize() throws Exception {
       super.initialize();
@@ -554,52 +553,6 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       void resume() {
          connection.runNow(this::deliver);
       }
-
-
-      /*
-      protected ReadableBuffer createCopyWithNewDeliveryCount(int deliveryCount, DeliveryAnnotations deliveryAnnotations) {
-      assert deliveryCount > 1;
-
-      final int amqpDeliveryCount = deliveryCount - 1;
-
-      final ByteBuf result = PooledByteBufAllocator.DEFAULT.heapBuffer(getEncodeSize());
-
-      // If this is re-delivering the message then the header must be re-encoded
-      // otherwise we want to write the original header if present.  When a
-      // Header is present we need to copy it as we are updating the re-delivered
-      // message and not the stored version which we don't want to invalidate here.
-      Header header = this.header;
-      if (header == null) {
-         header = new Header();
-      } else {
-         header = new Header(header);
-      }
-
-      header.setDeliveryCount(UnsignedInteger.valueOf(amqpDeliveryCount));
-      TLSEncode.getEncoder().setByteBuffer(new NettyWritable(result));
-      TLSEncode.getEncoder().writeObject(header);
-      TLSEncode.getEncoder().setByteBuffer((WritableBuffer) null);
-
-      // TODO get dleivery annotations from the reference
-      writeDeliveryAnnotationsForSendBuffer(result, deliveryAnnotations);
-      // skip existing delivery annotations of the original message
-      getData().position(encodedHeaderSize + encodedDeliveryAnnotationsSize);
-      result.writeBytes(getData().byteBuffer());
-      getData().position(0);
-
-      return new NettyReadable(result);
-   }
-
-   protected void writeDeliveryAnnotationsForSendBuffer(ByteBuf result, DeliveryAnnotations deliveryAnnotations) {
-      DeliveryAnnotations daToUse = deliveryAnnotations != null ? deliveryAnnotations : deliveryAnnotationsForSendBuffer;
-      if (daToUse != null && !daToUse.getValue().isEmpty()) {
-         TLSEncode.getEncoder().setByteBuffer(new NettyWritable(result));
-         TLSEncode.getEncoder().writeObject(daToUse);
-         TLSEncode.getEncoder().setByteBuffer((WritableBuffer) null);
-      }
-   }
-       */
-
 
       void deliver() {
 

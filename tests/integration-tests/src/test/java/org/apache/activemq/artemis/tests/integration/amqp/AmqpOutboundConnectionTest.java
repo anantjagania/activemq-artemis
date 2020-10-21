@@ -58,7 +58,7 @@ public class AmqpOutboundConnectionTest extends AmqpClientTestSupport {
       runOutboundConnectionTest(false, false);
    }
 
-   @Test
+   @Test(timeout = 60000)
    public void testOutboundConnectionWithSecurity() throws Throwable {
       runOutboundConnectionTest(true, true);
    }

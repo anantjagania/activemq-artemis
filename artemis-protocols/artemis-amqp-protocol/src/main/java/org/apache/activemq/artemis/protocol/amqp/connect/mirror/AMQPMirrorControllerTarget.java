@@ -63,7 +63,7 @@ import static org.apache.activemq.artemis.protocol.amqp.connect.mirror.AMQPMirro
 
 public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implements MirrorController {
 
-   public static final SimpleString INTERNAL_ID_EXTRA_PROPERTY = SimpleString.toSimpleString("x-opt-INTERNAL-ID");
+   public static final SimpleString INTERNAL_ID_EXTRA_PROPERTY = SimpleString.toSimpleString(INTERNAL_ID.toString());
 
    private static final Logger logger = Logger.getLogger(AMQPMirrorControllerTarget.class);
 
@@ -79,9 +79,6 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
                                      Receiver receiver,
                                      ActiveMQServer server) {
       super(sessionSPI, connection, protonSession, receiver);
-      if (logger.isDebugEnabled()) {
-         logger.debug("Adding Remote Control target", new Exception("debug"));
-      }
       this.server = server;
    }
 
@@ -103,7 +100,6 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
       try {
          Object eventType = message.getMessageAnnotationProperty(EVENT_TYPE);
          if (eventType != null) {
-            // I'm not using fancy switch with strings for JDK compatibility, just in case
             if (eventType.equals(ADDRESS_SCAN_START)) {
                logger.debug("Starting scan for removed queues");
                startAddressScan();
@@ -154,13 +150,9 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
       } catch (Throwable e) {
          logger.warn(e.getMessage(), e);
       } finally {
-         try {
-            delivery.disposition(Accepted.getInstance());
-            settle(delivery);
-            connection.flush();
-         } catch (Throwable e) {
-            logger.warn(e.getMessage(), e);
-         }
+         delivery.disposition(Accepted.getInstance());
+         settle(delivery);
+         connection.flush();
       }
    }
 
