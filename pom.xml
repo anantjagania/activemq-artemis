@@ -48,10 +48,13 @@
       <module>artemis-jms-client-all</module>
       <module>artemis-jms-client-osgi</module>
       <module>artemis-jms-server</module>
+      <module>artemis-jakarta-client</module>
+      <module>artemis-jakarta-server</module>
       <module>artemis-journal</module>
       <module>artemis-ra</module>
       <module>artemis-rest</module>
       <module>artemis-service-extensions</module>
+      <module>artemis-jakarta-service-extensions</module>	      
       <module>artemis-jdbc-store</module>
       <module>artemis-maven-plugin</module>
       <module>artemis-server-osgi</module>
@@ -119,6 +122,11 @@
       <geronimo.ejb.3.0.spec.version>1.0.1</geronimo.ejb.3.0.spec.version>
       <geronimo.jta.1.1.spec.version>1.1.1</geronimo.jta.1.1.spec.version>
       <geronimo.jms.2.spec.version>1.0-alpha-2</geronimo.jms.2.spec.version>
+      <jakarta.json-api.version>2.0.0-RC3</jakarta.json-api.version>
+      <jakarta.annotation-api.version>2.0.0</jakarta.annotation-api.version>
+      <jakarta.ejb-api.version>4.0.0-RC2</jakarta.ejb-api.version>
+      <jakarta.transaction-api.version>2.0.0-RC2</jakarta.transaction-api.version>
+      <jakarta.jms-api.version>3.0.0-RC1</jakarta.jms-api.version>
       <weld.version>2.4.0.Final</weld.version>
       <arquillian-weld-embedded.version>2.0.0.Beta3</arquillian-weld-embedded.version>
       <owb.version>1.7.0</owb.version>
@@ -441,6 +449,31 @@
             <version>${geronimo.jms.2.spec.version}</version>
             <!-- License: Apache 2.0 -->
          </dependency>
+         <dependency>
+            <groupId>jakarta.jms</groupId>
+            <artifactId>jakarta.jms-api</artifactId>
+            <version>${jakarta.jms-api.version}</version>
+        </dependency>
+        <dependency>
+           <groupId>jakarta.transaction</groupId>
+           <artifactId>jakarta.transaction-api</artifactId>
+           <version>${jakarta.transaction-api.version}</version>
+        </dependency>
+        <dependency>
+           <groupId>jakarta.json</groupId>
+           <artifactId>jakarta.json-api</artifactId>
+           <version>${jakarta.json-api.version}</version>
+        </dependency>
+        <dependency>
+           <groupId>jakarta.ejb</groupId>
+           <artifactId>jakarta.ejb-api</artifactId>
+           <version>${jakarta.ejb-api.version}</version>
+        </dependency>
+        <dependency>
+           <groupId>jakarta.annotation</groupId>
+           <artifactId>jakarta.annotation-api</artifactId>
+           <version>${jakarta.annotation-api.version}</version>
+        </dependency>
 
          <dependency>
             <groupId>commons-collections</groupId>
