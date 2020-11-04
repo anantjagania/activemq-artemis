@@ -44,6 +44,7 @@
       <module>artemis-core-client-osgi</module>
       <module>artemis-server</module>
       <module>artemis-junit</module>
+      <module>artemis-jms-contract</module>
       <module>artemis-jms-client</module>
       <module>artemis-jms-client-all</module>
       <module>artemis-jms-client-osgi</module>
