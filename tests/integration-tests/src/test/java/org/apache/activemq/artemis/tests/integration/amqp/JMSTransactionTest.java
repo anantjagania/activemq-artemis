@@ -21,18 +21,27 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.apache.activemq.artemis.api.core.QueueConfiguration;
+import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.core.server.impl.AddressInfo;
+import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class JMSTransactionTest extends JMSClientTestSupport {
+
+   protected String getConfiguredProtocols() {
+      return "AMQP,OPENWIRE,CORE";
+   }
 
    @Test(timeout = 60000)
    public void testProduceMessageAndCommit() throws Throwable {
@@ -159,6 +168,83 @@ public class JMSTransactionTest extends JMSClientTestSupport {
 
       Queue queueView = getProxyToQueue(getQueueName());
       Wait.assertEquals(10, queueView::getMessageCount);
+   }
+
+   @Test(timeout = 60000)
+   public void testAckAndSendWithDuplicateAMQP() throws Throwable {
+      testAckAndSendWithDuplicate("AMQP");
+   }
+
+   /** the main purpose of this test is to validate the test itself.
+    *  I am more concerned to make sure the broker will behave similarly to both Core AND AMQP
+    *  then I am to find bugs on the core protocol for this one. */
+   @Test(timeout = 60000)
+   public void testAckAndSendWithDuplicateCORE() throws Throwable {
+      testAckAndSendWithDuplicate("CORE");
+   }
+
+   public void testAckAndSendWithDuplicate(String protocol) throws Throwable {
+      String inputQueue = getQueueName() + ".input";
+      String outputQueue = getQueueName() + ".output";
+      server.addAddressInfo(new AddressInfo(inputQueue).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
+      server.addAddressInfo(new AddressInfo(outputQueue).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
+      server.createQueue(new QueueConfiguration(inputQueue).setAddress(inputQueue).setRoutingType(RoutingType.ANYCAST).setDurable(true));
+      server.createQueue(new QueueConfiguration(outputQueue).setAddress(outputQueue).setRoutingType(RoutingType.ANYCAST).setDurable(true));
+
+      ConnectionFactory factory = CFUtil.createConnectionFactory(protocol, "tcp://localhost:5672");
+      Connection connection = factory.createConnection();
+      Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
+      javax.jms.Queue queueinput = session.createQueue(inputQueue);
+      javax.jms.Queue queueouptut = session.createQueue(outputQueue);
+      try (MessageProducer producerinput = session.createProducer(queueinput)) {
+         for (int i = 0; i < 10; i++) {
+            TextMessage message = session.createTextMessage();
+            message.setText("Message:" + i);
+            producerinput.send(message);
+         }
+         session.commit();
+      }
+
+      connection.start();
+      try (MessageConsumer consumer = session.createConsumer(queueinput); MessageProducer producer = session.createProducer(queueouptut)) {
+         for (int i = 0; i < 10; i++) {
+            TextMessage received = (TextMessage) consumer.receive(5000);
+            Assert.assertNotNull(received);
+            TextMessage sending = session.createTextMessage();
+            sending.setStringProperty("_AMQ_DUPL_ID", "itwillcertainlyfail");
+            producer.send(sending);
+         }
+         session.commit();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+
+      session.rollback();
+
+      try (MessageConsumer consumer = session.createConsumer(queueinput); MessageProducer producer = session.createProducer(queueouptut)) {
+         for (int i = 0; i < 10; i++) {
+            TextMessage received = (TextMessage)consumer.receive(5000);
+            Assert.assertNotNull(received);
+            TextMessage sending = session.createTextMessage();
+            sending.setStringProperty("_AMQ_DUPL_ID", "message:" + i);
+            producer.send(sending);
+            session.commit();
+         }
+      }
+
+      try (MessageConsumer consumer = session.createConsumer(queueinput)) {
+         Assert.assertNull(consumer.receiveNoWait());
+      }
+
+      try (MessageConsumer consumer = session.createConsumer(queueouptut)) {
+         for (int i = 0; i < 10; i++) {
+            TextMessage received = (TextMessage)consumer.receive(5000);
+            Assert.assertNotNull(received);
+         }
+         Assert.assertNull(consumer.receiveNoWait());
+         session.commit();
+      }
+
    }
 
    @Test(timeout = 60000)
