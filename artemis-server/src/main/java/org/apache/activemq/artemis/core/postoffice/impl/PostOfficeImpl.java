@@ -1874,7 +1874,6 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          for (MessageReference ref : refs) {
             if (!ref.isAlreadyAcked()) {
                ref.getQueue().addTail(ref, false);
-               logger.info("addOperation " + ref.getMessage());
             }
          }
       }

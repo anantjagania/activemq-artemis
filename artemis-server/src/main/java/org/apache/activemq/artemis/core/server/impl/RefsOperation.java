@@ -182,8 +182,6 @@ public class RefsOperation extends TransactionOperationAbstract {
          synchronized (ref.getQueue()) {
             ref.getQueue().postAcknowledge(ref, reason);
          }
-
-         logger.info("RefsOperation.afterCommit " + ref.getMessage());
       }
 
       if (pagedMessagesToPostACK != null) {
