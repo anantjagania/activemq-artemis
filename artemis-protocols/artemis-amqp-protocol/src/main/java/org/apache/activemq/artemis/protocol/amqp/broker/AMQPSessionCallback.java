@@ -58,6 +58,7 @@ import org.apache.activemq.artemis.protocol.amqp.proton.AmqpSupport;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonServerReceiverContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonServerSenderContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.transaction.ProtonTransactionHandler;
+import org.apache.activemq.artemis.protocol.amqp.proton.transaction.ProtonTransactionImpl;
 import org.apache.activemq.artemis.protocol.amqp.sasl.PlainSASLResult;
 import org.apache.activemq.artemis.protocol.amqp.sasl.SASLResult;
 import org.apache.activemq.artemis.spi.core.protocol.SessionCallback;
@@ -423,6 +424,9 @@ public class AMQPSessionCallback implements SessionCallback {
    public void ack(Transaction transaction, Object brokerConsumer, Message message) throws Exception {
       if (transaction == null) {
          transaction = serverSession.getCurrentTransaction();
+      }
+      if (transaction instanceof ProtonTransactionImpl) {
+         ((ProtonTransactionImpl)transaction).incrementAck();
       }
       OperationContext oldContext = recoverContext();
       try {

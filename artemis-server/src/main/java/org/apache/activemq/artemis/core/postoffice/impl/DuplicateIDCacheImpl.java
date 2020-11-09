@@ -234,9 +234,10 @@ public class DuplicateIDCacheImpl implements DuplicateIDCache {
    }
 
    private synchronized void addToCacheInMemory(final byte[] duplID, final long recordID) {
-      if (logger.isTraceEnabled()) {
-         logger.trace("DuplicateIDCacheImpl(" + this.address + ")::addToCacheInMemory Adding " + describeID(duplID, recordID));
-      }
+      //if (logger.isTraceEnabled()) {
+
+      logger.info("DuplicateIDCacheImpl(" + this.address + ")::addToCacheInMemory Adding " + describeID(duplID, recordID));
+     // }
 
       ByteArrayHolder holder = new ByteArrayHolder(duplID);
 

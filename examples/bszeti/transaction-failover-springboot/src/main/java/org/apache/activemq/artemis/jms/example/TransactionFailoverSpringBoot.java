@@ -22,8 +22,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
+import javax.jms.MessageConsumer;
 import javax.jms.QueueBrowser;
 import javax.jms.Session;
 
@@ -143,10 +145,19 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
             log.info("message in target queue:" + msg.getStringProperty("SEND_COUNTER") + " id=" + msg.getStringProperty("_AMQ_DUPL_ID"));
          }
 
-         int DLQCount = 0;
-         while((msg = jmsTemplate.receive("DLQ")) != null) {
-            DLQCount++;
-            log.info("message in DLQ queue:" + msg.getStringProperty("SEND_COUNTER") + " id=" + msg.getStringProperty("_AMQ_DUPL_ID"));
+         log.info("Receiving browser info now on DLQ");
+
+         org.apache.qpid.jms.JmsConnectionFactory factory = new org.apache.qpid.jms.JmsConnectionFactory("amqp://localhost:61617");
+         Connection connection = factory.createConnection();
+         connection.start();
+         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         QueueBrowser consumer = session.createBrowser(session.createQueue("DLQ"));
+         Enumeration<Message> messages = consumer.getEnumeration();
+         final AtomicInteger DLQCount = new AtomicInteger(0);
+         while (messages.hasMoreElements()) {
+            Message message = messages.nextElement();
+            DLQCount.incrementAndGet();
+            log.info("Recived " + message + " from DLQ");
          }
          log.info("Sent messages: {}", sendCounter.get());
          log.info("Message count on source queue: {}", sourceCount);
@@ -180,19 +191,9 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
 
    Map<String, String> amqDuplIds = new ConcurrentHashMap<>();
 
-   public static AtomicInteger concurrent = new AtomicInteger(0);
-
   // @Transactional
    @JmsListener(destination = "${source.queue}",  concurrency = "${receive.concurrentConsumers}")
    public void receiveMessage(String text, @Header("SEND_COUNTER") String counter, @Header("_AMQ_DUPL_ID") String amqDuplId) {
-      concurrent.incrementAndGet();
-
-      if (concurrent.get() > 1) {
-         new Exception("There are " + concurrent.get() + " Threads on this guys").printStackTrace();
-         System.err.flush();
-         System.exit(-1);
-      }
-
       try {
          System.out.println("Thread::" + Thread.currentThread().getName());
          //Receive is transactional
@@ -233,7 +234,6 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
       }*/
          //Commit
       } finally {
-         concurrent.decrementAndGet();
       }
    }
 

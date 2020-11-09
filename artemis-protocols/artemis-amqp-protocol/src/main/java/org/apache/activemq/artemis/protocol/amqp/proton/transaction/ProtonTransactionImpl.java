@@ -19,6 +19,7 @@ package org.apache.activemq.artemis.protocol.amqp.proton.transaction;
 import javax.transaction.xa.Xid;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.activemq.artemis.api.core.Pair;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
@@ -29,9 +30,11 @@ import org.apache.activemq.artemis.core.server.impl.RefsOperation;
 import org.apache.activemq.artemis.core.transaction.Transaction;
 import org.apache.activemq.artemis.core.transaction.TransactionOperationAbstract;
 import org.apache.activemq.artemis.core.transaction.impl.TransactionImpl;
+import org.apache.activemq.artemis.protocol.amqp.broker.AMQPMessage;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonServerSenderContext;
 import org.apache.qpid.proton.engine.Delivery;
+import org.jboss.logging.Logger;
 
 /**
  * AMQP Protocol has different TX Rollback behaviour for Acks depending on whether an AMQP delivery has been settled
@@ -40,6 +43,8 @@ import org.apache.qpid.proton.engine.Delivery;
  * we increment the delivery count and return to the consumer.
  */
 public class ProtonTransactionImpl extends TransactionImpl {
+
+   private static final Logger logger = Logger.getLogger(ProtonTransactionImpl.class);
 
    /* We need to track the Message reference against the AMQP objects, so we can check whether the corresponding
       deliveries have been settled.  We also need to ensure we are settling on the correct link.  Hence why we keep a ref
@@ -85,8 +90,35 @@ public class ProtonTransactionImpl extends TransactionImpl {
       return deliveries;
    }
 
+   private AMQPMessage message;
+
+   private String address;
+
+   public void setLastMessage(AMQPMessage message) {
+      this.message = message;
+   }
+
+   public void setAddress(String address) {
+      logger.info("Address::" + address);
+      this.address = address;
+   }
+
+   final AtomicInteger acks = new AtomicInteger(0);
+   public void incrementAck() {
+      acks.incrementAndGet();
+   }
+
    @Override
    public void commit() throws Exception {
+      try {
+         if (acks.get() == 0) {
+            logger.warn("A send happened without acks... address = " + address + " message = " + message);
+         }
+      } catch (Throwable p) {
+         p.printStackTrace();
+      }
+      acks.set(0);
+      address = null;
       super.commit();
    }
 

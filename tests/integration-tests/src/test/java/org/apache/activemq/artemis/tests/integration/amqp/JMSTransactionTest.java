@@ -30,14 +30,19 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
+import org.apache.activemq.artemis.rest.ActiveMQ;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
+import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class JMSTransactionTest extends JMSClientTestSupport {
+
+   private static final Logger logger = Logger.getLogger(JMSTransactionTest.class);
 
    protected String getConfiguredProtocols() {
       return "AMQP,OPENWIRE,CORE";
@@ -183,13 +188,16 @@ public class JMSTransactionTest extends JMSClientTestSupport {
       testAckAndSendWithDuplicate("CORE");
    }
 
+   protected static void createAnycastQueuePair(ActiveMQServer server, String name) throws Exception {
+      server.addAddressInfo(new AddressInfo(name).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
+      server.createQueue(new QueueConfiguration(name).setAddress(name).setRoutingType(RoutingType.ANYCAST).setDurable(true));
+   }
+
    public void testAckAndSendWithDuplicate(String protocol) throws Throwable {
       String inputQueue = getQueueName() + ".input";
       String outputQueue = getQueueName() + ".output";
-      server.addAddressInfo(new AddressInfo(inputQueue).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
-      server.addAddressInfo(new AddressInfo(outputQueue).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
-      server.createQueue(new QueueConfiguration(inputQueue).setAddress(inputQueue).setRoutingType(RoutingType.ANYCAST).setDurable(true));
-      server.createQueue(new QueueConfiguration(outputQueue).setAddress(outputQueue).setRoutingType(RoutingType.ANYCAST).setDurable(true));
+      createAnycastQueuePair(server, inputQueue);
+      createAnycastQueuePair(server, outputQueue);
 
       ConnectionFactory factory = CFUtil.createConnectionFactory(protocol, "tcp://localhost:5672");
       Connection connection = factory.createConnection();
@@ -205,19 +213,33 @@ public class JMSTransactionTest extends JMSClientTestSupport {
          session.commit();
       }
 
+      // Adding a message just to make sure tofail is recorded as a duplicate ID
+      try (MessageProducer producerinput = session.createProducer(queueouptut)) {
+         TextMessage message = session.createTextMessage();
+         message.setText("dumb");
+         message.setStringProperty("_AMQ_DUPL_ID", "tofail");
+         producerinput.send(message);
+         session.commit();
+      }
+
       connection.start();
+      boolean failed = false;
       try (MessageConsumer consumer = session.createConsumer(queueinput); MessageProducer producer = session.createProducer(queueouptut)) {
          for (int i = 0; i < 10; i++) {
             TextMessage received = (TextMessage) consumer.receive(5000);
             Assert.assertNotNull(received);
             TextMessage sending = session.createTextMessage();
-            sending.setStringProperty("_AMQ_DUPL_ID", "itwillcertainlyfail");
+            sending.setStringProperty("_AMQ_DUPL_ID", "tofail");
             producer.send(sending);
          }
          session.commit();
       } catch (Exception e) {
-         e.printStackTrace();
+         logger.debug(e.getMessage(), e);
+         failed = true;
       }
+
+
+      Assert.assertTrue(failed);
 
       session.rollback();
 
@@ -237,7 +259,7 @@ public class JMSTransactionTest extends JMSClientTestSupport {
       }
 
       try (MessageConsumer consumer = session.createConsumer(queueouptut)) {
-         for (int i = 0; i < 10; i++) {
+         for (int i = 0; i < 11; i++) { // 10 processed messages + initially sent message with tofail recorded
             TextMessage received = (TextMessage)consumer.receive(5000);
             Assert.assertNotNull(received);
          }

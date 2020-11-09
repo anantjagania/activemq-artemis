@@ -35,6 +35,7 @@ import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPInternal
 import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPNotFoundException;
 import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPSecurityException;
 import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolMessageBundle;
+import org.apache.activemq.artemis.protocol.amqp.proton.transaction.ProtonTransactionImpl;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Modified;
 import org.apache.qpid.proton.amqp.messaging.Outcome;
@@ -170,12 +171,29 @@ public class ProtonServerReceiverContext extends ProtonAbstractReceiver {
       return defaultRoutingType;
    }
 
+   private static final Logger logger = Logger.getLogger(ProtonServerSenderContext.class);
+
    @Override
    protected void actualDelivery(AMQPMessage message, Delivery delivery, Receiver receiver, Transaction tx) {
       try {
+         if (tx instanceof ProtonTransactionImpl) {
+            ((ProtonTransactionImpl)tx).setLastMessage(message);
+            if (address != null) {
+               ((ProtonTransactionImpl) tx).setAddress("" + address);
+            } else {
+               ((ProtonTransactionImpl) tx).setAddress(message.getAddress());
+            }
+         }
+
+         if (tx == null && message.getAddress() != null && message.getAddress().equals("target")) {
+            logger.warn("no TX while sending " + message);
+         }
+
          if (sessionSPI != null) {
             sessionSPI.serverSend(this, tx, receiver, delivery, address, routingContext, message);
          }
+
+
       } catch (Exception e) {
          log.warn(e.getMessage(), e);
 
