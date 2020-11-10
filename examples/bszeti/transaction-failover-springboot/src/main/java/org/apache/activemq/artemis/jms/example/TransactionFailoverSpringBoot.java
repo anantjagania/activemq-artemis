@@ -195,6 +195,7 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
    @JmsListener(destination = "${source.queue}",  concurrency = "${receive.concurrentConsumers}")
    public void receiveMessage(String text, @Header("SEND_COUNTER") String counter, @Header("_AMQ_DUPL_ID") String amqDuplId) {
       try {
+         new Exception("Send").printStackTrace(System.out);
          System.out.println("Thread::" + Thread.currentThread().getName());
          //Receive is transactional
          // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
