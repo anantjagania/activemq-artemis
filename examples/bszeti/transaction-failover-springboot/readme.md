@@ -51,3 +51,28 @@ See summary output of the application:
 46098 [main] [INFO] Message count on target queue: 1000
 46098 [main] [WARNING] Duplicates on DLQ: 12
 ```
+
+Variations - with transacted send
+==========
+
+DEFAULT_MESSAGE_LISTENER_CONTAINER + CACHE_CONSUMER (CACHE_AUTO)
+
+* DLQ messages, lots of errors, retries
+* Messages with exceptions are retried as expected.
+* Sometimes the test execution takes much longer, it had to wait for transaction timeouts on the broker side probably
+
+JMS_TRANSACTION_MANAGER + CACHE_NONE (CACHE_AUTO)
+
+* No DLQ messages, no message loss. 
+* Messages with exceptions are retried as expected.
+* Slower as there is no caching
+* Receive: JMS session is created by TransactionManager, it's transacted.
+* Send: Send is also transacted using the same session as receive
+
+JMS_TRANSACTION_MANAGER + CACHE_CONSUMER
+
+* Message loss during failover. 
+* Messages with exceptions are retried as expected.
+* Receive: JMS session is created and cached by DefaultMessageListenerContainer. Receive is only transacted if DefaultJmsListenerContainerFactory.setSessionTransacted(true).
+* Send: Another (transacted) JMS session from the TransactionManager is used - from JmsTemplate. So the send and receive is not done in the same JMS session.
+

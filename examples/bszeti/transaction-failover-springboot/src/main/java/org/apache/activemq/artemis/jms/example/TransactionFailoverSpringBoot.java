@@ -16,17 +16,11 @@
  */
 package org.apache.activemq.artemis.jms.example;
 
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.QueueBrowser;
 import javax.jms.Session;
 
 import org.apache.activemq.artemis.util.ServerUtil;
@@ -37,26 +31,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
-import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.config.JmsListenerEndpointRegistry;
-import org.springframework.jms.connection.JmsTransactionManager;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-@EnableJms
+//@EnableJms
 @EnableScheduling
 @SpringBootApplication
 public class TransactionFailoverSpringBoot implements CommandLineRunner {
@@ -65,9 +46,23 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
 
    private static Process server0;
    private static Process server1;
+   public static void main(String[] args) throws Exception{
 
-   public static void main(String[] args) {
-      SpringApplication.run(TransactionFailoverSpringBoot.class, args);
+      try {
+         //Start servers - this is needed before the main run as DefaultMessageListenerContainer tries to get a connection during start
+         server0 = ServerUtil.startServer(args[0], TransactionFailoverSpringBoot.class.getSimpleName() + "0", 0, 5000);
+         server1 = ServerUtil.startServer(args[1], TransactionFailoverSpringBoot.class.getSimpleName() + "1", 1, 5000);
+
+         //Main run
+         SpringApplication.run(TransactionFailoverSpringBoot.class, args);
+
+      } finally {
+         //Stop server
+         log.info("Shut down servers");
+         ServerUtil.killServer(server0);
+         ServerUtil.killServer(server1);
+         log.info("Done");
+      }
    }
 
    @Autowired
@@ -79,17 +74,35 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
    @Autowired
    private ConfigurableApplicationContext applicationContext;
 
- /*  @Autowired
-   private PlatformTransactionManager transactionManager;*/
-
    @Value("${source.queue}")
    String sourceQueue;
+
+   @Value("${target.queue}")
+   String targetQueue;
 
    @Value("${send.count}")
    Integer sendCount;
 
-   @Value("${target.queue}")
-   String targetQueue;
+   @Value("${receive.delayBeforeForward}")
+   Integer delayBeforeForward;
+
+   @Value("${receive.delayBeforeDone}")
+   Integer delayBeforeDone;
+
+   @Value("${receive.addAmqDuplId}")
+   Boolean addAmqDuplId;
+
+   @Value("${receive.throwException}")
+   Boolean throwException;
+
+   @Value("${brokerFailover}")
+   Boolean brokerFailover;
+
+   @Value("${counterUpdate}")
+   Integer counterUpdate;
+
+   @Value("${shutDownDelay}")
+   Integer shutDownDelay;
 
    private AtomicInteger receiveCounter = new AtomicInteger();
    private AtomicInteger sendCounter = new AtomicInteger();
@@ -98,177 +111,131 @@ public class TransactionFailoverSpringBoot implements CommandLineRunner {
 
    @Override
    public void run(String... args) throws Exception {
-
       try {
-         server0 = ServerUtil.startServer(args[0], TransactionFailoverSpringBoot.class.getSimpleName() + "0", 0, 5000);
-         server1 = ServerUtil.startServer(args[1], TransactionFailoverSpringBoot.class.getSimpleName() + "1", 1, 5000);
 
-         //Send messages -
-         for (int i = 0; i < sendCount; i++) {
-            sendMessage(sourceQueue);
+         //Send messages to queue, before starting receivers
+         for (int i=0; i< sendCount; i++) {
+            String uuid = UUID.randomUUID().toString();
+            log.debug("Sending: {}", uuid);
+
+            this.jmsTemplate.convertAndSend(sourceQueue, "message: "+uuid, m -> {
+               m.setStringProperty("SEND_COUNTER", ""+sendCounter.incrementAndGet());
+               m.setStringProperty("UUID", uuid);
+               return m;
+            });
+
          }
+         log.info("Total sent: {}",sendCounter.get());
 
-         log.info("Total sent: {}", sendCounter.get());
 
-         Thread.sleep(2000);
+         //Start receiving messages
+         Thread.sleep(1000);
          log.info("Start listeners");
+
+         log.info("Message count before listener start - sent: {}, received: {}, forwarded: {}", sendCounter.get(), receiveCounter.get(), receiveForwardedCounter.get());
          jmsListenerEndpointRegistry.start();
 
-         //Wait until we received 10% of messages
-         while (receiveCounter.get() < sendCount / 10) {
+
+         //Wait until we received 10% of messages before trigger broker failover
+         while (receiveCounter.get() < sendCount/10) {
             Thread.sleep(100);
          }
 
          //Broker failover
-         ServerUtil.killServer(server0);
+         if (brokerFailover) {
+            ServerUtil.killServer(server0);
+            log.info("Message count after failover - sent: {}, received: {}, forwarded: {}", sendCounter.get(), receiveCounter.get(), receiveForwardedCounter.get());
+         }
+
 
          //Wait until we received all of messages, and no more was incoming in the last second
          while (receiveCounter.get() < sendCount || receiveCounter.get() > receiveCounterLast) {
-            Thread.sleep(1000);
+            Thread.sleep(counterUpdate);
          }
 
-         log.info("Wait a bit more before shutdown...");
-         Thread.sleep(15000);
-         log.info("Counting...");
+
+         Thread.sleep(shutDownDelay);
+         log.info("Counting queue sizes...");
+
          jmsTemplate.setReceiveTimeout(1000);
-         int sourceCount = 0;
          Message msg;
+
+         int sourceCount = 0;
          while((msg = jmsTemplate.receive(sourceQueue)) != null) {
             sourceCount++;
-            log.info("message in source queue:" + msg.getStringProperty("SEND_COUNTER") + " id=" + msg.getStringProperty("_AMQ_DUPL_ID"));
          }
-
 
          int targetCount = 0;
          while((msg = jmsTemplate.receive(targetQueue)) != null) {
             targetCount++;
-            log.info("message in target queue:" + msg.getStringProperty("SEND_COUNTER") + " id=" + msg.getStringProperty("_AMQ_DUPL_ID"));
          }
 
-         log.info("Receiving browser info now on DLQ");
-
-         org.apache.qpid.jms.JmsConnectionFactory factory = new org.apache.qpid.jms.JmsConnectionFactory("amqp://localhost:61617");
-         Connection connection = factory.createConnection();
-         connection.start();
-         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-         QueueBrowser consumer = session.createBrowser(session.createQueue("DLQ"));
-         Enumeration<Message> messages = consumer.getEnumeration();
-         final AtomicInteger DLQCount = new AtomicInteger(0);
-         while (messages.hasMoreElements()) {
-            Message message = messages.nextElement();
-            DLQCount.incrementAndGet();
-            log.info("Recived " + message + " from DLQ");
+         int DLQCount = 0;
+         while((msg = jmsTemplate.receive("DLQ")) != null) {
+            DLQCount++;
+            log.info("message in DLQ queue: {} - {}", msg.getStringProperty("UUID"), msg.getStringProperty("SEND_COUNTER"));
          }
-         log.info("Sent messages: {}", sendCounter.get());
+
+         log.info("Message count at the end - sent: {}, received: {}, forwarded: {}", sendCounter.get(), receiveCounter.get(), receiveForwardedCounter.get());
          log.info("Message count on source queue: {}", sourceCount);
-         log.info("Message count on target queue: {}", targetCount);
-         log.warn("Duplicates on DLQ: {}", DLQCount);
+         log.info("Message count on target queue: {}",targetCount);
+         log.warn("Message count on DLQ - duplicates: {}", DLQCount);
          //Number of messages on DLQ should be 0 for a seamless failover
 
       } finally {
          //Shut down listeners and scheduled tasks
          log.info("Stop applicationContext");
          applicationContext.close();
-
-         log.info("Shut down servers");
-         ServerUtil.killServer(server0);
-         ServerUtil.killServer(server1);
-         log.info("Done");
       }
    }
 
-   public void sendMessage(String sendQuque) {
-      String uuid = UUID.randomUUID().toString();
-      log.debug("Sending: {}", uuid);
-
-      this.jmsTemplate.convertAndSend(sendQuque, "message: " + uuid, m -> {
-         m.setStringProperty("_AMQ_DUPL_ID", uuid);
-         m.setStringProperty("SEND_COUNTER", "" + sendCounter.incrementAndGet());
-         return m;
-      });
-
-   }
-
-   Map<String, String> amqDuplIds = new ConcurrentHashMap<>();
-
-  // @Transactional
-   @JmsListener(destination = "${source.queue}",  concurrency = "${receive.concurrentConsumers}")
-   public void receiveMessage(String text, @Header("SEND_COUNTER") String counter, @Header("_AMQ_DUPL_ID") String amqDuplId) {
-      try {
-         new Exception("Send").printStackTrace(System.out);
-         System.out.println("Thread::" + Thread.currentThread().getName());
-         //Receive is transactional
-         // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-         // TransactionStatus status = transactionManager.getTransaction(def);
-         log.info("Received: {} - {}", amqDuplId, counter);
-         receiveCounter.incrementAndGet();
-         if (amqDuplIds.put(amqDuplId, counter) != null) {
-            log.warn("Received again: {} - {}", amqDuplId, counter);
-         }
-
-         //Send also participates in the transaction
-         this.jmsTemplate.convertAndSend(targetQueue, text, m -> {
-            m.setStringProperty("SEND_COUNTER", counter);
-            m.setStringProperty("_AMQ_DUPL_ID", amqDuplId);
-            return m;
-         });
-
-      /*try {
-         transactionManager.commit(status);
-      } catch (TransactionException e) {
-         e.printStackTrace();
-         *//*try {
-            Thread.sleep(30000);
-         } catch (InterruptedException ex) {
-            ex.printStackTrace();
-         }*//*
-         transactionManager.rollback(status);
-      }*/
-         receiveForwardedCounter.incrementAndGet();
-         log.info("Forwarded: {} - {}", amqDuplId, counter);
-
-         log.info("Done: {} - {}", amqDuplId, counter);
-     /* try {
-         Thread.sleep(5000);
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-      }*/
-         //Commit
-      } finally {
-      }
-   }
-
-   @Scheduled(fixedRate = 1000)
+   /**
+    * Log message counters. It also updates receiveCounterLast, which is needed to shut down after all messages are received.
+    */
+   @Scheduled(fixedDelayString = "${counterUpdate}")
    public void reportCurrentTime() {
       int current = receiveCounter.get();
       int diff = current - receiveCounterLast;
       receiveCounterLast = current;
-      log.info("sent: {}, received: {} ({}/s), forwarded: {}", sendCounter.get(), current, diff, receiveForwardedCounter.get());
-   }
-
-  /* @Bean
-   public PlatformTransactionManager transactionManager(ConnectionFactory connectionFactory) {
-      return new JmsTransactionManager(connectionFactory);
+      log.debug("Method calls: sent: {}, received: {} ({}/s), forwarded: {}", sendCounter.get(), current, diff, receiveForwardedCounter.get());
    }
 
 
-   @Bean
-   public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory) {
-      JmsTemplate template = new JmsTemplate();
-      template.setConnectionFactory(connectionFactory);
-      return template;
+   //Collect ids, so we can observe duplicates.
+   Map<String,String> receivedUUIDs = new ConcurrentHashMap<>();
+
+   /**
+    * Process a message and send to target queue - this is used by JmsListeners
+    */
+   public void doReceiveMessage(String text, Session session, String counter, String UUID) throws InterruptedException {
+
+      //Increase counters and uuid set
+      log.debug("Received: {} - {}", UUID, counter);
+      receiveCounter.incrementAndGet();
+      if (receivedUUIDs.put(UUID,counter) != null) {
+         log.warn("Received again: {} - {}", UUID, counter);
+      }
+
+      //Send message to target queue
+      Thread.sleep(delayBeforeForward);
+      this.jmsTemplate.convertAndSend(targetQueue, text, m -> {
+         m.setStringProperty("SEND_COUNTER", counter);
+         m.setStringProperty("UUID", UUID);
+         if (addAmqDuplId) {
+            m.setStringProperty("_AMQ_DUPL_ID", UUID);
+         }
+         return m;
+      });
+      log.debug("Forwarded: {} - {}", UUID, counter);
+      receiveForwardedCounter.incrementAndGet();
+
+      //Optianally throw exception to test transaction boundaries
+      if (throwException) {
+         throw new RuntimeException("Exception for uuid:" + UUID);
+      }
+
+      Thread.sleep(delayBeforeDone);
+      log.debug("Done: {} - {}", UUID, counter);
    }
 
-   @Bean
-   public JmsListenerContainerFactory<?> msgFactory(ConnectionFactory connectionFactory,
-                                                    DefaultJmsListenerContainerFactoryConfigurer configurer,
-                                                    PlatformTransactionManager transactionManager) {
-      DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-      factory.setTransactionManager(transactionManager);
-      factory.setReceiveTimeout(10000L);
-      configurer.configure(factory, connectionFactory);
-      return factory;
-
-
-   }*/
 }
