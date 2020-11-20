@@ -213,7 +213,7 @@ public class MQTTTestSupport extends ActiveMQTestBase {
       cf = new ActiveMQConnectionFactory(false, new TransportConfiguration(ActiveMQTestBase.NETTY_CONNECTOR_FACTORY));
    }
 
-   private ActiveMQServer createServerForMQTT() throws Exception {
+   protected ActiveMQServer createServerForMQTT() throws Exception {
       Configuration defaultConfig = createDefaultConfig(true).setIncomingInterceptorClassNames(singletonList(MQTTIncomingInterceptor.class.getName())).setOutgoingInterceptorClassNames(singletonList(MQTTOutoingInterceptor.class.getName()));
       AddressSettings addressSettings = new AddressSettings();
       addressSettings.setDeadLetterAddress(SimpleString.toSimpleString("DLA"));

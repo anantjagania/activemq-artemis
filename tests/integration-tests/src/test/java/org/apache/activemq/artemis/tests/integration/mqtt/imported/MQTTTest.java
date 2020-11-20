@@ -46,10 +46,12 @@ import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.postoffice.QueueBinding;
 import org.apache.activemq.artemis.core.protocol.mqtt.MQTTUtil;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.apache.activemq.artemis.tests.util.Wait;
+import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.apache.activemq.transport.amqp.client.AmqpClient;
 import org.apache.activemq.transport.amqp.client.AmqpConnection;
 import org.apache.activemq.transport.amqp.client.AmqpMessage;
@@ -1142,6 +1144,70 @@ public class MQTTTest extends MQTTTestSupport {
 
       assertEquals(1, getSessions().size());
    }
+
+   @Test
+   public void testDLQ() throws Exception {
+      final MQTTClientProvider publishProvider = getMQTTClientProvider();
+      initializeConnection(publishProvider);
+
+
+      AddressSettings settings = new AddressSettings().setDeadLetterAddress(SimpleString.toSimpleString("TPDLQ")).setMaxDeliveryAttempts(1);
+      server.getAddressSettingsRepository().addMatch("TopicA", settings);
+      createAnycastPair(server, "TPDLQ");
+      final String CLIENTID = "cleansession";
+      final MQTT mqttNotClean = createMQTTConnection(CLIENTID, false);
+      final String TOPIC = "TopicA";
+
+      StringBuilder largeString = new StringBuilder();
+      while (largeString.length() < 1024 * 1024) {
+         largeString.append("This is huge ");
+      }
+      for (int i = 0; i < 2; i++) {
+         System.out.println("#processing " + i);
+         BlockingConnection notClean = mqttNotClean.blockingConnection();
+         notClean.connect();
+         notClean.subscribe(new Topic[]{new Topic(TOPIC, QoS.EXACTLY_ONCE)});
+         String subscriptionQueueName = "cleansession.TopicA";
+         Wait.waitFor(() -> server.locateQueue(subscriptionQueueName) != null);
+         Queue queue = server.locateQueue(subscriptionQueueName);
+         if (i == 0) {
+            //notClean.publish(TOPIC, largeString.toString().getBytes(), QoS.EXACTLY_ONCE, false);
+            publishProvider.publish(TOPIC, largeString.toString().getBytes(), AT_LEAST_ONCE);
+            Wait.assertEquals(1, queue::getMessageCount);
+         } else {
+            Thread.sleep(100);
+         }
+         notClean.disconnect();
+
+         Wait.waitFor(() -> queue.getDeliveringCount() == 0);
+
+         // this is to force DLQ
+         LinkedListIterator<MessageReference> iterator = queue.iterator();
+         while (iterator.hasNext()) {
+            MessageReference reference = iterator.next();
+
+            reference.incrementDeliveryCount();
+            reference.incrementDeliveryCount();
+            reference.incrementDeliveryCount();
+         }
+         iterator.close();
+      }
+
+      assertEquals(1, getSessions().size());
+
+      // MUST NOT receive message from previous not clean session even when creating a new subscription
+      final MQTT mqttClean = createMQTTConnection(CLIENTID, true);
+      final BlockingConnection clean = mqttClean.blockingConnection();
+      clean.connect();
+      clean.subscribe(new Topic[]{new Topic(TOPIC, QoS.EXACTLY_ONCE)});
+      Message msg = clean.receive(100, TimeUnit.MILLISECONDS);
+      assertNull(msg);
+      clean.publish(TOPIC, TOPIC.getBytes(), QoS.EXACTLY_ONCE, false);
+      clean.disconnect();
+
+      assertEquals(0, getSessions().size());
+   }
+
 
    @Test(timeout = 60 * 1000)
    public void testCleanSessionForMessages() throws Exception {
