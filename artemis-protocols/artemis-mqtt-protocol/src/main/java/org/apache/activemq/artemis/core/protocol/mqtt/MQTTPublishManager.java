@@ -132,6 +132,8 @@ public class MQTTPublishManager {
             outboundStore.publish(mqttid, message.getMessageID(), consumer.getID());
             sendServerMessage(mqttid, message, deliveryCount, qos);
          } else {
+            new Exception("I'm here").printStackTrace();
+            System.exit(-1);
             // Client must have disconnected and it's Subscription QoS cleared
             consumer.individualCancel(message.getMessageID(), false, true);
          }

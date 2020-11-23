@@ -613,6 +613,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
                     final QueueFactory factory) {
       super(server == null ? EmptyCriticalAnalyzer.getInstance() : server.getCriticalAnalyzer(), CRITICAL_PATHS);
 
+      new Exception("Queue " + queueConfiguration + " created").printStackTrace();
+
       this.id = queueConfiguration.getId();
 
       this.address = queueConfiguration.getAddress();
@@ -1943,11 +1945,13 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    @Override
    public void cancel(final Transaction tx, final MessageReference reference, boolean ignoreRedeliveryCheck) {
+      new Exception("cancel").printStackTrace();
       getRefsOperation(tx, AckReason.NORMAL, ignoreRedeliveryCheck).addAck(reference);
    }
 
    @Override
    public synchronized void cancel(final MessageReference reference, final long timeBase, boolean sorted) throws Exception {
+      new Exception("cancel").printStackTrace(); System.exit(-1);
       Pair<Boolean, Boolean> redeliveryResult = checkRedelivery(reference, timeBase, false);
       if (redeliveryResult.getA()) {
          if (!scheduledDeliveryHandler.checkAndSchedule(reference, false)) {
@@ -3229,6 +3233,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    public Pair<Boolean, Boolean> checkRedelivery(final MessageReference reference,
                                   final long timeBase,
                                   final boolean ignoreRedeliveryDelay) throws Exception {
+
+      new Exception("Check redelivery").printStackTrace();
 
       if (internalQueue) {
          if (logger.isTraceEnabled()) {

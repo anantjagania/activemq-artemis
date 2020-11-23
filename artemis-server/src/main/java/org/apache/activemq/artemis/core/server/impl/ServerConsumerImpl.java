@@ -566,6 +566,7 @@ public class ServerConsumerImpl implements ServerConsumer, ReadyListener {
 
       Transaction tx = new TransactionImpl(storageManager, sorted);
 
+      System.out.println("We have " + refs.size());
       refs.forEach(ref -> {
          if (logger.isTraceEnabled()) {
             logger.trace("ServerConsumerImpl::" + this + " cancelling reference " + ref);

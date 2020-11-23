@@ -191,11 +191,13 @@ public class MessageReferenceImpl extends LinkedListImpl.Node<MessageReferenceIm
    @Override
    public void incrementDeliveryCount() {
       DELIVERY_COUNT_UPDATER.incrementAndGet(this);
+      new Exception("Increemented delivered Count, now being at: " + deliveryCount).printStackTrace();
    }
 
    @Override
    public void decrementDeliveryCount() {
       DELIVERY_COUNT_UPDATER.decrementAndGet(this);
+      new Exception("Decrement delivery count").printStackTrace();
    }
 
    @Override
