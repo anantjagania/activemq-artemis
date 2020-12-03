@@ -18,6 +18,7 @@ package org.apache.activemq.artemis.core.message.impl;
 
 import java.io.InputStream;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
@@ -154,8 +155,8 @@ public class MessageInternalImpl implements MessageInternal {
     * @param newID
     */
    @Override
-   public Message copy(long newID) {
-      return message.copy(newID);
+   public Message copy(long newID, Consumer<Message> messageSetter) {
+      return message.copy(newID, messageSetter);
    }
 
    /**

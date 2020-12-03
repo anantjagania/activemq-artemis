@@ -3435,6 +3435,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
          throw new ActiveMQNullRefException("Reference to message is null");
       }
 
+      new Exception("Make copy").printStackTrace();
+
       Message message = ref.getMessage();
       /*
        We copy the message and send that to the dla/expiry queue - this is
@@ -3447,17 +3449,17 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
       long newID = storageManager.generateID();
 
-      Message copy = message.copy(newID);
+      Message copy = message.copy(newID, (c) -> {
+         if (copyOriginalHeaders) {
+            c.referenceOriginalMessage(message, ref.getQueue().getName().toString());
+         }
 
-      if (copyOriginalHeaders) {
-         copy.referenceOriginalMessage(message, ref.getQueue().getName().toString());
-      }
+         c.setExpiration(0);
 
-      copy.setExpiration(0);
-
-      if (expiry) {
-         copy.setBrokerProperty(Message.HDR_ACTUAL_EXPIRY_TIME, System.currentTimeMillis());
-      }
+         if (expiry) {
+            c.setBrokerProperty(Message.HDR_ACTUAL_EXPIRY_TIME, System.currentTimeMillis());
+         }
+      });
 
       copy.reencode();
 

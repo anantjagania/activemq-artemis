@@ -17,11 +17,13 @@
 package org.apache.activemq.artemis.protocol.amqp.broker;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.persistence.CoreMessageObjectPools;
 import org.apache.activemq.artemis.core.persistence.Persister;
 import org.apache.activemq.artemis.protocol.amqp.util.NettyWritable;
@@ -142,8 +144,12 @@ public class AMQPStandardMessage extends AMQPMessage {
    }
 
    @Override
-   public final org.apache.activemq.artemis.api.core.Message copy(long newID) {
-      return copy().setMessageID(newID);
+   public final org.apache.activemq.artemis.api.core.Message copy(long newID, Consumer<Message> messageSetter) {
+      Message message = copy().setMessageID(newID);
+      if (messageSetter != null) {
+         messageSetter.accept(message);
+      }
+      return message;
    }
 
    @Override

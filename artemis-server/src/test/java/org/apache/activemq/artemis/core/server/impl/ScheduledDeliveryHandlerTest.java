@@ -382,7 +382,7 @@ public class ScheduledDeliveryHandlerTest extends Assert {
       }
 
       @Override
-      public Message copy(long newID) {
+      public Message copy(long newID, java.util.function.Consumer<Message> messageSetter) {
          return null;
       }
 

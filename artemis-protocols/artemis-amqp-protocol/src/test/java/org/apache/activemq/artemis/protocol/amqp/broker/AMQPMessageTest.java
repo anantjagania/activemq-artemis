@@ -1681,7 +1681,7 @@ public class AMQPMessageTest {
    public void testCopyMessageWithNewArtemisMessageID() {
       AMQPStandardMessage message = new AMQPStandardMessage(0, encodedProtonMessage, null, null);
       message.setMessageID(127);
-      AMQPStandardMessage copy = (AMQPStandardMessage) message.copy(255);
+      AMQPStandardMessage copy = (AMQPStandardMessage) message.copy(255, null);
 
       assertNotEquals(message.getMessageID(), copy.getMessageID());
       assertProtonMessageEquals(message.getProtonMessage(), copy.getProtonMessage());

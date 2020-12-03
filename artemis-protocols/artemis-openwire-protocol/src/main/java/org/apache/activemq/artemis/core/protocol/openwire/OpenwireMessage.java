@@ -18,6 +18,7 @@
 package org.apache.activemq.artemis.core.protocol.openwire;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -89,7 +90,7 @@ public class OpenwireMessage implements Message {
    }
 
    @Override
-   public Message copy(long newID) {
+   public Message copy(long newID, Consumer<Message> messageSetter) {
       return null;
    }
 

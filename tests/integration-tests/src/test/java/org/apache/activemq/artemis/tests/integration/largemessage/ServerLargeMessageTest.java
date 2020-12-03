@@ -359,7 +359,7 @@ public class ServerLargeMessageTest extends ActiveMQTestBase {
          //now replace the underlying file with a fake
          replaceFile(largeMessage);
 
-         Message copied = largeMessage.copy(99999);
+         Message copied = largeMessage.copy(99999, null);
          assertEquals(99999, copied.getMessageID());
 
       } finally {

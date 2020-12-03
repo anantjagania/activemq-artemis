@@ -16,6 +16,8 @@
  */
 package org.apache.activemq.artemis.core.server.transformer;
 
+import java.util.function.Consumer;
+
 import org.apache.activemq.artemis.api.core.ICoreMessage;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -93,7 +95,7 @@ public class ServerMessageImpl extends MessageInternalImpl implements ServerMess
    }
 
    @Override
-   public ServerMessage copy(long newID) {
+   public ServerMessage copy(long newID, Consumer<Message> messageSetter) {
       throw new UnsupportedOperationException();
    }
 

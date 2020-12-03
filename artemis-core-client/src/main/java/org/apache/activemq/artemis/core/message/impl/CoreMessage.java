@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -476,8 +477,12 @@ public class CoreMessage extends RefCountMessage implements ICoreMessage {
    }
 
    @Override
-   public Message copy(long newID) {
-      return copy().setMessageID(newID);
+   public Message copy(long newID, Consumer<Message> functionConsumer) {
+      Message message = copy().setMessageID(newID);
+      if (functionConsumer != null) {
+         functionConsumer.accept(message);
+      }
+      return message;
    }
 
    @Override

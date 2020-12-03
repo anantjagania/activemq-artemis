@@ -20,6 +20,7 @@ package org.apache.activemq.artemis.protocol.amqp.broker;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -434,11 +435,16 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
    }
 
    @Override
-   public Message copy(final long newID) {
+   public Message copy(final long newID, Consumer<Message> messageSetter) {
       try {
+         // TODO: Parse properties on this message,
+         // then we need to set the properties, and make a proper setup ont he file copy
          AMQPLargeMessage copy = new AMQPLargeMessage(newID, messageFormat, null, coreMessageObjectPools, storageManager);
          copy.setDurable(this.isDurable());
          largeBody.copyInto(copy);
+         if (messageSetter != null) {
+            messageSetter.accept(copy);
+         }
          copy.finishParse();
          copy.releaseResources(true);
          return copy;

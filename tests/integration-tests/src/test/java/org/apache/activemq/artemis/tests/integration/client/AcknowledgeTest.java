@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
@@ -422,7 +423,7 @@ public class AcknowledgeTest extends ActiveMQTestBase {
       }
 
       @Override
-      public Message copy(long newID) {
+      public Message copy(long newID, Consumer<Message> messageSetter) {
          return null;
       }
 

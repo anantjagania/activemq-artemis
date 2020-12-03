@@ -56,7 +56,7 @@ public class MQTTRetainMessageManager {
       queue.deleteAllReferences();
 
       if (!reset) {
-         sendToQueue(message.copy(session.getServer().getStorageManager().generateID()), queue, tx);
+         sendToQueue(message.copy(session.getServer().getStorageManager().generateID(), null), queue, tx);
       }
 
    }
@@ -81,7 +81,7 @@ public class MQTTRetainMessageManager {
                         i.remove();
                      }
                   }
-                  Message message = ref.getMessage().copy(session.getServer().getStorageManager().generateID());
+                  Message message = ref.getMessage().copy(session.getServer().getStorageManager().generateID(), null);
                   sendToQueue(message, queue, tx);
                }
             }

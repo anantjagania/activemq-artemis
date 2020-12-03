@@ -1280,8 +1280,7 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          // We have to copy the message and store it separately, otherwise we may lose remote bindings in case of restart before the message
          // arrived the target node
          // as described on https://issues.jboss.org/browse/JBPAPP-6130
-         Message copyRedistribute = message.copy(storageManager.generateID());
-         copyRedistribute.setAddress(originatingQueue.getAddress());
+         Message copyRedistribute = message.copy(storageManager.generateID(), (m) -> m.setAddress(originatingQueue.getAddress()));
 
          if (tx != null) {
             tx.addOperation(new TransactionOperationAbstract() {

@@ -16,6 +16,8 @@
  */
 package org.apache.activemq.artemis.core.persistence.impl.journal;
 
+import java.util.function.Consumer;
+
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.ICoreMessage;
@@ -294,13 +296,15 @@ public final class LargeServerMessageImpl extends CoreMessage implements CoreLar
    }
 
    @Override
-   public Message copy(final long newID) {
+   public Message copy(final long newID, Consumer<Message> messageSetter) {
       try {
          LargeServerMessage newMessage = storageManager.createLargeMessage(newID, this);
          largeBody.copyInto(newMessage);
          newMessage.finishParse();
          newMessage.releaseResources(true);
-         return newMessage.toMessage();
+         Message message = newMessage.toMessage();
+         messageSetter.accept(message);
+         return message;
 
       } catch (Exception e) {
          ActiveMQServerLogger.LOGGER.lareMessageErrorCopying(e, this);

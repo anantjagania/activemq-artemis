@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import io.netty.buffer.ByteBuf;
@@ -299,8 +300,9 @@ public interface Message {
    /** It will generate a new instance of the message encode, being a deep copy, new properties, new everything */
    Message copy();
 
-   /** It will generate a new instance of the message encode, being a deep copy, new properties, new everything */
-   Message copy(long newID);
+   /** It will generate a new instance of the message encode, being a deep copy, new properties, new everything.
+    *  the setter is used to set properties on messages */
+   Message copy(long newID, Consumer<Message> setter);
 
    default boolean acceptsConsumer(long uniqueConsumerID) {
       return true;

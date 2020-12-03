@@ -102,28 +102,30 @@ public class DivertImpl implements Divert {
       // Shouldn't copy if it's not routed anywhere else
       if (!forwardAddress.equals(context.getAddress(message))) {
          long id = storageManager.generateID();
-         copy = message.copy(id);
+         copy = message.copy(id, (c) -> {
+            // This will set the original MessageId, and the original address
+            c.referenceOriginalMessage(message, this.getUniqueName().toString());
 
-         // This will set the original MessageId, and the original address
-         copy.referenceOriginalMessage(message, this.getUniqueName().toString());
+            c.setAddress(forwardAddress);
 
-         copy.setAddress(forwardAddress);
+            c.setExpiration(message.getExpiration());
 
-         copy.setExpiration(message.getExpiration());
+            switch (routingType) {
+               case ANYCAST:
+                  c.setRoutingType(RoutingType.ANYCAST);
+                  break;
+               case MULTICAST:
+                  c.setRoutingType(RoutingType.MULTICAST);
+                  break;
+               case STRIP:
+                  c.setRoutingType(null);
+                  break;
+               case PASS:
+                  break;
+            }
 
-         switch (routingType) {
-            case ANYCAST:
-               copy.setRoutingType(RoutingType.ANYCAST);
-               break;
-            case MULTICAST:
-               copy.setRoutingType(RoutingType.MULTICAST);
-               break;
-            case STRIP:
-               copy.setRoutingType(null);
-               break;
-            case PASS:
-               break;
-         }
+         });
+
 
          if (transformer != null) {
             copy = transformer.transform(copy);
