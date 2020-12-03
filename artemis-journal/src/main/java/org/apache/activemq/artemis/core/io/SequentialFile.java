@@ -104,6 +104,12 @@ public interface SequentialFile {
     */
    int read(ByteBuffer bytes, IOCallback callback) throws Exception;
 
+   default int read(byte[] bytes, int offset, int length) throws Exception {
+      ByteBuffer wrap = ByteBuffer.wrap(bytes, 0, length);
+      position(offset);
+      return read(wrap);
+   }
+
    /**
     * @param bytes the ByteBuffer must be compatible with the SequentialFile implementation (AIO or
     *              NIO). To be safe, use a buffer from the corresponding

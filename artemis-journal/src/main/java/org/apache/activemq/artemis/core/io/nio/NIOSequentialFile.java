@@ -271,6 +271,11 @@ public class NIOSequentialFile extends AbstractSequentialFile {
    }
 
    @Override
+   public synchronized int read(byte[] bytes, int offset, int length) throws Exception {
+      return rfile.read(bytes, offset, length);
+   }
+
+   @Override
    public synchronized int read(final ByteBuffer bytes,
                                 final IOCallback callback) throws IOException, ActiveMQIllegalStateException {
       try {

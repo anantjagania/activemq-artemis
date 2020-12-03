@@ -364,12 +364,14 @@ public class LargeBody {
       return storageManager.createFileForLargeMessage(getMessageID(), message.toMessage().isDurable());
    }
 
-   protected void openFile() throws Exception {
+   public SequentialFile openFile() throws Exception {
       if (file == null) {
          validateFile();
       } else if (!file.isOpen()) {
          file.open();
       }
+
+      return file;
    }
 
    class LargeBodyReaderImpl implements LargeBodyReader {

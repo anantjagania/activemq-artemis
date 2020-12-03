@@ -90,7 +90,7 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
     */
    private Boolean fileDurable;
 
-   private volatile AmqpReadableBuffer parsingData;
+   private volatile FileBasedMappedBuffer parsingData;
 
    private StorageManager storageManager;
 
@@ -131,7 +131,7 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
    }
 
    public void openLargeMessage() throws Exception {
-      this.parsingData = new AmqpReadableBuffer(largeBody.map());
+      this.parsingData = new FileBasedMappedBuffer(largeBody.openFile(), PooledByteBufAllocator.DEFAULT.buffer(10 * 1024));
    }
 
    public void closeLargeMessage() throws Exception {
