@@ -472,7 +472,7 @@ public class AMQPReplicaTest extends AmqpClientTestSupport {
       amqpConnection.addElement(replica);
       server_2.getConfiguration().addAMQPConnection(amqpConnection);
 
-      int NUMBER_OF_MESSAGES = 200;
+      int NUMBER_OF_MESSAGES = 2;
 
       server_2.start();
       Wait.assertTrue(server_2::isStarted);

@@ -17,6 +17,8 @@
 
 package org.apache.activemq.artemis.protocol.amqp.broker;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 
 import io.netty.buffer.ByteBuf;
@@ -35,12 +37,15 @@ import org.apache.activemq.artemis.core.persistence.impl.journal.LargeServerMess
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.server.LargeServerMessage;
 import org.apache.activemq.artemis.core.server.MessageReference;
+import org.apache.activemq.artemis.protocol.amqp.util.NettyWritable;
 import org.apache.activemq.artemis.protocol.amqp.util.TLSEncode;
+import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
 import org.apache.activemq.artemis.utils.collections.TypedProperties;
 import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.codec.DecoderImpl;
 import org.apache.qpid.proton.codec.ReadableBuffer;
 import org.apache.qpid.proton.codec.TypeConstructor;
+import org.apache.qpid.proton.codec.WritableBuffer;
 
 public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage {
 
@@ -90,7 +95,7 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
     */
    private Boolean fileDurable;
 
-   private volatile FileBasedMappedBuffer parsingData;
+   private volatile ReadableBuffer parsingData;
 
    private StorageManager storageManager;
 
@@ -131,12 +136,30 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
    }
 
    public void openLargeMessage() throws Exception {
-      this.parsingData = new FileBasedMappedBuffer(largeBody.openFile(), PooledByteBufAllocator.DEFAULT.buffer(10 * 1024));
+      SequentialFile file = largeBody.createFile();
+      file.open();
+      this.parsingData = new FileBasedMappedBuffer(file, PooledByteBufAllocator.DEFAULT.buffer(10 * 1024));
+      // this.parsingData = new AmqpReadableBuffer(largeBody.map());
+   }
+
+   protected void uniquePlace() {
+      StringWriter writer = new StringWriter();
+      Exception e = new Exception();
+      e.printStackTrace(new PrintWriter(writer));
+      if (strings.addIfAbsent(writer.toString())) {
+         e.printStackTrace(System.out);
+      }
    }
 
    public void closeLargeMessage() throws Exception {
       largeBody.releaseResources(false);
-      parsingData.freeDirectBuffer();
+
+      if (parsingData instanceof FileBasedMappedBuffer) {
+         ((FileBasedMappedBuffer)parsingData).freeDirectBuffer();
+         ((FileBasedMappedBuffer)parsingData).getFile().close();
+      } else if (parsingData instanceof AmqpReadableBuffer) {
+         ((AmqpReadableBuffer)parsingData).freeDirectBuffer();
+      }
       parsingData = null;
    }
 
@@ -195,6 +218,39 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
       }
    }
 
+   protected void saveEncoding(ByteBuf buf) {
+
+      WritableBuffer oldBuffer = TLSEncode.getEncoder().getBuffer();
+
+      TLSEncode.getEncoder().setByteBuffer(new NettyWritable(buf));
+
+      try {
+         buf.writeInt(headerPosition);
+         buf.writeInt(encodedHeaderSize);
+         TLSEncode.getEncoder().writeObject(header);
+
+         buf.writeInt(deliveryAnnotationsPosition);
+         buf.writeInt(encodedDeliveryAnnotationsSize);
+
+         buf.writeInt(messageAnnotationsPosition);
+         TLSEncode.getEncoder().writeObject(messageAnnotations);
+
+
+         buf.writeInt(propertiesPosition);
+         TLSEncode.getEncoder().writeObject(properties);
+
+         buf.writeInt(applicationPropertiesPosition);
+         buf.writeInt(remainingBodyPosition);
+
+         TLSEncode.getEncoder().writeObject(applicationProperties);
+
+      } finally {
+         TLSEncode.getEncoder().setByteBuffer(oldBuffer);
+      }
+   }
+
+   private static ConcurrentHashSet<String> strings = new ConcurrentHashSet<>();
+
    @Override
    public void finishParse() throws Exception {
       openLargeMessage();
@@ -238,6 +294,7 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
 
    @Override
    public ReadableBuffer getData() {
+      uniquePlace();
       if (parsingData == null) {
          throw new RuntimeException("AMQP Large Message is not open");
       }
@@ -368,6 +425,7 @@ public class AMQPLargeMessage extends AMQPMessage implements LargeServerMessage 
 
    @Override
    public Message copy() {
+      new Exception("Copy").printStackTrace();
       SequentialFile newfile = largeBody.createFile();
       AMQPLargeMessage newMessage = new AMQPLargeMessage(this, newfile, messageID);
       newMessage.setParentRef(this);

@@ -30,8 +30,8 @@ import org.apache.activemq.artemis.utils.DataConstants;
 import org.apache.qpid.proton.codec.ReadableBuffer;
 import org.apache.qpid.proton.codec.WritableBuffer;
 
-
 public class FileBasedMappedBuffer implements ReadableBuffer {
+
    final SequentialFile file;
    ByteBuf workingBuffer;
    // Position of the working buffer in the file
@@ -41,13 +41,22 @@ public class FileBasedMappedBuffer implements ReadableBuffer {
    int limit;
    int readPosition = 0;
 
-
    private FileBasedMappedBuffer(FileBasedMappedBuffer copy) {
       this.file = copy.file;
       this.workingBuffer = copy.workingBuffer;
       this.currentFilePosition = copy.currentFilePosition;
       this.maxPosition = copy.maxPosition;
       this.limit = copy.limit;
+   }
+
+   public FileBasedMappedBuffer(SequentialFile file, ByteBuf workingBuffer) {
+      try {
+         this.file = file;
+         this.workingBuffer = workingBuffer;
+         this.limit = (int) file.size();
+      } catch (Exception e) {
+         throw new RuntimeException(e.getMessage(), e);
+      }
    }
 
    private void checkWorkingBuffer(int filePosition, int requiredBytes) {
@@ -90,16 +99,6 @@ public class FileBasedMappedBuffer implements ReadableBuffer {
       maxPosition = currentFilePosition + maxRead;
    }
 
-   public FileBasedMappedBuffer(SequentialFile file, ByteBuf workingBuffer) {
-      try {
-         this.file = file;
-         this.workingBuffer = workingBuffer;
-         this.limit = (int) file.size();
-      } catch (Exception e) {
-         throw new RuntimeException(e.getMessage(), e);
-      }
-   }
-
    @Override
    public int capacity() {
       return 0;
@@ -127,49 +126,63 @@ public class FileBasedMappedBuffer implements ReadableBuffer {
 
    @Override
    public byte get() {
-      checkWorkingBuffer(offset + readPosition++, 1);
-      return workingBuffer.readByte();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition++, 1);
+         return workingBuffer.readByte();
+      }
    }
 
    @Override
    public byte get(int i) {
-      checkWorkingBuffer(offset + i, 1);
-      return workingBuffer.getByte(i - currentFilePosition);
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + i, 1);
+         return workingBuffer.getByte(i - currentFilePosition);
+      }
    }
 
    @Override
    public int getInt() {
-      checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_INT);
-      readPosition += DataConstants.SIZE_INT;
-      return workingBuffer.readInt();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_INT);
+         readPosition += DataConstants.SIZE_INT;
+         return workingBuffer.readInt();
+      }
    }
 
    @Override
    public long getLong() {
-      checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_LONG);
-      readPosition += DataConstants.SIZE_LONG;
-      return workingBuffer.readInt();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_LONG);
+         readPosition += DataConstants.SIZE_LONG;
+         return workingBuffer.readInt();
+      }
    }
 
    @Override
    public short getShort() {
-      checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_SHORT);
-      readPosition += DataConstants.SIZE_SHORT;
-      return workingBuffer.readShort();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_SHORT);
+         readPosition += DataConstants.SIZE_SHORT;
+         return workingBuffer.readShort();
+      }
    }
 
    @Override
    public float getFloat() {
-      checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_FLOAT);
-      readPosition += DataConstants.SIZE_FLOAT;
-      return workingBuffer.readFloat();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_FLOAT);
+         readPosition += DataConstants.SIZE_FLOAT;
+         return workingBuffer.readFloat();
+      }
    }
 
    @Override
    public double getDouble() {
-      checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_DOUBLE);
-      readPosition += DataConstants.SIZE_DOUBLE;
-      return workingBuffer.readDouble();
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, DataConstants.SIZE_DOUBLE);
+         readPosition += DataConstants.SIZE_DOUBLE;
+         return workingBuffer.readDouble();
+      }
    }
 
    @Override
@@ -281,79 +294,80 @@ public class FileBasedMappedBuffer implements ReadableBuffer {
 
    @Override
    public String readString(CharsetDecoder charsetDecoder) throws CharacterCodingException {
-      checkWorkingBuffer(offset + readPosition, 0);
+      synchronized (workingBuffer) {
+         checkWorkingBuffer(offset + readPosition, 0);
 
-      int bytesToRead = limit - readPosition;
+         int bytesToRead = limit - readPosition;
 
-      if (bytesToRead <= workingBuffer.readableBytes()) {
-         workingBuffer.writerIndex(bytesToRead + workingBuffer.readerIndex());
-         String str = workingBuffer.toString(charsetDecoder.charset());
-         workingBuffer.writerIndex(workingBuffer.capacity());
-         readPosition += bytesToRead;
-         return str;
-      } else {
-         return readStringFromFile(charsetDecoder);
+         if (bytesToRead <= workingBuffer.readableBytes()) {
+            workingBuffer.writerIndex(bytesToRead + workingBuffer.readerIndex());
+            String str = workingBuffer.toString(charsetDecoder.charset());
+            workingBuffer.writerIndex(workingBuffer.capacity());
+            readPosition += bytesToRead;
+            return str;
+         } else {
+            return readStringFromFile(charsetDecoder);
+         }
       }
    }
 
    // Adapted from CompositeReadableBuffer::readSringFromComponents
    private String readStringFromFile(CharsetDecoder decoder) throws CharacterCodingException {
-      int size = (int)(remaining() * decoder.averageCharsPerByte());
-      CharBuffer decoded = CharBuffer.allocate(size);
+      synchronized (workingBuffer) {
+         int size = (int) (remaining() * decoder.averageCharsPerByte());
+         CharBuffer decoded = CharBuffer.allocate(size);
 
-      CoderResult step;
+         CoderResult step;
 
-      checkWorkingBuffer(offset + readPosition, 1);
-      ByteBuffer currentRead = workingBuffer.nioBuffer();
+         checkWorkingBuffer(offset + readPosition, 1);
+         ByteBuffer currentRead = workingBuffer.nioBuffer();
 
-      int upperLimit = limit - readPosition;
-      if (upperLimit < currentRead.limit()) {
-         currentRead.limit(upperLimit);
-      }
-
-
-      //currentRead.limit(workingBuffer.writerIndex());
-      //currentRead.position(workingBuffer.readerIndex());
-      readPosition += currentRead.remaining();
-      boolean endOfInput = !hasRemaining();
-
-      do {
-
-         step = decoder.decode(currentRead, decoded, endOfInput);
-
-         if (step.isUnderflow()) {
-            if (endOfInput) {
-               step = decoder.flush(decoded);
-               break;
-            } else {
-               checkWorkingBuffer(offset + readPosition, 1);
-               currentRead = workingBuffer.nioBuffer();
-               currentRead.position(workingBuffer.readerIndex());
-               readPosition += currentRead.remaining();
-               if (readPosition > limit) {
-                  int overFlow = readPosition - limit;
-                  readPosition -= overFlow;
-                  currentRead.limit(currentRead.limit() - overFlow);
-               }
-               endOfInput = !hasRemaining();
-            }
-         } else if (step.isOverflow()) {
-            size = 2 * size + 1;
-            CharBuffer upsized = CharBuffer.allocate(size);
-            decoded.flip();
-            upsized.put(decoded);
-            decoded = upsized;
-            continue;
+         int upperLimit = limit - readPosition;
+         if (upperLimit < currentRead.limit()) {
+            currentRead.limit(upperLimit);
          }
-      }
-      while (!step.isError());
 
-      if (step.isError()) {
-         step.throwException();
-      }
+         //currentRead.limit(workingBuffer.writerIndex());
+         //currentRead.position(workingBuffer.readerIndex());
+         readPosition += currentRead.remaining();
+         boolean endOfInput = !hasRemaining();
 
-      return ((CharBuffer) decoded.flip()).toString();
+         do {
+
+            step = decoder.decode(currentRead, decoded, endOfInput);
+
+            if (step.isUnderflow()) {
+               if (endOfInput) {
+                  step = decoder.flush(decoded);
+                  break;
+               } else {
+                  checkWorkingBuffer(offset + readPosition, 1);
+                  currentRead = workingBuffer.nioBuffer();
+                  currentRead.position(workingBuffer.readerIndex());
+                  readPosition += currentRead.remaining();
+                  if (readPosition > limit) {
+                     int overFlow = readPosition - limit;
+                     readPosition -= overFlow;
+                     currentRead.limit(currentRead.limit() - overFlow);
+                  }
+                  endOfInput = !hasRemaining();
+               }
+            } else if (step.isOverflow()) {
+               size = 2 * size + 1;
+               CharBuffer upsized = CharBuffer.allocate(size);
+               decoded.flip();
+               upsized.put(decoded);
+               decoded = upsized;
+               continue;
+            }
+         } while (!step.isError());
+
+         if (step.isError()) {
+            step.throwException();
+         }
+
+         return ((CharBuffer) decoded.flip()).toString();
+      }
    }
-
 
 }
