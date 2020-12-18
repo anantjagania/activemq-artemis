@@ -49,10 +49,11 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.utils.RetryRule;
+import org.apache.activemq.artemis.utils.ExecuteUtil;
 import org.apache.activemq.artemis.utils.SpawnedVMSupport;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.fusesource.mqtt.client.BlockingConnection;
@@ -60,16 +61,12 @@ import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class SoakPagingTest extends SmokeTestBase {
-
-   @Rule
-   public RetryRule retryRule = new RetryRule(1);
 
    public static final int LAG_CONSUMER_TIME = 1000;
    public static final int TIME_RUNNING = 4000;
@@ -94,8 +91,7 @@ public class SoakPagingTest extends SmokeTestBase {
 
    @Parameterized.Parameters(name = "protocol={0}, type={1}, tx={2}")
    public static Collection<Object[]> getParams() {
-      return Arrays.asList(new Object[][]{{"MQTT", "topic", false}, {"AMQP", "shared", false}, {"AMQP", "queue", false}, {"OPENWIRE", "topic", false}, {"OPENWIRE", "queue", false}, {"CORE", "shared", false}, {"CORE", "queue", false},
-         {"AMQP", "shared", true}, {"AMQP", "queue", true}, {"OPENWIRE", "topic", true}, {"OPENWIRE", "queue", true}, {"CORE", "shared", true}, {"CORE", "queue", true}});
+      return Arrays.asList(new Object[][]{{"MQTT", "topic", false}, {"AMQP", "shared", false}, {"AMQP", "queue", false}, {"OPENWIRE", "topic", false}, {"OPENWIRE", "queue", false}, {"CORE", "shared", false}, {"CORE", "queue", false}, {"AMQP", "shared", true}, {"AMQP", "queue", true}, {"OPENWIRE", "topic", true}, {"OPENWIRE", "queue", true}, {"CORE", "shared", true}, {"CORE", "queue", true}});
    }
 
    public static final String SERVER_NAME_0 = "replicated-static0";
@@ -106,6 +102,7 @@ public class SoakPagingTest extends SmokeTestBase {
    private static Process server0;
 
    private static Process server1;
+
    @Before
    public void before() throws Exception {
       cleanupData(SERVER_NAME_0);
@@ -160,8 +157,20 @@ public class SoakPagingTest extends SmokeTestBase {
 
          final ConnectionFactory factory = createConnectionFactory(protocol, "tcp://" + host + ":" + port);
 
-         CountDownLatch producersLatch = new CountDownLatch(producer_threads);
+         CountDownLatch startConsumer = new CountDownLatch(1);
          CountDownLatch consumersLatch = new CountDownLatch(consumer_threads);
+         for (int i = 0; i < consumer_threads; i++) {
+            Thread t = new Thread(new Runnable() {
+               @Override
+               public void run() {
+                  SoakPagingTest app = new SoakPagingTest(protocol, consumerType, tx);
+                  app.consume(factory, consumer_count.getAndIncrement(), consumersLatch, startConsumer);
+               }
+            });
+            t.start();
+         }
+
+         CountDownLatch producersLatch = new CountDownLatch(producer_threads);
 
          for (int i = 0; i < producer_threads; i++) {
             Thread t = new Thread(new Runnable() {
@@ -174,17 +183,11 @@ public class SoakPagingTest extends SmokeTestBase {
             t.start();
          }
 
-         Thread.sleep(1000);
-
-         for (int i = 0; i < consumer_threads; i++) {
-            Thread t = new Thread(new Runnable() {
-               @Override
-               public void run() {
-                  SoakPagingTest app = new SoakPagingTest(protocol, consumerType, tx);
-                  app.consume(factory, consumer_count.getAndIncrement(), consumersLatch);
-               }
-            });
-            t.start();
+         // Some of the tests need the consumers to start first (shared subscriptions for example)
+         System.out.println("Awaiting consumers...");
+         if (!consumersLatch.await(30000, TimeUnit.MILLISECONDS)) {
+            System.err.println("Awaiting consumers timeout");
+            System.exit(0);
          }
 
          System.out.println("Awaiting producers...");
@@ -193,11 +196,8 @@ public class SoakPagingTest extends SmokeTestBase {
             System.exit(0);
          }
 
-         System.out.println("Awaiting consumers...");
-         if (!consumersLatch.await(30000, TimeUnit.MILLISECONDS)) {
-            System.err.println("Awaiting consumers timeout");
-            System.exit(0);
-         }
+         Thread.sleep(1000); // producers to start ahead, messages accumulating and paging
+         startConsumer.countDown();
 
          System.out.println("Awaiting timeout...");
          Thread.sleep(time);
@@ -213,16 +213,45 @@ public class SoakPagingTest extends SmokeTestBase {
 
    }
 
+   // I have been using this for now to debug this test. I may eventually remove it for good when the test gets stable on my CI.
+   private static final boolean DEBUG_PIDS = false;
+
    @Test
    public void testPagingReplication() throws Throwable {
 
       server1 = startServer(SERVER_NAME_1, 0, 30000);
 
-      for (int i = 0; i < CLIENT_KILLS; i++) {
-         Process process = SpawnedVMSupport.spawnVM(SoakPagingTest.class.getName(), protocol, consumerType, "" + TIME_RUNNING, "" + transaction);
+      AtomicBoolean running = new AtomicBoolean(true);
 
-         int result = process.waitFor();
-         Assert.assertTrue(result > 0);
+      Thread t = new Thread(() -> {
+         try {
+            while (running.get()) {
+               System.out.println("*******************************************************************************************************************************\n" + "Server0 = " + ExecuteUtil.getPID(server0) + "\n" + "Server1 = " + ExecuteUtil.getPID(server1) + "\n" + "*******************************************************************************************************************************");
+               Thread.sleep(1000);
+            }
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      });
+
+      if (DEBUG_PIDS) {
+         t.start();
+      }
+
+      try {
+
+         for (int i = 0; i < CLIENT_KILLS; i++) {
+            Process process = SpawnedVMSupport.spawnVM(SoakPagingTest.class.getName(), protocol, consumerType, "" + TIME_RUNNING, "" + transaction);
+
+            int result = process.waitFor();
+            if (result <= 0) {
+               ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server0));
+               ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server1));
+            }
+            Assert.assertTrue(result > 0);
+         }
+      } finally {
+         running.set(false);
       }
    }
 
@@ -284,7 +313,7 @@ public class SoakPagingTest extends SmokeTestBase {
       }
    }
 
-   public void consume(ConnectionFactory factory, int index, CountDownLatch latch) {
+   public void consume(ConnectionFactory factory, int index, CountDownLatch latch, CountDownLatch startLatch) {
       try {
          Connection connection = factory.createConnection("admin", "admin");
 
@@ -308,14 +337,18 @@ public class SoakPagingTest extends SmokeTestBase {
          MessageConsumer messageConsumer;
 
          if (protocol.equals("shared")) {
-            messageConsumer = session.createSharedConsumer((Topic)address, consumerId);
+            messageConsumer = session.createSharedConsumer((Topic) address, consumerId);
          } else {
             messageConsumer = session.createConsumer(address);
          }
 
-         if (LAG_CONSUMER_TIME > 0) Thread.sleep(LAG_CONSUMER_TIME);
+         if (LAG_CONSUMER_TIME > 0)
+            Thread.sleep(LAG_CONSUMER_TIME);
 
          latch.countDown();
+
+         // it will wait some producing before we start consuming
+         startLatch.await(5, TimeUnit.MINUTES);
          connection.start();
          System.out.println("Consumer" + index + " started");
 
