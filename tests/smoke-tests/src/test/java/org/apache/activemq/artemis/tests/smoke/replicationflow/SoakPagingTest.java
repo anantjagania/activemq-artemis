@@ -259,11 +259,11 @@ public class SoakPagingTest extends SmokeTestBase {
       System.out.println("*******************************************************************************************************************************");
       System.out.println("SERVER 0 jstack");
       System.out.println("*******************************************************************************************************************************");
-      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server0));
+      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "-F", "" + ExecuteUtil.getPID(server0));
       System.out.println("*******************************************************************************************************************************");
       System.out.println("SERVER 1 jstack");
       System.out.println("*******************************************************************************************************************************");
-      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server1));
+      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "-F", "" + ExecuteUtil.getPID(server1));
    }
 
    public void produce(ConnectionFactory factory, int index, CountDownLatch latch) {
