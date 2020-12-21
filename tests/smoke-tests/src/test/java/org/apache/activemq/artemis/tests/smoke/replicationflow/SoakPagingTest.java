@@ -54,19 +54,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
 import org.apache.activemq.artemis.utils.ExecuteUtil;
+import org.apache.activemq.artemis.utils.RetryRule;
 import org.apache.activemq.artemis.utils.SpawnedVMSupport;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.fusesource.mqtt.client.BlockingConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.QoS;
+import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class SoakPagingTest extends SmokeTestBase {
+
+   private static final Logger log = Logger.getLogger(SoakPagingTest.class);
+   @Rule
+   public RetryRule retryRule = new RetryRule(100, true);
 
    public static final int LAG_CONSUMER_TIME = 1000;
    public static final int TIME_RUNNING = 4000;
@@ -91,7 +98,7 @@ public class SoakPagingTest extends SmokeTestBase {
 
    @Parameterized.Parameters(name = "protocol={0}, type={1}, tx={2}")
    public static Collection<Object[]> getParams() {
-      return Arrays.asList(new Object[][]{{"MQTT", "topic", false}, {"AMQP", "shared", false}, {"AMQP", "queue", false}, {"OPENWIRE", "topic", false}, {"OPENWIRE", "queue", false}, {"CORE", "shared", false}, {"CORE", "queue", false}, {"AMQP", "shared", true}, {"AMQP", "queue", true}, {"OPENWIRE", "topic", true}, {"OPENWIRE", "queue", true}, {"CORE", "shared", true}, {"CORE", "queue", true}});
+      return Arrays.asList(new Object[][]{{"AMQP", "shared", false}});
    }
 
    public static final String SERVER_NAME_0 = "replicated-static0";
@@ -184,13 +191,13 @@ public class SoakPagingTest extends SmokeTestBase {
          }
 
          // Some of the tests need the consumers to start first (shared subscriptions for example)
-         System.out.println("Awaiting consumers...");
+         log.debug("Awaiting consumers...");
          if (!consumersLatch.await(30000, TimeUnit.MILLISECONDS)) {
             System.err.println("Awaiting consumers timeout");
             System.exit(0);
          }
 
-         System.out.println("Awaiting producers...");
+         log.debug("Awaiting producers...");
          if (!producersLatch.await(30000, TimeUnit.MILLISECONDS)) {
             System.err.println("Awaiting producers timeout");
             System.exit(0);
@@ -199,11 +206,11 @@ public class SoakPagingTest extends SmokeTestBase {
          Thread.sleep(1000); // producers to start ahead, messages accumulating and paging
          startConsumer.countDown();
 
-         System.out.println("Awaiting timeout...");
+         log.debug("Awaiting timeout...");
          Thread.sleep(time);
 
          int exitStatus = consumed.get() > 0 ? 1 : 0;
-         System.out.println("Exiting with the status: " + exitStatus);
+         log.debug("Exiting with the status: " + exitStatus);
          System.exit(exitStatus);
       } catch (Throwable t) {
          System.err.println("Exiting with the status 0. Reason: " + t);
@@ -226,7 +233,7 @@ public class SoakPagingTest extends SmokeTestBase {
       Thread t = new Thread(() -> {
          try {
             while (running.get()) {
-               System.out.println("*******************************************************************************************************************************\n" + "Server0 = " + ExecuteUtil.getPID(server0) + "\n" + "Server1 = " + ExecuteUtil.getPID(server1) + "\n" + "*******************************************************************************************************************************");
+               log.debug("*******************************************************************************************************************************\n" + "Server0 = " + ExecuteUtil.getPID(server0) + "\n" + "Server1 = " + ExecuteUtil.getPID(server1) + "\n" + "*******************************************************************************************************************************");
                Thread.sleep(1000);
             }
          } catch (Exception e) {
@@ -245,14 +252,24 @@ public class SoakPagingTest extends SmokeTestBase {
 
             int result = process.waitFor();
             if (result <= 0) {
-               ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server0));
-               ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server1));
+               jstack();
             }
             Assert.assertTrue(result > 0);
          }
       } finally {
          running.set(false);
       }
+   }
+
+   protected void jstack() throws Exception {
+      System.out.println("*******************************************************************************************************************************");
+      System.out.println("SERVER 0 jstack");
+      System.out.println("*******************************************************************************************************************************");
+      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server0));
+      System.out.println("*******************************************************************************************************************************");
+      System.out.println("SERVER 1 jstack");
+      System.out.println("*******************************************************************************************************************************");
+      ExecuteUtil.runCommand(true, 1, TimeUnit.MINUTES, "jstack", "" + ExecuteUtil.getPID(server1));
    }
 
    public void produce(ConnectionFactory factory, int index, CountDownLatch latch) {
@@ -267,7 +284,7 @@ public class SoakPagingTest extends SmokeTestBase {
          latch.countDown();
 
          connection.start();
-         System.out.println("Producer" + index + " started");
+         log.debug("Producer" + index + " started");
 
          final Session session;
 
@@ -301,7 +318,7 @@ public class SoakPagingTest extends SmokeTestBase {
             produced.incrementAndGet();
             i++;
             if (i % 100 == 0) {
-               System.out.println("Producer" + index + " published " + i + " messages");
+               log.debug("Producer" + index + " published " + i + " messages");
                if (transaction) {
                   session.commit();
                }
@@ -350,17 +367,17 @@ public class SoakPagingTest extends SmokeTestBase {
          // it will wait some producing before we start consuming
          startLatch.await(5, TimeUnit.MINUTES);
          connection.start();
-         System.out.println("Consumer" + index + " started");
+         log.debug("Consumer" + index + " started");
 
          int i = 0;
          while (true) {
             Message m = messageConsumer.receive(1000);
             consumed.incrementAndGet();
             if (m == null)
-               System.out.println("Consumer" + index + "received null");
+               log.debug("Consumer" + index + "received null");
             i++;
             if (i % 100 == 0) {
-               System.out.println("Consumer" + index + "received " + i + " messages");
+               log.debug("Consumer" + index + "received " + i + " messages");
                if (transaction) {
                   session.commit();
                }
