@@ -129,13 +129,7 @@ public class SoakPagingTest extends SmokeTestBase {
       } else if (protocol.toUpperCase().equals("MQTT")) {
          return new MQTTCF();
       } else if (protocol.toUpperCase().equals("AMQP")) {
-
-         if (uri.startsWith("tcp://")) {
-            // replacing tcp:// by amqp://
-            uri = "amqp" + uri.substring(3);
-
-         }
-         return new JmsConnectionFactory(uri);
+         return new JmsConnectionFactory("failover:(amqp://localhost:61616,amqp://localhost:61617)?failover.maxReconnectAttempts=16&jms.prefetchPolicy.all=5&jms.forceSyncSend=true");
       } else if (protocol.toUpperCase().equals("CORE") || protocol.toUpperCase().equals("ARTEMIS")) {
          return new org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory(uri);
       } else {
