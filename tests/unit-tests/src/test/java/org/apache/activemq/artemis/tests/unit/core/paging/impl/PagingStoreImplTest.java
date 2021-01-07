@@ -182,6 +182,37 @@ public class PagingStoreImplTest extends ActiveMQTestBase {
       storeImpl.stop();
    }
 
+
+   @Test
+   public void testDoubleZeroed() throws Exception {
+      SequentialFileFactory factory = new FakeSequentialFileFactory();
+
+      PagingStoreFactory storeFactory = new FakeStoreFactory(factory);
+
+      AddressSettings addressSettings = new AddressSettings().setAddressFullMessagePolicy(AddressFullMessagePolicy.PAGE);
+
+      PagingStore storeImpl = new PagingStoreImpl(PagingStoreImplTest.destinationTestName, null, 100, createMockManager(), createStorageManagerMock(), factory, storeFactory, PagingStoreImplTest.destinationTestName, addressSettings, getExecutorFactory().getExecutor(), true);
+
+      storeImpl.start();
+
+      Assert.assertEquals(0, storeImpl.getNumberOfPages());
+
+      storeImpl.startPaging();
+
+      Assert.assertEquals(1, storeImpl.getNumberOfPages());
+
+      for (int i = 0; i < 10; i++) {
+         storeImpl.forceAnotherPage();
+      }
+      System.out.println("right after I have " + storeImpl.getNumberOfPages());
+
+      for (int i = 0; i < 10; i++) {
+         storeImpl.getCursorProvider().cleanup();
+         System.out.println("Now I have " + storeImpl.getNumberOfPages());
+      }
+      storeImpl.stop();
+   }
+
    @Test
    public void testDepageOnCurrentPage() throws Exception {
       SequentialFileFactory factory = new FakeSequentialFileFactory();
