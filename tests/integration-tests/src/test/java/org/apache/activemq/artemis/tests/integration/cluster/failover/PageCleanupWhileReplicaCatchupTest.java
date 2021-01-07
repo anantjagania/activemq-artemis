@@ -28,9 +28,6 @@ import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.core.config.Configuration;
-import org.apache.activemq.artemis.core.paging.cursor.PageCursorProvider;
-import org.apache.activemq.artemis.core.paging.cursor.impl.PageCursorProviderImpl;
-import org.apache.activemq.artemis.core.paging.impl.PagingStoreImpl;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.NodeManager;
 import org.apache.activemq.artemis.core.server.Queue;
@@ -95,15 +92,12 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          workers[i].start();
       }
 
-      for (int i = 0; i < 30; i++) {
+      for (int i = 0; i < 50; i++) {
          logger.debug("Starting replica " + i);
          backupServer.start();
-         Thread.sleep(1000);
          Wait.assertTrue(backupServer.getServer()::isReplicaSync);
          backupServer.stop();
       }
-
-      backupServer.start();
 
       running = false;
 
@@ -160,13 +154,6 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
                   for (int i = 0; i < 10; i++) {
                      Assert.assertNotNull(consumer.receive(5000));
                   }
-                  Wait.assertTrue(((PageCursorProviderImpl)queue.getPagingStore().getCursorProvider())::isCleanupEnabled);
-                  if (!Wait.waitFor(() -> {
-                     if (queue.getPagingStore().isPaging()) {
-                        queue.getPagingStore().getCursorProvider().scheduleCleanup();
-                     }
-                     return !queue.getPagingStore().isPaging();
-                  }));
                   Wait.assertFalse("Waiting for !Paging on " + queueName + " with folder " + queue.getPagingStore().getFolder(), queue.getPagingStore()::isPaging);
                   //PagingStoreImpl store = (PagingStoreImpl) queue.getPagingStore();
                   //Wait.assertEquals(1, store::getNumberOfFiles);
@@ -175,9 +162,6 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          } catch (Throwable e) {
             e.printStackTrace(System.out);
             this.throwable = e;
-            queue.getPagingStore().getCursorProvider().cleanup();
-            System.out.println("page result = " + queue.getPagingStore().isPaging() + " on " + queueName);
-
          }
 
       }

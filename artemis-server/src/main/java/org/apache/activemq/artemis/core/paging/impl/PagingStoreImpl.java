@@ -1108,8 +1108,6 @@ public class PagingStoreImpl implements PagingStore {
 
          final int newPageId = currentPageId + 1;
 
-         new Exception("open new page on " + getAddress() + " id = " + newPageId).printStackTrace(System.out);
-
          if (logger.isTraceEnabled()) {
             logger.trace("new pageNr=" + newPageId, new Exception("trace"));
          }

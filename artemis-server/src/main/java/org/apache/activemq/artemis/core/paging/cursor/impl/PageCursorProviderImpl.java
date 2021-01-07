@@ -362,7 +362,6 @@ public class PageCursorProviderImpl implements PageCursorProvider {
          logger.trace("scheduling cleanup", new Exception("trace"));
       }
       if (!cleanupEnabled || scheduledCleanup.intValue() > 2) {
-         new Exception("cleanupEnabled=" + cleanupEnabled + " and scheduledCleanup=" + scheduledCleanup).printStackTrace(System.out);
          // Scheduled cleanup was already scheduled before.. never mind!
          // or we have cleanup disabled
          return;
@@ -414,17 +413,11 @@ public class PageCursorProviderImpl implements PageCursorProvider {
 
    @Override
    public void disableCleanup() {
-      new Exception("disable cleanup").printStackTrace(System.out);
       this.cleanupEnabled = false;
-   }
-
-   public boolean isCleanupEnabled() {
-      return cleanupEnabled;
    }
 
    @Override
    public void resumeCleanup() {
-      new Exception("resume cleanup").printStackTrace(System.out);
       this.cleanupEnabled = true;
       scheduleCleanup();
    }
@@ -448,8 +441,6 @@ public class PageCursorProviderImpl implements PageCursorProvider {
 
       logger.tracef("%s locked", this);
 
-      System.out.println("Cleanup on " + pagingStore.getFolder());
-
       synchronized (this) {
          try {
             if (!pagingStore.isStarted()) {
@@ -457,7 +448,6 @@ public class PageCursorProviderImpl implements PageCursorProvider {
             }
 
             if (pagingStore.getNumberOfPages() == 0) {
-               new Exception("returning from numberOfPages == 0 while nrFiles=" + ((PagingStoreImpl)pagingStore).getNumberOfFiles()).printStackTrace();
                return;
             }
 
@@ -498,11 +488,6 @@ public class PageCursorProviderImpl implements PageCursorProvider {
             if (pagingStore.getNumberOfPages() == 0 || pagingStore.getNumberOfPages() == 1 && pagingStore.getCurrentPage().getNumberOfMessages() == 0) {
                pagingStore.stopPaging();
             } else {
-               logger.info("Couldn't cleanup page on address " + this.pagingStore.getAddress() +
-                               " as numberOfPages == " +
-                               pagingStore.getNumberOfPages() +
-                               " and currentPage.numberOfMessages = " +
-                               pagingStore.getCurrentPage().getNumberOfMessages());
                if (logger.isTraceEnabled()) {
                   logger.trace("Couldn't cleanup page on address " + this.pagingStore.getAddress() +
                                   " as numberOfPages == " +
@@ -647,14 +632,14 @@ public class PageCursorProviderImpl implements PageCursorProvider {
 
          // we just need to make sure the storage is done..
          // if the thread pool is full, we will just log it once instead of looping
-         if (!storageManager.waitOnOperations(5000)) {
+         /* if (!storageManager.waitOnOperations(5000)) {
             for (int i = 0; i < 100; i++) {
                System.out.println("*******************************************************************************************************************************");
                new Exception("yay!!!!! ").printStackTrace(System.out);
                System.out.println("*******************************************************************************************************************************");
             }
             ActiveMQServerLogger.LOGGER.problemCompletingOperations(storageManager.getContext());
-         }
+         } */
       } finally {
          for (PageSubscription cursor : cursorList) {
             cursor.enableAutoCleanup();
