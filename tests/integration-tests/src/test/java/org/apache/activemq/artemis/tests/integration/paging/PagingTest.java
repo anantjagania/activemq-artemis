@@ -4630,7 +4630,7 @@ public class PagingTest extends ActiveMQTestBase {
       // It's async, so need to wait a bit for it happening
       assertFalse(server.getPagingManager().getPageStore(ADDRESS).isPaging());
 
-      Wait.assertEquals(1, ()->server.getPagingManager().getPageStore(ADDRESS).getNumberOfPages());
+      Wait.assertEquals(0, ()->server.getPagingManager().getPageStore(ADDRESS).getNumberOfPages());
    }
 
    @Test
@@ -6004,7 +6004,7 @@ public class PagingTest extends ActiveMQTestBase {
 
          locator.close();
 
-         Wait.assertEquals(2, store::getNumberOfPages);
+         Wait.assertEquals(0, store::getNumberOfPages);
 
       } finally {
          try {
