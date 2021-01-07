@@ -92,7 +92,7 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          workers[i].start();
       }
 
-      for (int i = 0; i < 50; i++) {
+      for (int i = 0; i < 100; i++) {
          logger.debug("Starting replica " + i);
          backupServer.start();
          Wait.assertTrue(backupServer.getServer()::isReplicaSync);
