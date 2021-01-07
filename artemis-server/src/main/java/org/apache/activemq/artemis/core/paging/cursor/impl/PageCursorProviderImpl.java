@@ -36,6 +36,7 @@ import org.apache.activemq.artemis.core.paging.cursor.PageSubscription;
 import org.apache.activemq.artemis.core.paging.cursor.PagedReference;
 import org.apache.activemq.artemis.core.paging.cursor.PagedReferenceImpl;
 import org.apache.activemq.artemis.core.paging.impl.Page;
+import org.apache.activemq.artemis.core.paging.impl.PagingStoreImpl;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.transaction.Transaction;
@@ -412,11 +413,17 @@ public class PageCursorProviderImpl implements PageCursorProvider {
 
    @Override
    public void disableCleanup() {
+      new Exception("disable cleanup").printStackTrace(System.out);
       this.cleanupEnabled = false;
+   }
+
+   public boolean isCleanupEnabled() {
+      return cleanupEnabled;
    }
 
    @Override
    public void resumeCleanup() {
+      new Exception("resume cleanup").printStackTrace(System.out);
       this.cleanupEnabled = true;
       scheduleCleanup();
    }
@@ -427,6 +434,8 @@ public class PageCursorProviderImpl implements PageCursorProvider {
       logger.tracef("performing page cleanup %s", this);
 
       ArrayList<Page> depagedPages = new ArrayList<>();
+
+      storageManager.readLock();
 
       while (true) {
          if (pagingStore.lock(100)) {
@@ -445,6 +454,7 @@ public class PageCursorProviderImpl implements PageCursorProvider {
             }
 
             if (pagingStore.getNumberOfPages() == 0) {
+               new Exception("returning from numberOfPages == 0 while nrFiles=" + ((PagingStoreImpl)pagingStore).getNumberOfFiles()).printStackTrace();
                return;
             }
 
@@ -485,6 +495,11 @@ public class PageCursorProviderImpl implements PageCursorProvider {
             if (pagingStore.getNumberOfPages() == 0 || pagingStore.getNumberOfPages() == 1 && pagingStore.getCurrentPage().getNumberOfMessages() == 0) {
                pagingStore.stopPaging();
             } else {
+               logger.info("Couldn't cleanup page on address " + this.pagingStore.getAddress() +
+                               " as numberOfPages == " +
+                               pagingStore.getNumberOfPages() +
+                               " and currentPage.numberOfMessages = " +
+                               pagingStore.getCurrentPage().getNumberOfMessages());
                if (logger.isTraceEnabled()) {
                   logger.trace("Couldn't cleanup page on address " + this.pagingStore.getAddress() +
                                   " as numberOfPages == " +
@@ -498,6 +513,7 @@ public class PageCursorProviderImpl implements PageCursorProvider {
             return;
          } finally {
             pagingStore.unlock();
+            storageManager.readUnLock();
          }
       }
       finishCleanup(depagedPages);
@@ -511,9 +527,13 @@ public class PageCursorProviderImpl implements PageCursorProvider {
                          " is leaving page mode as all messages are consumed and acknowledged from the page store");
       }
 
-      pagingStore.forceAnotherPage();
-
       Page currentPage = pagingStore.getCurrentPage();
+
+      if (currentPage.getSize() > 0) {
+         pagingStore.forceAnotherPage();
+      }
+
+      currentPage = pagingStore.getCurrentPage();
 
       storeBookmark(cursorList, currentPage);
 
@@ -629,6 +649,11 @@ public class PageCursorProviderImpl implements PageCursorProvider {
          // we just need to make sure the storage is done..
          // if the thread pool is full, we will just log it once instead of looping
          if (!storageManager.waitOnOperations(5000)) {
+            for (int i = 0; i < 100; i++) {
+               System.out.println("*******************************************************************************************************************************");
+               new Exception("yay!!!!! ").printStackTrace(System.out);
+               System.out.println("*******************************************************************************************************************************");
+            }
             ActiveMQServerLogger.LOGGER.problemCompletingOperations(storageManager.getContext());
          }
       } finally {

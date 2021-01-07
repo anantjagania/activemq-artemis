@@ -52,6 +52,7 @@ import org.apache.activemq.artemis.core.journal.impl.JournalImpl;
 import org.apache.activemq.artemis.core.paging.PagedMessage;
 import org.apache.activemq.artemis.core.paging.PagingManager;
 import org.apache.activemq.artemis.core.paging.PagingStore;
+import org.apache.activemq.artemis.core.paging.impl.Page;
 import org.apache.activemq.artemis.core.persistence.OperationContext;
 import org.apache.activemq.artemis.core.persistence.impl.journal.codec.LargeMessagePersister;
 import org.apache.activemq.artemis.core.persistence.impl.journal.codec.PendingLargeMessageEncoding;
@@ -636,6 +637,7 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
 
       try {
          Map<SimpleString, Collection<Integer>> pageFilesToSync;
+         pagingManager.lock();
          storageManagerLock.writeLock().lock();
          try {
             if (isReplicated())
@@ -680,6 +682,7 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
             replicator.sendLargeMessageIdListMessage(pendingLargeMessages);
          } finally {
             storageManagerLock.writeLock().unlock();
+            pagingManager.unlock();
          }
 
          sendJournalFile(messageFiles, JournalContent.MESSAGES);
@@ -736,7 +739,10 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
       for (SimpleString storeName : pagingManager.getStoreNames()) {
          PagingStore store = pagingManager.getPageStore(storeName);
          info.put(storeName, store.getCurrentIds());
-         store.forceAnotherPage();
+         Page currentPage = store.getCurrentPage();
+         if (currentPage == null || currentPage.getSize() > 0) {
+            store.forceAnotherPage();
+         }
       }
       return info;
    }

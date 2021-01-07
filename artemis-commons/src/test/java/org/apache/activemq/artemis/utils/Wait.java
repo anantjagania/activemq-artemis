@@ -68,7 +68,7 @@ public class Wait {
       boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
 
       if (!result) {
-         System.out.println(ThreadDumpUtil.threadDump("thread dump"));
+         //System.out.println(ThreadDumpUtil.threadDump("thread dump"));
          Assert.fail(size + " != " + condition.getCount());
       }
    }
@@ -87,7 +87,7 @@ public class Wait {
       boolean result = waitFor(() -> (obj == condition || obj.equals(condition.getObject())), timeout, sleepMillis);
 
       if (!result) {
-         System.out.println(ThreadDumpUtil.threadDump("thread dump"));
+         //System.out.println(ThreadDumpUtil.threadDump("thread dump"));
          Assert.assertEquals(obj, condition.getObject());
       }
    }
@@ -96,7 +96,7 @@ public class Wait {
       boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
 
       if (!result) {
-         System.out.println(ThreadDumpUtil.threadDump("thread dump"));
+         //System.out.println(ThreadDumpUtil.threadDump("thread dump"));
          Assert.fail(size + " != " + condition.getCount());
       }
    }
@@ -143,7 +143,7 @@ public class Wait {
       boolean result = waitFor(condition, duration, sleep);
 
       if (!result) {
-         System.out.println(ThreadDumpUtil.threadDump("thread dump"));
+         //System.out.println(ThreadDumpUtil.threadDump("thread dump"));
          Assert.fail(failureMessage);
       }
    }
@@ -168,7 +168,7 @@ public class Wait {
             conditionSatisified = condition.isSatisfied();
          }
          if (!conditionSatisified) {
-            System.out.println(ThreadDumpUtil.threadDump("thread dump"));
+            //System.out.println(ThreadDumpUtil.threadDump("thread dump"));
          }
          return conditionSatisified;
       } catch (Exception e) {

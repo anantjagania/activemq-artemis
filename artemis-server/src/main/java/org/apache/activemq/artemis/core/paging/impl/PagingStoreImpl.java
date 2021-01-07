@@ -400,6 +400,16 @@ public class PagingStoreImpl implements PagingStore {
       }
    }
 
+   public int getNumberOfFiles() throws Exception {
+      final SequentialFileFactory fileFactory = this.fileFactory;
+      if (fileFactory != null) {
+         List<String> files = fileFactory.listFiles("page");
+         return files.size();
+      }
+
+      return 0;
+   }
+
    @Override
    public void start() throws Exception {
       lock.writeLock().lock();
@@ -1097,6 +1107,8 @@ public class PagingStoreImpl implements PagingStore {
          numberOfPages++;
 
          final int newPageId = currentPageId + 1;
+
+         new Exception("open new page on " + getAddress() + " id = " + newPageId).printStackTrace(System.out);
 
          if (logger.isTraceEnabled()) {
             logger.trace("new pageNr=" + newPageId, new Exception("trace"));
