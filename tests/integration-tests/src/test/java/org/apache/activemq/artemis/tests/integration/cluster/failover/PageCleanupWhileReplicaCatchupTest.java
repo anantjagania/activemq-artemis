@@ -111,18 +111,29 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          worker.join();
       }
 
+      Throwable toThrow = null;
       for (Worker worker : workers) {
          if (worker.throwable != null) {
-            throw worker.throwable;
+            worker.queue.getPagingStore().getCursorProvider().scheduleCleanup();
+            Thread.sleep(2000);
+            worker.queue.getPagingStore().getCursorProvider().cleanup();
+            System.out.println("Is paging after these calls::" + worker.queue.getPagingStore().isPaging() + " on queue " + worker.queueName);
+            toThrow = worker.throwable;
          }
       }
+
+      if (toThrow != null) {
+         throw toThrow;
+      }
+
+
    }
 
    class Worker extends Thread {
 
-      private final String queueName;
-      private final Queue queue;
-      private volatile Throwable throwable;
+      final String queueName;
+      final Queue queue;
+      volatile Throwable throwable;
 
       Worker(String queue) {
          super("Worker on queue " + queue + " for test on PageCleanupWhileReplicaCatchupTest");
@@ -164,7 +175,9 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          } catch (Throwable e) {
             e.printStackTrace(System.out);
             this.throwable = e;
-            System.exit(-1);
+            queue.getPagingStore().getCursorProvider().cleanup();
+            System.out.println("page result = " + queue.getPagingStore().isPaging() + " on " + queueName);
+
          }
 
       }

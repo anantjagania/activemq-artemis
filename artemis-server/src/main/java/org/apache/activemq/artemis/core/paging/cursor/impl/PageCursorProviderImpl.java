@@ -362,6 +362,7 @@ public class PageCursorProviderImpl implements PageCursorProvider {
          logger.trace("scheduling cleanup", new Exception("trace"));
       }
       if (!cleanupEnabled || scheduledCleanup.intValue() > 2) {
+         new Exception("cleanupEnabled=" + cleanupEnabled + " and scheduledCleanup=" + scheduledCleanup).printStackTrace(System.out);
          // Scheduled cleanup was already scheduled before.. never mind!
          // or we have cleanup disabled
          return;
@@ -447,6 +448,8 @@ public class PageCursorProviderImpl implements PageCursorProvider {
 
       logger.tracef("%s locked", this);
 
+      System.out.println("Cleanup on " + pagingStore.getFolder());
+
       synchronized (this) {
          try {
             if (!pagingStore.isStarted()) {
@@ -481,7 +484,7 @@ public class PageCursorProviderImpl implements PageCursorProvider {
                }
             }
 
-            for (long i = pagingStore.getFirstPage(); i < minPage; i++) {
+            for (long i = pagingStore.getFirstPage(); i <= minPage; i++) {
                if (!checkPageCompletion(cursorList, i)) {
                   break;
                }
