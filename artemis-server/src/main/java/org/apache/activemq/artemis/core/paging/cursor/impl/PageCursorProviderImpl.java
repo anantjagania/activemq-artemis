@@ -527,13 +527,9 @@ public class PageCursorProviderImpl implements PageCursorProvider {
                          " is leaving page mode as all messages are consumed and acknowledged from the page store");
       }
 
+      pagingStore.forceAnotherPage();
+
       Page currentPage = pagingStore.getCurrentPage();
-
-      if (currentPage.getSize() > 0) {
-         pagingStore.forceAnotherPage();
-      }
-
-      currentPage = pagingStore.getCurrentPage();
 
       storeBookmark(cursorList, currentPage);
 

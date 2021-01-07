@@ -739,10 +739,7 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
       for (SimpleString storeName : pagingManager.getStoreNames()) {
          PagingStore store = pagingManager.getPageStore(storeName);
          info.put(storeName, store.getCurrentIds());
-         Page currentPage = store.getCurrentPage();
-         if (currentPage == null || currentPage.getSize() > 0) {
-            store.forceAnotherPage();
-         }
+         store.forceAnotherPage();
       }
       return info;
    }
