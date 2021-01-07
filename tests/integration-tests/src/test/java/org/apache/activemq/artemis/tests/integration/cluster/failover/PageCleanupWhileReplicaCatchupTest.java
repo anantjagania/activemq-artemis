@@ -150,9 +150,12 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
                      Assert.assertNotNull(consumer.receive(5000));
                   }
                   Wait.assertTrue(((PageCursorProviderImpl)queue.getPagingStore().getCursorProvider())::isCleanupEnabled);
-                  if (!Wait.waitFor(queue.getPagingStore()::isPaging)) {
-                     queue.getPagingStore().getCursorProvider().resumeCleanup();
-                  }
+                  if (!Wait.waitFor(() -> {
+                     if (queue.getPagingStore().isPaging()) {
+                        queue.getPagingStore().getCursorProvider().scheduleCleanup();
+                     }
+                     return !queue.getPagingStore().isPaging();
+                  }));
                   Wait.assertFalse("Waiting for !Paging on " + queueName + " with folder " + queue.getPagingStore().getFolder(), queue.getPagingStore()::isPaging);
                   //PagingStoreImpl store = (PagingStoreImpl) queue.getPagingStore();
                   //Wait.assertEquals(1, store::getNumberOfFiles);
