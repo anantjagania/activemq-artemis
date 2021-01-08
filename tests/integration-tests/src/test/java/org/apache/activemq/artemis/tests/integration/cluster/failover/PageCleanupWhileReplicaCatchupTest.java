@@ -28,6 +28,7 @@ import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.core.config.Configuration;
+import org.apache.activemq.artemis.core.paging.impl.PagingStoreImpl;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.NodeManager;
 import org.apache.activemq.artemis.core.server.Queue;
@@ -79,8 +80,8 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
       return createInVMFailoverServer(realFiles, configuration, PAGE_SIZE, PAGE_MAX, conf, nodeManager, id);
    }
 
-   @Test//(timeout = 600_000)
-   public void testBackup() throws Throwable {
+   @Test(timeout = 120_000)
+   public void testBackupOnPage() throws Throwable {
       int numberOfWorkers = 20;
 
       Worker[] workers = new Worker[numberOfWorkers];
@@ -92,7 +93,7 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          workers[i].start();
       }
 
-      for (int i = 0; i < 100; i++) {
+      for (int i = 0; i < 25; i++) {
          logger.debug("Starting replica " + i);
          backupServer.start();
          Wait.assertTrue(backupServer.getServer()::isReplicaSync);
@@ -120,7 +121,10 @@ public class PageCleanupWhileReplicaCatchupTest extends FailoverTestBase {
          throw toThrow;
       }
 
-
+      for (Worker worker : workers) {
+         PagingStoreImpl storeImpl = (PagingStoreImpl)worker.queue.getPagingStore();
+         Assert.assertTrue("Store impl " + worker.queueName + " had more files on " + storeImpl.getFolder(), storeImpl.getNumberOfFiles() <= 1);
+      }
    }
 
    class Worker extends Thread {
