@@ -18,12 +18,9 @@ package org.apache.activemq.artemis.core.io.aio;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
 import java.nio.ByteBuffer;
 import java.util.PriorityQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -35,10 +32,11 @@ import org.apache.activemq.artemis.core.io.SequentialFile;
 import org.apache.activemq.artemis.core.journal.impl.SimpleWaitIOCallback;
 import org.apache.activemq.artemis.nativo.jlibaio.LibaioFile;
 import org.apache.activemq.artemis.journal.ActiveMQJournalLogger;
-import org.apache.activemq.artemis.utils.ReusableLatch;
+import org.apache.activemq.artemis.utils.AutomaticLatch;
 import org.jboss.logging.Logger;
 
-public class AIOSequentialFile extends AbstractSequentialFile {
+/** This class is implementing Runnable to reuse a callback to close it. */
+public class AIOSequentialFile extends AbstractSequentialFile implements Runnable {
 
    private static final Logger logger = Logger.getLogger(AIOSequentialFileFactory.class);
 
@@ -48,7 +46,7 @@ public class AIOSequentialFile extends AbstractSequentialFile {
 
    private final AIOSequentialFileFactory aioFactory;
 
-   private final ReusableLatch pendingCallbacks = new ReusableLatch();
+   private final AutomaticLatch pendingCallbacks = new AutomaticLatch();
 
    /**
     * Used to determine the next writing sequence
@@ -104,6 +102,19 @@ public class AIOSequentialFile extends AbstractSequentialFile {
       close(true);
    }
 
+   @Override
+   public void afterComplete(Runnable run) {
+      pendingCallbacks.afterCompletion(run);
+   }
+
+   public void run() {
+      try {
+         // new Exception("Closing " + getFileName()).printStackTrace();
+         aioFile.close();
+      } catch (IOException e) {
+         factory.onIOError(e, e.getMessage(), this);
+      }
+   }
 
    @Override
    public synchronized void close(boolean waitSync) throws IOException, InterruptedException, ActiveMQException {
@@ -112,32 +123,11 @@ public class AIOSequentialFile extends AbstractSequentialFile {
       }
 
       super.close();
-      try {
-         if (waitSync) {
-            final String fileName = this.getFileName();
-            try {
-               int waitCount = 0;
-               while (!pendingCallbacks.await(10, TimeUnit.SECONDS)) {
-                  waitCount++;
-                  if (waitCount == 1) {
-                     final ThreadInfo[] threads = ManagementFactory.getThreadMXBean().dumpAllThreads(true, true);
-                     for (ThreadInfo threadInfo : threads) {
-                        ActiveMQJournalLogger.LOGGER.warn(threadInfo.toString());
-                     }
-                     factory.onIOError(new IOException("Timeout on close"), "Timeout on close", this);
-                  }
-                  ActiveMQJournalLogger.LOGGER.warn("waiting pending callbacks on " + fileName + " from " + (waitCount * 10) + " seconds!");
-               }
-            } catch (InterruptedException e) {
-               ActiveMQJournalLogger.LOGGER.warn("interrupted while waiting pending callbacks on " + fileName, e);
-               throw e;
-            }
-         }
-      }  finally {
-         opened = false;
-         timedBuffer = null;
-         aioFile.close();
-         aioFile = null;
+      opened = false;
+      this.timedBuffer = null;
+
+      if (waitSync) {
+         pendingCallbacks.afterCompletion(this);
       }
    }
 

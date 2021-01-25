@@ -354,8 +354,13 @@ public class JournalFilesRepository {
     * @param file
     * @throws Exception
     */
-   public synchronized void addFreeFile(final JournalFile file, final boolean renameTmp) throws Exception {
-      addFreeFile(file, renameTmp, true);
+   public synchronized void addFreeFile(final JournalFile file, final boolean renameTmp) {
+      try {
+         addFreeFile(file, renameTmp, true);
+      } catch (Exception e) {
+         // TODO: Critical exception
+         logger.warn(e.getMessage(), e);
+      }
    }
 
    /**
@@ -367,6 +372,9 @@ public class JournalFilesRepository {
    public synchronized void addFreeFile(final JournalFile file,
                                         final boolean renameTmp,
                                         final boolean checkDelete) throws Exception {
+
+      // The add FreeFile needs to be asynchronous, after the completion (file is closed)
+      new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace();
       long calculatedSize = 0;
       try {
          calculatedSize = file.getFile().size();

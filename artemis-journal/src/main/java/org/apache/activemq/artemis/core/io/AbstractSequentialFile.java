@@ -50,6 +50,8 @@ public abstract class AbstractSequentialFile implements SequentialFile {
 
    protected final SequentialFileFactory factory;
 
+   protected final Executor writerExeuctor;
+
    protected long fileSize = 0;
 
    protected final AtomicLong position = new AtomicLong(0);
@@ -74,6 +76,7 @@ public abstract class AbstractSequentialFile implements SequentialFile {
       this.file = new File(directory, file);
       this.directory = directory;
       this.factory = factory;
+      this.writerExeuctor = writerExecutor;
    }
 
    protected TimedBufferObserver createTimedBufferObserver() {

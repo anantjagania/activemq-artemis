@@ -37,6 +37,10 @@ public interface SequentialFile {
 
    void open() throws Exception;
 
+   default void afterComplete(Runnable run) {
+      run.run();
+   }
+
    /**
     * The maximum number of simultaneous writes accepted
     *
