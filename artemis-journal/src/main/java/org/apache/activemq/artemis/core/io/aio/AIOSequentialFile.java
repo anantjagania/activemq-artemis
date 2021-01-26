@@ -119,7 +119,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    private void actualClose() {
       try {
-         new Exception("Closing " + getFileName()).printStackTrace(System.out);
+         //new Exception("Closing " + getFileName()).printStackTrace(System.out);
          aioFile.close();
       } catch (IOException e) {
          factory.onIOError(e, e.getMessage(), this);
@@ -157,7 +157,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    @Override
    public void open() throws Exception {
-      new Exception("Opening " + getFileName()).printStackTrace(System.out);
+      // new Exception("Opening " + getFileName()).printStackTrace(System.out);
       open(aioFactory.getMaxIO(), true);
    }
 

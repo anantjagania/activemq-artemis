@@ -374,7 +374,7 @@ public class JournalFilesRepository {
                                         final boolean checkDelete) throws Exception {
 
       // The add FreeFile needs to be asynchronous, after the completion (file is closed)
-      new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace(System.out);
+      //new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace(System.out);
       file.getFile().refUp();
 
       boolean opened = false;
@@ -421,6 +421,25 @@ public class JournalFilesRepository {
 
          if (CHECK_CONSISTENCE) {
             checkDataFiles();
+            for (JournalFile journalFile : getDataFiles()) {
+               if (journalFile.equals(file)) {
+                  for (int i = 0; i < 10; i++) {
+                     System.out.println("*******************************************************************************************************************************");
+                  }
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
+                  System.exit(-1);
+               }
+            }
          }
       } finally {
          if (opened) {

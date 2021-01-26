@@ -37,23 +37,22 @@ public class AutomaticLatch extends AbstractLatch {
    // it will execute when the counter reaches 0.
    // notice that since the latch is reusable,
    // the runnable will be cleared once it reached 0
-   public void afterCompletion(final Runnable run) {
+   public void afterCompletion(final Runnable newRun) {
       // We first raise one element up
       // to avoid a race on it being called while another thread sets it down to 0
       countUp();
       if (this.afterCompletion != null) {
-         final Runnable toRun = afterCompletion;
-         this.afterCompletion = new Runnable() {
-            @Override
-            public void run() {
-               toRun.run();
-               run.run();
-               ;
-            }
+         final Runnable oldRun = afterCompletion;
+         this.afterCompletion = () -> {
+            oldRun.run();
+            newRun.run();
          };
-         afterRequest.printStackTrace();
+         // new Exception("WHAT?").printStackTrace();
+         if (afterRequest != null) {
+            //afterRequest.printStackTrace();
+         }
       } else {
-         this.afterCompletion = run;
+         this.afterCompletion = newRun;
       }
       afterRequest = new Exception("Requested Here");
       // then we countDown so it will be instantly 0 if nothing else done it
@@ -66,7 +65,7 @@ public class AutomaticLatch extends AbstractLatch {
       if (control.releaseShared(1)) {
          doRun();
          if (afterRequest != null) {
-            afterRequest.printStackTrace(System.out);
+            // afterRequest.printStackTrace(System.out);
             afterRequest = null;
          }
       }
