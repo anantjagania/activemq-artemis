@@ -36,7 +36,7 @@ import org.apache.activemq.artemis.utils.AutomaticLatch;
 import org.jboss.logging.Logger;
 
 /** This class is implementing Runnable to reuse a callback to close it. */
-public class AIOSequentialFile extends AbstractSequentialFile implements Runnable {
+public class AIOSequentialFile extends AbstractSequentialFile  {
 
    private static final Logger logger = Logger.getLogger(AIOSequentialFileFactory.class);
 
@@ -107,9 +107,9 @@ public class AIOSequentialFile extends AbstractSequentialFile implements Runnabl
       pendingCallbacks.afterCompletion(run);
    }
 
-   public void run() {
+   private void actualClose() {
       try {
-         // new Exception("Closing " + getFileName()).printStackTrace();
+         new Exception("Closing " + getFileName()).printStackTrace(System.out);
          aioFile.close();
       } catch (IOException e) {
          factory.onIOError(e, e.getMessage(), this);
@@ -127,7 +127,9 @@ public class AIOSequentialFile extends AbstractSequentialFile implements Runnabl
       this.timedBuffer = null;
 
       if (waitSync) {
-         pendingCallbacks.afterCompletion(this);
+         pendingCallbacks.afterCompletion(this::actualClose);
+      } else {
+         actualClose();
       }
    }
 
@@ -145,6 +147,7 @@ public class AIOSequentialFile extends AbstractSequentialFile implements Runnabl
 
    @Override
    public void open() throws Exception {
+      new Exception("Opening " + getFileName()).printStackTrace(System.out);
       open(aioFactory.getMaxIO(), true);
    }
 

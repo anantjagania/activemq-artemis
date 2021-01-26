@@ -56,7 +56,7 @@ public class JournalFilesRepository {
     * <br>
     * This is meant to be false as these extra checks would cause performance issues
     */
-   private static final boolean CHECK_CONSISTENCE = false;
+   private static final boolean CHECK_CONSISTENCE = true;
 
    private final SequentialFileFactory fileFactory;
 
@@ -374,7 +374,7 @@ public class JournalFilesRepository {
                                         final boolean checkDelete) throws Exception {
 
       // The add FreeFile needs to be asynchronous, after the completion (file is closed)
-      new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace();
+      new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace(System.out);
       long calculatedSize = 0;
       try {
          calculatedSize = file.getFile().size();

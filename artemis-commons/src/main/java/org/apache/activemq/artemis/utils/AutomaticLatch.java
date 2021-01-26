@@ -39,6 +39,9 @@ public class AutomaticLatch extends AbstractLatch {
       // We first raise one element up
       // to avoid a race on it being called while another thread sets it down to 0
       countUp();
+      if (this.afterCompletion != null) {
+         new Exception ("WHAT???").printStackTrace();
+      }
       this.afterCompletion = run;
       // then we countDown so it will be instantly 0 if nothing else done it
       // or it then just keep flow as usual
