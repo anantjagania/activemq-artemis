@@ -83,7 +83,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    @Override
    public void refDown() {
-      pendingCallbacks.countUp();
+      pendingCallbacks.countDown();
    }
 
    @Override
@@ -110,11 +110,6 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    @Override
    public void close() throws IOException, InterruptedException, ActiveMQException {
       close(true);
-   }
-
-   @Override
-   public void afterComplete(Runnable run) {
-      pendingCallbacks.afterCompletion(run);
    }
 
    private void actualClose() {

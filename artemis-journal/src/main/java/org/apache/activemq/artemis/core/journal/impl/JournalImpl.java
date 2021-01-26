@@ -2260,7 +2260,8 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
                }
 
                filesRepository.removeDataFile(file);
-               file.getFile().afterComplete(() -> filesRepository.addFreeFile(file, false));
+
+               filesRepository.addFreeFile(file, false);
             }
          }
       } finally {

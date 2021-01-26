@@ -56,7 +56,7 @@ public class JournalFilesRepository {
     * <br>
     * This is meant to be false as these extra checks would cause performance issues
     */
-   private static final boolean CHECK_CONSISTENCE = true;
+   private static final boolean CHECK_CONSISTENCE = false;
 
    private final SequentialFileFactory fileFactory;
 
@@ -354,13 +354,8 @@ public class JournalFilesRepository {
     * @param file
     * @throws Exception
     */
-   public synchronized void addFreeFile(final JournalFile file, final boolean renameTmp) {
-      try {
-         addFreeFile(file, renameTmp, true);
-      } catch (Exception e) {
-         // TODO: Critical exception
-         logger.warn(e.getMessage(), e);
-      }
+   public synchronized void addFreeFile(final JournalFile file, final boolean renameTmp) throws Exception {
+      addFreeFile(file, renameTmp, true);
    }
 
    /**
@@ -372,80 +367,44 @@ public class JournalFilesRepository {
    public synchronized void addFreeFile(final JournalFile file,
                                         final boolean renameTmp,
                                         final boolean checkDelete) throws Exception {
+      long calculatedSize = 0;
+      try {
+         calculatedSize = file.getFile().size();
+      } catch (Exception e) {
+         throw new IllegalStateException(e.getMessage() + " file: " + file);
+      }
+      if (calculatedSize != fileSize) {
+         damagedFile(file);
+      } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
+         // Re-initialise it
 
-      // The add FreeFile needs to be asynchronous, after the completion (file is closed)
-      //new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace(System.out);
-      file.getFile().refUp();
+         if (logger.isTraceEnabled()) {
+            logger.trace("Adding free file " + file);
+         }
 
-      boolean opened = false;
+         JournalFile jf = reinitializeFile(file);
 
-      if (!file.getFile().isOpen()) {
-         opened = true;
-         file.getFile().open();
+         if (renameTmp) {
+            jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
+         }
+
+         freeFiles.add(jf);
+         freeFilesCount.getAndIncrement();
+      } else {
+         if (logger.isTraceEnabled()) {
+            logger.trace("DataFiles.size() = " + dataFiles.size());
+            logger.trace("openedFiles.size() = " + openedFiles.size());
+            logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
+            logger.trace("Free Files = " + freeFilesCount.get());
+            logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" +
+                            (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) +
+                            ") < minFiles (" + minFiles + ")");
+         }
+         file.getFile().delete();
       }
 
-      try {
-         long calculatedSize = 0;
-         try {
-            calculatedSize = file.getFile().size();
-         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage() + " file: " + file);
-         }
-         if (calculatedSize != fileSize) {
-            damagedFile(file);
-         } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
-            // Re-initialise it
-
-            if (logger.isTraceEnabled()) {
-               logger.trace("Adding free file " + file);
-            }
-
-            JournalFile jf = reinitializeFile(file);
-
-            if (renameTmp) {
-               jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
-            }
-
-            freeFiles.add(jf);
-            freeFilesCount.getAndIncrement();
-         } else {
-            if (logger.isTraceEnabled()) {
-               logger.trace("DataFiles.size() = " + dataFiles.size());
-               logger.trace("openedFiles.size() = " + openedFiles.size());
-               logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
-               logger.trace("Free Files = " + freeFilesCount.get());
-               logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" + (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) + ") < minFiles (" + minFiles + ")");
-            }
-            file.getFile().delete();
-         }
-
-         if (CHECK_CONSISTENCE) {
-            checkDataFiles();
-            for (JournalFile journalFile : getDataFiles()) {
-               if (journalFile.equals(file)) {
-                  for (int i = 0; i < 10; i++) {
-                     System.out.println("*******************************************************************************************************************************");
-                  }
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  new Exception("This is F#$@ up! Journal File duplicate between datafiles and freefiles::" + journalFile).printStackTrace();
-                  System.exit(-1);
-               }
-            }
-         }
-      } finally {
-         if (opened) {
-            file.getFile().close(false);
-            file.getFile().refDown();
-         }
+      if (CHECK_CONSISTENCE) {
+         checkDataFiles();
       }
    }
 
