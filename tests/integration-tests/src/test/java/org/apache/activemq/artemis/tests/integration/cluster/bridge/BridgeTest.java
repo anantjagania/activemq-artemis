@@ -52,6 +52,7 @@ import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.TransformerConfiguration;
 import org.apache.activemq.artemis.core.io.SequentialFileFactory;
+import org.apache.activemq.artemis.core.io.aio.AIOSequentialFile;
 import org.apache.activemq.artemis.core.io.nio.NIOSequentialFileFactory;
 import org.apache.activemq.artemis.core.journal.PreparedTransactionInfo;
 import org.apache.activemq.artemis.core.journal.RecordInfo;
@@ -1359,6 +1360,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
          }
       }
+
+      Wait.assertEquals(0, () -> AIOSequentialFile.openedFiles.get());
 
       assertEquals(0, loadQueues(server0).size());
 

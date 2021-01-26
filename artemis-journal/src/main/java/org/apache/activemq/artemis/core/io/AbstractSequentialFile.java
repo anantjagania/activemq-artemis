@@ -44,7 +44,7 @@ public abstract class AbstractSequentialFile implements SequentialFile {
 
    private static final Logger logger = Logger.getLogger(AbstractSequentialFile.class);
 
-   private File file;
+   protected File file;
 
    protected final File directory;
 
@@ -93,7 +93,7 @@ public abstract class AbstractSequentialFile implements SequentialFile {
    }
 
    @Override
-   public final void delete() throws IOException, InterruptedException, ActiveMQException {
+   public void delete() throws IOException, InterruptedException, ActiveMQException {
       try {
          if (isOpen()) {
             close(false);

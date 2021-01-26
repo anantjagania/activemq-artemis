@@ -19,8 +19,10 @@ package org.apache.activemq.artemis.core.io.aio;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.PriorityQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -113,8 +115,8 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    private void actualClose() {
+      openedFiles.decrementAndGet();
       try {
-         //new Exception("Closing " + getFileName()).printStackTrace(System.out);
          aioFile.close();
       } catch (IOException e) {
          factory.onIOError(e, e.getMessage(), this);
@@ -139,6 +141,22 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    @Override
+   public void delete() throws IOException, InterruptedException, ActiveMQException {
+      if (isOpen()) {
+         close(false);
+      }
+      pendingCallbacks.afterCompletion(() -> {
+         try {
+            Files.deleteIfExists(file.toPath());
+         } catch (Throwable t) {
+            logger.trace("Fine error while deleting file", t);
+            ActiveMQJournalLogger.LOGGER.errorDeletingFile(this);
+         }
+      });
+   }
+
+
+   @Override
    public synchronized void fill(final int size) throws Exception {
       if (logger.isTraceEnabled()) {
          logger.trace("Filling file: " + getFileName());
@@ -156,9 +174,17 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       open(aioFactory.getMaxIO(), true);
    }
 
+   public static AtomicInteger openedFiles = new AtomicInteger(0);
+
    @Override
    public synchronized void open(final int maxIO, final boolean useExecutor) throws ActiveMQException {
+      if (opened) {
+         return;
+      }
       opened = true;
+      openedFiles.incrementAndGet();
+
+      // new Exception("opening " + getFileName()).printStackTrace();
 
       if (logger.isTraceEnabled()) {
          logger.trace("Opening file: " + getFileName());
