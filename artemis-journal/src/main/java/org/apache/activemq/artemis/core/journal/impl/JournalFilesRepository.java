@@ -375,44 +375,58 @@ public class JournalFilesRepository {
 
       // The add FreeFile needs to be asynchronous, after the completion (file is closed)
       new Exception("AddFreeFile " + file.getFile().getFileName()).printStackTrace(System.out);
-      long calculatedSize = 0;
+      file.getFile().refUp();
+
+      boolean opened = false;
+
+      if (!file.getFile().isOpen()) {
+         opened = true;
+         file.getFile().open();
+      }
+
       try {
-         calculatedSize = file.getFile().size();
-      } catch (Exception e) {
-         throw new IllegalStateException(e.getMessage() + " file: " + file);
-      }
-      if (calculatedSize != fileSize) {
-         damagedFile(file);
-      } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
-         // Re-initialise it
+         long calculatedSize = 0;
+         try {
+            calculatedSize = file.getFile().size();
+         } catch (Exception e) {
+            throw new IllegalStateException(e.getMessage() + " file: " + file);
+         }
+         if (calculatedSize != fileSize) {
+            damagedFile(file);
+         } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
+            // Re-initialise it
 
-         if (logger.isTraceEnabled()) {
-            logger.trace("Adding free file " + file);
+            if (logger.isTraceEnabled()) {
+               logger.trace("Adding free file " + file);
+            }
+
+            JournalFile jf = reinitializeFile(file);
+
+            if (renameTmp) {
+               jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
+            }
+
+            freeFiles.add(jf);
+            freeFilesCount.getAndIncrement();
+         } else {
+            if (logger.isTraceEnabled()) {
+               logger.trace("DataFiles.size() = " + dataFiles.size());
+               logger.trace("openedFiles.size() = " + openedFiles.size());
+               logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
+               logger.trace("Free Files = " + freeFilesCount.get());
+               logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" + (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) + ") < minFiles (" + minFiles + ")");
+            }
+            file.getFile().delete();
          }
 
-         JournalFile jf = reinitializeFile(file);
-
-         if (renameTmp) {
-            jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
+         if (CHECK_CONSISTENCE) {
+            checkDataFiles();
          }
-
-         freeFiles.add(jf);
-         freeFilesCount.getAndIncrement();
-      } else {
-         if (logger.isTraceEnabled()) {
-            logger.trace("DataFiles.size() = " + dataFiles.size());
-            logger.trace("openedFiles.size() = " + openedFiles.size());
-            logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
-            logger.trace("Free Files = " + freeFilesCount.get());
-            logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" +
-                            (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) +
-                            ") < minFiles (" + minFiles + ")");
+      } finally {
+         if (opened) {
+            file.getFile().close(false);
+            file.getFile().refDown();
          }
-         file.getFile().delete();
-      }
-
-      if (CHECK_CONSISTENCE) {
-         checkDataFiles();
       }
    }
 

@@ -77,6 +77,16 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    @Override
+   public void refUp() {
+      pendingCallbacks.countUp();
+   }
+
+   @Override
+   public void refDown() {
+      pendingCallbacks.countUp();
+   }
+
+   @Override
    public ByteBuffer map(int position, long size) throws IOException {
       return null;
    }
