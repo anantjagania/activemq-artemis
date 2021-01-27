@@ -120,7 +120,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       this.requestCloseAt = null;
       openedFiles.decrementAndGet();
       filesOpen.remove(this);
-      new Exception("close " + getFileName()).printStackTrace(System.out);
+      // new Exception("close " + getFileName()).printStackTrace(System.out);
       try {
          aioFile.close();
       } catch (IOException e) {
@@ -198,7 +198,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       if (opened) {
          return;
       }
-      new Exception("open " + getFileName()).printStackTrace(System.out);
+      // new Exception("open " + getFileName()).printStackTrace(System.out);
       filesOpen.addIfAbsent(this);
       opened = true;
       openedFiles.incrementAndGet();
@@ -377,7 +377,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    @Override
    public String toString() {
-      return "AIOSequentialFile:" + getFile().getAbsolutePath();
+      return "AIOSequentialFile{" + getFileName() + ", opened=" + opened + ", pendingClose=" + pendingClose + ", pendingCallbacks=" + pendingCallbacks + '}';
    }
 
    // Private methods

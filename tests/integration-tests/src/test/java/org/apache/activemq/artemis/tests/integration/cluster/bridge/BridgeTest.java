@@ -1384,11 +1384,13 @@ public class BridgeTest extends ActiveMQTestBase {
 
       if (!Wait.waitFor(() -> AIOSequentialFile.openedFiles.get() == 0)) {
          for (AIOSequentialFile file : AIOSequentialFile.filesOpen) {
-            System.out.println("Files " + file.getFileName() + " is still open");
+            System.out.println("Files " + file.getFileName() + " is still open with pending status::" + file.isPending() + " toString() = " + file);
             Exception requestClose = file.requestCloseAt;
 
             if (requestClose != null) {
                requestClose.printStackTrace(System.out);
+            } else {
+               System.out.println("no close request");
             }
          }
          Assert.fail("There are still open files: " + AIOSequentialFile.openedFiles.get());
