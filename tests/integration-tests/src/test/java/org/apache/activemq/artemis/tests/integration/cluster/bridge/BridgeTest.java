@@ -1382,6 +1382,8 @@ public class BridgeTest extends ActiveMQTestBase {
          }
       }
 
+      System.out.println("New test...");
+
       if (!Wait.waitFor(() -> AIOSequentialFile.openedFiles.get() == 0)) {
          for (AIOSequentialFile file : AIOSequentialFile.filesOpen) {
             System.out.println("Files " + file.getFileName() + " is still open with pending status::" + file.isPending() + " toString() = " + file);
