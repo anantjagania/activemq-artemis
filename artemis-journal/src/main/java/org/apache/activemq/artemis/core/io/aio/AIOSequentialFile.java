@@ -122,6 +122,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       } catch (IOException e) {
          factory.onIOError(e, e.getMessage(), this);
       } finally {
+         aioFile = null;
          pendingClose = false;
       }
    }
