@@ -81,17 +81,23 @@ import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
 import org.apache.activemq.artemis.tests.util.Wait;
 import org.apache.activemq.artemis.utils.RandomUtil;
+import org.apache.activemq.artemis.utils.RetryRule;
 import org.apache.activemq.artemis.utils.ReusableLatch;
 import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
 public class BridgeTest extends ActiveMQTestBase {
+
+   @Rule
+   public RetryRule retryRule = new RetryRule(500, true);
 
    private static final Logger log = Logger.getLogger(BridgeTest.class);
 
@@ -129,27 +135,32 @@ public class BridgeTest extends ActiveMQTestBase {
       }
    }
 
+   @Ignore
    @Test
    public void testSimpleBridge() throws Exception {
       internaltestSimpleBridge(false, false);
    }
 
    @Test
+   @Ignore
    public void testSimpleBridgeFiles() throws Exception {
       internaltestSimpleBridge(false, true);
    }
 
    @Test
+   @Ignore
    public void testSimpleBridgeLargeMessageNullPersistence() throws Exception {
       internaltestSimpleBridge(true, false);
    }
 
    @Test
+   @Ignore
    public void testSimpleBridgeLargeMessageFiles() throws Exception {
       internaltestSimpleBridge(true, true);
    }
 
    @Test
+   @Ignore
    public void testLargeMessageBridge() throws Exception {
       long time = System.currentTimeMillis();
       Map<String, Object> server0Params = new HashMap<>();
@@ -255,6 +266,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testBlockedBridgeAndReconnect() throws Exception {
       long time = System.currentTimeMillis();
       Map<String, Object> server0Params = new HashMap<>();
@@ -533,21 +545,25 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testWithFilter() throws Exception {
       internalTestWithFilter(false, false);
    }
 
    @Test
+   @Ignore
    public void testWithFilterFiles() throws Exception {
       internalTestWithFilter(false, true);
    }
 
    @Test
+   @Ignore
    public void testWithFilterLargeMessages() throws Exception {
       internalTestWithFilter(true, false);
    }
 
    @Test
+   @Ignore
    public void testWithFilterLargeMessagesFiles() throws Exception {
       internalTestWithFilter(true, true);
    }
@@ -691,6 +707,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
    // Created to verify JBPAPP-6057
    @Test
+   @Ignore
    public void testStartLater() throws Exception {
       Map<String, Object> server0Params = new HashMap<>();
       server0 = createClusteredServerWithParams(isNetty(), 0, true, server0Params);
@@ -799,6 +816,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testWithDuplicates() throws Exception {
       Map<String, Object> server0Params = new HashMap<>();
       server0 = createClusteredServerWithParams(isNetty(), 0, true, server0Params);
@@ -958,11 +976,13 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testWithTransformer() throws Exception {
       internaltestWithTransformer(false);
    }
 
    @Test
+   @Ignore
    public void testWithTransformerFiles() throws Exception {
       internaltestWithTransformer(true);
    }
@@ -1071,6 +1091,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testWithTransformerProperties() throws Exception {
       final String propKey = "bridged";
       final String propValue = "true";
@@ -1380,6 +1401,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testBridgeWithPaging() throws Exception {
       ActiveMQServer server0 = null;
       ActiveMQServer server1 = null;
@@ -1609,6 +1631,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testBridgeWithLargeMessage() throws Exception {
       ActiveMQServer server0 = null;
       ActiveMQServer server1 = null;
@@ -1739,6 +1762,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testBridgeWithVeryLargeMessage() throws Exception {
       ActiveMQServer server0 = null;
       ActiveMQServer server1 = null;
@@ -1900,6 +1924,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testNullForwardingAddress() throws Exception {
       Map<String, Object> server0Params = new HashMap<>();
       server0 = createClusteredServerWithParams(isNetty(), 0, false, server0Params);
@@ -1999,6 +2024,7 @@ public class BridgeTest extends ActiveMQTestBase {
    }
 
    @Test
+   @Ignore
    public void testInjectedTransformer() throws Exception {
       final SimpleString ADDRESS = new SimpleString("myAddress");
       final SimpleString QUEUE = new SimpleString("myQueue");
