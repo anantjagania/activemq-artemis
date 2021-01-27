@@ -135,7 +135,7 @@ public interface SequentialFile {
 
    /** When closing a file from a finalize block, you cant wait on syncs or anything like that.
     *  otherwise the VM may hung. Especially on the testsuite. */
-   default void close(boolean waitSync) throws Exception {
+   default void close(boolean waitSync, boolean blockOnWait) throws Exception {
       // by default most implementations are just using the regular close..
       // if the close needs sync, please use this parameter or fianlizations may get stuck
       close();

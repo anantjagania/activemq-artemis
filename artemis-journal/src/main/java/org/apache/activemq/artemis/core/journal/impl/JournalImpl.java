@@ -796,7 +796,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
             fileFactory.releaseDirectBuffer(wholeFileBuffer);
          }
          try {
-            file.getFile().close(false);
+            file.getFile().close(false, false);
          } catch (Throwable ignored) {
          }
       }
@@ -1695,7 +1695,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
                setAutoReclaim(false);
 
                // We need to move to the next file, as we need a clear start for negatives and positives counts
-               moveNextFile(false);
+               moveNextFile(false, true);
 
                // Take the snapshots and replace the structures
 
@@ -2505,7 +2505,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
       debugWait();
       journalLock.writeLock().lock();
       try {
-         moveNextFile(false);
+         moveNextFile(false, true);
       } finally {
          journalLock.writeLock().unlock();
       }
@@ -2586,7 +2586,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
          fileFactory.deactivateBuffer();
 
          if (currentFile != null && currentFile.getFile().isOpen()) {
-            currentFile.getFile().close();
+            currentFile.getFile().close(true, true);
          }
          filesRepository.clear();
 
@@ -3155,7 +3155,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
       try {
          if (!currentFile.getFile().fits(size)) {
-            moveNextFile(true);
+            moveNextFile(true, false);
 
             // The same check needs to be done at the new file also
             if (!currentFile.getFile().fits(size)) {
@@ -3215,8 +3215,8 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
    /**
     * You need to guarantee lock.acquire() before calling this method!
     */
-   protected void moveNextFile(final boolean scheduleReclaim) throws Exception {
-      filesRepository.closeFile(currentFile);
+   protected void moveNextFile(final boolean scheduleReclaim, boolean blockOnClose) throws Exception {
+      filesRepository.closeFile(currentFile, blockOnClose);
 
       currentFile = filesRepository.openFile();
 

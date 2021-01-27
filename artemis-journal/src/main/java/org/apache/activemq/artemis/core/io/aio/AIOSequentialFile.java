@@ -112,10 +112,11 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    @Override
    public void close() throws IOException, InterruptedException, ActiveMQException {
-      close(true);
+      close(true, false);
    }
 
    private void actualClose() {
+      // new Exception("Closing " + getFileName()).printStackTrace(System.out);
       openedFiles.decrementAndGet();
       try {
          aioFile.close();
@@ -133,7 +134,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    @Override
-   public synchronized void close(boolean waitSync) throws IOException, InterruptedException, ActiveMQException {
+   public synchronized void close(boolean waitSync, boolean blockOnWait) throws IOException, InterruptedException, ActiveMQException {
       if (!opened) {
          return;
       }
@@ -145,6 +146,9 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
       if (waitSync) {
          pendingCallbacks.afterCompletion(this::actualClose);
+         if (blockOnWait) {
+            pendingCallbacks.await();
+         }
       } else {
          actualClose();
       }
@@ -360,7 +364,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    private void checkOpened() {
       if (aioFile == null || !opened) {
-         throw new NullPointerException("File not opened, file=null");
+         throw new NullPointerException("File not opened, file=null on fileName = " + getFileName());
       }
    }
 

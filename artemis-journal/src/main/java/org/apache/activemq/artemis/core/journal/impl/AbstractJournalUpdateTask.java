@@ -149,7 +149,7 @@ public abstract class AbstractJournalUpdateTask implements JournalReaderCallback
 
          return controlFile;
       } finally {
-         controlFile.close();
+         controlFile.close(true, true);
       }
    }
 
@@ -228,7 +228,7 @@ public abstract class AbstractJournalUpdateTask implements JournalReaderCallback
                   byteBuffer.clear().position(readerIndex).limit(readerIndex + writingChannel.readableBytes());
                   sequentialFile.blockingWriteDirect(byteBuffer, true, false);
                } finally {
-                  sequentialFile.close();
+                  sequentialFile.close(true, true);
                   newDataFiles.add(currentFile);
                }
             }

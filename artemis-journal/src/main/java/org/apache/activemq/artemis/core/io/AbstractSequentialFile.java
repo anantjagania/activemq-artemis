@@ -96,7 +96,7 @@ public abstract class AbstractSequentialFile implements SequentialFile {
    public final void delete() throws IOException, InterruptedException, ActiveMQException {
       try {
          if (isOpen()) {
-            close(false);
+            close(false, false);
          }
          Files.deleteIfExists(file.toPath());
       } catch (Throwable t) {
