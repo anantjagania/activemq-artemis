@@ -31,6 +31,10 @@ import org.apache.activemq.artemis.core.journal.EncodingSupport;
 
 public interface SequentialFile {
 
+   default boolean isPending() {
+      return false;
+   }
+
    boolean isOpen();
 
    boolean exists();

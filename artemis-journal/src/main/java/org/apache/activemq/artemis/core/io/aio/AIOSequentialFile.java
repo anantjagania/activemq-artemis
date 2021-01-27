@@ -44,6 +44,8 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
    private boolean opened = false;
 
+   private volatile boolean pendingClose = false;
+
    private LibaioFile aioFile;
 
    private final AIOSequentialFileFactory aioFactory;
@@ -120,7 +122,14 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
          aioFile.close();
       } catch (IOException e) {
          factory.onIOError(e, e.getMessage(), this);
+      } finally {
+         pendingClose = false;
       }
+   }
+
+   @Override
+   public boolean isPending() {
+      return pendingClose;
    }
 
    @Override
@@ -131,6 +140,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
 
       super.close();
       opened = false;
+      pendingClose = true;
       this.timedBuffer = null;
 
       if (waitSync) {
