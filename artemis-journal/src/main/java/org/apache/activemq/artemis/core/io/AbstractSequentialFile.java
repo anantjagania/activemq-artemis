@@ -93,7 +93,7 @@ public abstract class AbstractSequentialFile implements SequentialFile {
    }
 
    @Override
-   public void delete() throws IOException, InterruptedException, ActiveMQException {
+   public final void delete() throws IOException, InterruptedException, ActiveMQException {
       try {
          if (isOpen()) {
             close(false);

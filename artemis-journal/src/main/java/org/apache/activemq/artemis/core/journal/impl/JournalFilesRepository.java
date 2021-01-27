@@ -367,58 +367,44 @@ public class JournalFilesRepository {
    public synchronized void addFreeFile(final JournalFile file,
                                         final boolean renameTmp,
                                         final boolean checkDelete) throws Exception {
+      long calculatedSize = 0;
+      try {
+         calculatedSize = file.getFile().size();
+      } catch (Exception e) {
+         throw new IllegalStateException(e.getMessage() + " file: " + file);
+      }
+      if (calculatedSize != fileSize) {
+         damagedFile(file);
+      } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
+         // Re-initialise it
 
-      file.getFile().refUp();
-      boolean opened = false;
+         if (logger.isTraceEnabled()) {
+            logger.trace("Adding free file " + file);
+         }
 
-      if (!file.getFile().isOpen()) {
-         opened = true;
-         file.getFile().open();
+         JournalFile jf = reinitializeFile(file);
+
+         if (renameTmp) {
+            jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
+         }
+
+         freeFiles.add(jf);
+         freeFilesCount.getAndIncrement();
+      } else {
+         if (logger.isTraceEnabled()) {
+            logger.trace("DataFiles.size() = " + dataFiles.size());
+            logger.trace("openedFiles.size() = " + openedFiles.size());
+            logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
+            logger.trace("Free Files = " + freeFilesCount.get());
+            logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" +
+                            (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) +
+                            ") < minFiles (" + minFiles + ")");
+         }
+         file.getFile().delete();
       }
 
-      try {
-         long calculatedSize = 0;
-         try {
-            calculatedSize = file.getFile().size();
-         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage() + " file: " + file);
-         }
-         if (calculatedSize != fileSize) {
-            damagedFile(file);
-         } else if (!checkDelete || (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size() < poolSize) || (poolSize < 0)) {
-            // Re-initialise it
-
-            if (logger.isTraceEnabled()) {
-               logger.trace("Adding free file " + file);
-            }
-
-            JournalFile jf = reinitializeFile(file);
-
-            if (renameTmp) {
-               jf.getFile().renameTo(JournalImpl.renameExtensionFile(jf.getFile().getFileName(), ".tmp"));
-            }
-
-            freeFiles.add(jf);
-            freeFilesCount.getAndIncrement();
-         } else {
-            if (logger.isTraceEnabled()) {
-               logger.trace("DataFiles.size() = " + dataFiles.size());
-               logger.trace("openedFiles.size() = " + openedFiles.size());
-               logger.trace("minfiles = " + minFiles + ", poolSize = " + poolSize);
-               logger.trace("Free Files = " + freeFilesCount.get());
-               logger.trace("File " + file + " being deleted as freeFiles.size() + dataFiles.size() + 1 + openedFiles.size() (" + (freeFilesCount.get() + dataFiles.size() + 1 + openedFiles.size()) + ") < minFiles (" + minFiles + ")");
-            }
-            file.getFile().delete();
-         }
-
-         if (CHECK_CONSISTENCE) {
-            checkDataFiles();
-         }
-      } finally {
-         if (opened) {
-            file.getFile().close(true);
-         }
-         file.getFile().refDown();
+      if (CHECK_CONSISTENCE) {
+         checkDataFiles();
       }
    }
 

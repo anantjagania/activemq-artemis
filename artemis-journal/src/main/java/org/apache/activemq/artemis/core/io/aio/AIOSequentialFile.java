@@ -19,7 +19,6 @@ package org.apache.activemq.artemis.core.io.aio;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.PriorityQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -149,22 +148,6 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
          actualClose();
       }
    }
-
-   @Override
-   public void delete() throws IOException, InterruptedException, ActiveMQException {
-      if (isOpen()) {
-         close(false);
-      }
-      pendingCallbacks.afterCompletion(() -> {
-         try {
-            Files.deleteIfExists(file.toPath());
-         } catch (Throwable t) {
-            logger.trace("Fine error while deleting file", t);
-            ActiveMQJournalLogger.LOGGER.errorDeletingFile(this);
-         }
-      });
-   }
-
 
    @Override
    public synchronized void fill(final int size) throws Exception {
