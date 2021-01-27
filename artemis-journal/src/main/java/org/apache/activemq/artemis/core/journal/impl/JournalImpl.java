@@ -2602,6 +2602,10 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
          fileFactory.deactivateBuffer();
 
+         for (JournalFile file : getDataFiles()) {
+            file.getFile().waitNotPending();
+         }
+
          if (currentFile != null && currentFile.getFile().isOpen()) {
             currentFile.getFile().close(true, true);
          }

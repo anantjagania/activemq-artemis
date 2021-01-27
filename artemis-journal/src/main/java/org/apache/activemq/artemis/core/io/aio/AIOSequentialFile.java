@@ -34,6 +34,7 @@ import org.apache.activemq.artemis.core.journal.impl.SimpleWaitIOCallback;
 import org.apache.activemq.artemis.nativo.jlibaio.LibaioFile;
 import org.apache.activemq.artemis.journal.ActiveMQJournalLogger;
 import org.apache.activemq.artemis.utils.AutomaticLatch;
+import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
 import org.jboss.logging.Logger;
 
 /** This class is implementing Runnable to reuse a callback to close it. */
@@ -116,7 +117,10 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    private void actualClose() {
+      this.requestCloseAt = null;
       openedFiles.decrementAndGet();
+      filesOpen.remove(this);
+      new Exception("close " + getFileName()).printStackTrace(System.out);
       try {
          aioFile.close();
       } catch (IOException e) {
@@ -153,6 +157,7 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       opened = false;
       pendingClose = true;
       this.timedBuffer = null;
+      this.requestCloseAt = new Exception("close request on " + getFileName());
 
       if (waitSync) {
          pendingCallbacks.afterCompletion(this::actualClose);
@@ -182,13 +187,19 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
       open(aioFactory.getMaxIO(), true);
    }
 
+   public volatile Exception requestCloseAt = null;
+
    public static AtomicInteger openedFiles = new AtomicInteger(0);
+
+   public static ConcurrentHashSet<AIOSequentialFile> filesOpen = new ConcurrentHashSet<>();
 
    @Override
    public synchronized void open(final int maxIO, final boolean useExecutor) throws ActiveMQException {
       if (opened) {
          return;
       }
+      new Exception("open " + getFileName()).printStackTrace(System.out);
+      filesOpen.addIfAbsent(this);
       opened = true;
       openedFiles.incrementAndGet();
 
