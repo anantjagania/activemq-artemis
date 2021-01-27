@@ -133,6 +133,17 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    @Override
+   public void waitNotPending() {
+      try {
+         pendingCallbacks.await();
+      } catch (InterruptedException e) {
+         // nothing to be done here, other than log it and forward it
+         logger.warn(e.getMessage(), e);
+         Thread.currentThread().interrupt();
+      }
+   }
+
+   @Override
    public synchronized void close(boolean waitSync, boolean blockOnWait) throws IOException, InterruptedException, ActiveMQException {
       if (!opened) {
          return;

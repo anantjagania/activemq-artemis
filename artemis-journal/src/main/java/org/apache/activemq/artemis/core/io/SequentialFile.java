@@ -35,6 +35,10 @@ public interface SequentialFile {
       return false;
    }
 
+   default void waitNotPending() {
+      return;
+   }
+
    boolean isOpen();
 
    boolean exists();

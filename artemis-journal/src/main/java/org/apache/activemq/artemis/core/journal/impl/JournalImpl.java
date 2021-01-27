@@ -53,6 +53,7 @@ import org.apache.activemq.artemis.core.io.SequentialFile;
 import org.apache.activemq.artemis.core.io.SequentialFileFactory;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.journal.IOCompletion;
+import org.apache.activemq.artemis.core.journal.Journal;
 import org.apache.activemq.artemis.core.journal.JournalLoadInformation;
 import org.apache.activemq.artemis.core.journal.LoaderCallback;
 import org.apache.activemq.artemis.core.journal.PreparedTransactionInfo;
@@ -1671,7 +1672,7 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
       compactorLock.writeLock().lock();
       try {
-         ArrayList<JournalFile> dataFilesToProcess = new ArrayList<>(filesRepository.getDataFilesCount());
+         ArrayList<JournalFile> dataFilesToProcess;
 
          boolean previousReclaimValue = isAutoReclaim();
 
@@ -1682,45 +1683,10 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
             onCompactStart();
 
-            // We need to guarantee that the journal is frozen for this short time
-            // We don't freeze the journal as we compact, only for the short time where we replace records
-            journalLock.writeLock().lock();
-            try {
-               if (state != JournalState.LOADED) {
-                  return;
-               }
+            dataFilesToProcess = getDataListToProcess();
 
-               onCompactLockingTheJournal();
-
-               setAutoReclaim(false);
-
-               // We need to move to the next file, as we need a clear start for negatives and positives counts
-               moveNextFile(false, true);
-
-               // Take the snapshots and replace the structures
-
-               dataFilesToProcess.addAll(filesRepository.getDataFiles());
-
-               filesRepository.clearDataFiles();
-
-               if (dataFilesToProcess.size() == 0) {
-                  logger.trace("Finishing compacting, nothing to process");
-                  return;
-               }
-
-               compactor = new JournalCompactor(fileFactory, this, filesRepository, records.keysLongHashSet(), dataFilesToProcess.get(0).getFileID());
-
-               transactions.forEach((id, pendingTransaction) -> {
-                  compactor.addPendingTransaction(id, pendingTransaction.getPositiveArray());
-                  pendingTransaction.setCompacting();
-               });
-
-               // We will calculate the new records during compacting, what will take the position the records will take
-               // after compacting
-               records.clear();
-            } finally {
-               journalLock.writeLock().unlock();
-            }
+            if (dataFilesToProcess == null)
+               return;
 
             Collections.sort(dataFilesToProcess, JOURNAL_FILE_COMPARATOR);
 
@@ -1847,6 +1813,57 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
       }
 
+   }
+
+   /** this private method will return a list of data files that need to be cleaned up.
+    *  It will get the list, and replace it on the journal structure, while a separate thread would be able
+    *  to read it, and append to a new list that will be replaced on the journal. */
+   private ArrayList<JournalFile> getDataListToProcess() throws Exception {
+      ArrayList<JournalFile> dataFilesToProcess = new ArrayList<>(filesRepository.getDataFilesCount());
+      // We need to guarantee that the journal is frozen for this short time
+      // We don't freeze the journal as we compact, only for the short time where we replace records
+      journalLock.writeLock().lock();
+      try {
+         if (state != JournalState.LOADED) {
+            return null;
+         }
+
+         onCompactLockingTheJournal();
+
+         setAutoReclaim(false);
+
+         // We need to move to the next file, as we need a clear start for negatives and positives counts
+         moveNextFile(false, true);
+
+         // Take the snapshots and replace the structures
+
+         dataFilesToProcess.addAll(filesRepository.getDataFiles());
+
+         filesRepository.clearDataFiles();
+
+         if (dataFilesToProcess.size() == 0) {
+            logger.trace("Finishing compacting, nothing to process");
+            return null;
+         }
+
+         compactor = new JournalCompactor(fileFactory, this, filesRepository, records.keysLongHashSet(), dataFilesToProcess.get(0).getFileID());
+
+         transactions.forEach((id, pendingTransaction) -> {
+            compactor.addPendingTransaction(id, pendingTransaction.getPositiveArray());
+            pendingTransaction.setCompacting();
+         });
+
+         // We will calculate the new records during compacting, what will take the position the records will take
+         // after compacting
+         records.clear();
+      } finally {
+         journalLock.writeLock().unlock();
+      }
+
+      for (JournalFile file : dataFilesToProcess) {
+         file.getFile().waitNotPending();
+      }
+      return dataFilesToProcess;
    }
 
    /**
