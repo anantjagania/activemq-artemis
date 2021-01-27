@@ -116,7 +116,6 @@ public class AIOSequentialFile extends AbstractSequentialFile  {
    }
 
    private void actualClose() {
-      // new Exception("Closing " + getFileName()).printStackTrace(System.out);
       openedFiles.decrementAndGet();
       try {
          aioFile.close();
