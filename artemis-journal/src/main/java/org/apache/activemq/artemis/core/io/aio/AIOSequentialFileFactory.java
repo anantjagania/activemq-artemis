@@ -416,9 +416,11 @@ public final class AIOSequentialFileFactory extends AbstractSequentialFileFactor
          if (logger.isDebugEnabled()) {
             logger.trace("AIO on error issued. Error(code: " + errno + " msg: " + message + ")");
          }
+         new Exception("erro:" + errno).printStackTrace(System.out);
          this.error = true;
          this.errorCode = errno;
          this.errorMessage = message;
+         sequentialDone();
       }
 
       /**
