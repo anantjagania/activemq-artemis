@@ -1002,12 +1002,12 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
    }
 
    @Override
-   public void replicationSyncPreserveOldFiles() {
+   public void prepareSnapshot() {
 
    }
 
    @Override
-   public void replicationSyncFinished() {
+   public void snapshotDone() {
 
    }
 

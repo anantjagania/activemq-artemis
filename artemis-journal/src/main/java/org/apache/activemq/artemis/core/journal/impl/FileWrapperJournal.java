@@ -368,12 +368,12 @@ public final class FileWrapperJournal extends JournalBase {
    }
 
    @Override
-   public void replicationSyncPreserveOldFiles() {
+   public void prepareSnapshot() {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void replicationSyncFinished() {
+   public void snapshotDone() {
       throw new UnsupportedOperationException();
    }
 }

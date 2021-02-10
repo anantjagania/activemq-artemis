@@ -678,8 +678,8 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
             originalBindingsJournal.synchronizationLock();
 
             try {
-               originalBindingsJournal.replicationSyncPreserveOldFiles();
-               originalMessageJournal.replicationSyncPreserveOldFiles();
+               originalBindingsJournal.prepareSnapshot();
+               originalMessageJournal.prepareSnapshot();
 
                pagingManager.lock();
                try {
@@ -726,8 +726,8 @@ public class JournalStorageManager extends AbstractJournalStorageManager {
          throw e;
       } finally {
          // Re-enable compact and reclaim of journal files
-         originalBindingsJournal.replicationSyncFinished();
-         originalMessageJournal.replicationSyncFinished();
+         originalBindingsJournal.snapshotDone();
+         originalMessageJournal.snapshotDone();
          pagingManager.resumeCleanup();
       }
    }

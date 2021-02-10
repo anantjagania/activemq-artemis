@@ -1026,12 +1026,12 @@ public final class ReplicationTest extends ActiveMQTestBase {
       }
 
       @Override
-      public void replicationSyncPreserveOldFiles() {
+      public void prepareSnapshot() {
          // no-op
       }
 
       @Override
-      public void replicationSyncFinished() {
+      public void snapshotDone() {
          // no-op
       }
    }

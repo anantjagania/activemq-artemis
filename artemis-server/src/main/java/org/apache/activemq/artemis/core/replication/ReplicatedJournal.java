@@ -618,12 +618,12 @@ public class ReplicatedJournal implements Journal {
    }
 
    @Override
-   public void replicationSyncPreserveOldFiles() {
+   public void prepareSnapshot() {
       throw new UnsupportedOperationException("should never get called");
    }
 
    @Override
-   public void replicationSyncFinished() {
+   public void snapshotDone() {
       throw new UnsupportedOperationException("should never get called");
    }
 

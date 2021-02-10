@@ -3251,13 +3251,14 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
    }
 
    @Override
-   public void replicationSyncPreserveOldFiles() {
+   public void prepareSnapshot() {
       setAutoReclaim(false);
    }
 
    @Override
-   public void replicationSyncFinished() {
+   public void snapshotDone() {
       setAutoReclaim(true);
+      scheduleReclaim();
    }
 
    @Override

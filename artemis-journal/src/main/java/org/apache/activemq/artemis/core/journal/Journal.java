@@ -311,15 +311,15 @@ public interface Journal extends ActiveMQComponent {
     * Meant to be used during synchronization of data between a live server and its replicating
     * (remote) backup. Old files must not be compacted or deleted during synchronization.
     */
-   void replicationSyncPreserveOldFiles();
+   void prepareSnapshot();
 
    /**
     * Restarts file reclaim and compacting on the journal.
     * <p>
-    * Meant to be used to revert the effect of {@link #replicationSyncPreserveOldFiles()}. it should
+    * Meant to be used to revert the effect of {@link #prepareSnapshot()}. it should
     * only be called once the synchronization of the backup and live servers is completed.
     */
-   void replicationSyncFinished();
+   void snapshotDone();
 
    /**
     * It will make sure there are no more pending operations on the Executors.
