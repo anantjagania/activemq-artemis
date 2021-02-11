@@ -48,7 +48,6 @@ public class NettyConnection implements Connection {
 
    private static final Logger logger = Logger.getLogger(NettyConnection.class);
 
-   private static final int DEFAULT_BATCH_BYTES = Integer.getInteger("io.netty.batch.bytes", 8192);
    private static final int DEFAULT_WAIT_MILLIS = 10_000;
 
    protected final Channel channel;
@@ -63,8 +62,6 @@ public class NettyConnection implements Connection {
    private final FastThreadLocal<ArrayList<ReadyListener>> localListenersPool = new FastThreadLocal<>();
 
    private final boolean batchingEnabled;
-   private final int writeBufferHighWaterMark;
-   private final int batchLimit;
 
    private boolean closed;
    private RemotingConnection protocolConnection;
@@ -85,10 +82,6 @@ public class NettyConnection implements Connection {
       this.directDeliver = directDeliver;
 
       this.batchingEnabled = batchingEnabled;
-
-      this.writeBufferHighWaterMark = this.channel.config().getWriteBufferHighWaterMark();
-
-      this.batchLimit = batchingEnabled ? Math.min(this.writeBufferHighWaterMark, DEFAULT_BATCH_BYTES) : 0;
    }
 
    private static void waitFor(ChannelPromise promise, long millis) {
@@ -104,22 +97,9 @@ public class NettyConnection implements Connection {
 
    /**
     * Returns an estimation of the current size of the write buffer in the channel.
-    * To obtain a more precise value is necessary to use the unsafe API of the channel to
-    * call the {@link io.netty.channel.ChannelOutboundBuffer#totalPendingWriteBytes()}.
-    * Anyway, both these values are subject to concurrent modifications.
     */
-   private static int batchBufferSize(Channel channel, int writeBufferHighWaterMark) {
-      //Channel::bytesBeforeUnwritable is performing a volatile load
-      //this is the reason why writeBufferHighWaterMark is passed as an argument
-      final int bytesBeforeUnwritable = (int) channel.bytesBeforeUnwritable();
-      assert bytesBeforeUnwritable >= 0;
-      final int writtenBytes = writeBufferHighWaterMark - bytesBeforeUnwritable;
-      assert writtenBytes >= 0;
-      return writtenBytes;
-   }
-
-   public final int pendingWritesOnChannel() {
-      return batchBufferSize(this.channel, this.writeBufferHighWaterMark);
+   private static long batchBufferSize(Channel channel) {
+      return channel.unsafe().outboundBuffer().totalPendingWriteBytes();
    }
 
    public final Channel getNettyChannel() {
@@ -253,7 +233,7 @@ public class NettyConnection implements Connection {
       try {
          return new ChannelBufferWrapper(channel.alloc().directBuffer(size), true);
       } catch (OutOfMemoryError oom) {
-         final long totalPendingWriteBytes = batchBufferSize(this.channel, this.writeBufferHighWaterMark);
+         final long totalPendingWriteBytes = batchBufferSize(this.channel);
          // I'm not using the ActiveMQLogger framework here, as I wanted the class name to be very specific here
          logger.warn("Trying to allocate " + size + " bytes, System is throwing OutOfMemoryError on NettyConnection " + this + ", there are currently " + "pendingWrites: [NETTY] -> " + totalPendingWriteBytes + " causes: " + oom.getMessage(), oom);
          throw oom;
@@ -269,9 +249,8 @@ public class NettyConnection implements Connection {
    @Override
    public final void checkFlushBatchBuffer() {
       if (this.batchingEnabled) {
-         //perform the flush only if necessary
-         final int batchBufferSize = batchBufferSize(this.channel, this.writeBufferHighWaterMark);
-         if (batchBufferSize > 0) {
+         // perform the flush only if necessary
+         if (batchBufferSize(this.channel) > 0 && !channel.isWritable()) {
             this.channel.flush();
          }
       }
@@ -361,12 +340,6 @@ public class NettyConnection implements Connection {
                            final boolean batched,
                            final ChannelFutureListener futureListener) {
       final int readableBytes = buffer.readableBytes();
-      if (logger.isDebugEnabled()) {
-         final int remainingBytes = this.writeBufferHighWaterMark - readableBytes;
-         if (remainingBytes < 0) {
-            logger.debug("a write request is exceeding by " + (-remainingBytes) + " bytes the writeBufferHighWaterMark size [ " + this.writeBufferHighWaterMark + " ] : consider to set it at least of " + readableBytes + " bytes");
-         }
-      }
       //no need to lock because the Netty's channel is thread-safe
       //and the order of write is ensured by the order of the write calls
       final Channel channel = this.channel;
@@ -379,10 +352,9 @@ public class NettyConnection implements Connection {
       final ChannelFuture future;
       final ByteBuf bytes = buffer.byteBuf();
       assert readableBytes >= 0;
-      final int writeBatchSize = this.batchLimit;
       final boolean batchingEnabled = this.batchingEnabled;
-      if (batchingEnabled && batched && !flush && readableBytes < writeBatchSize) {
-         future = writeBatch(bytes, readableBytes, promise);
+      if (batchingEnabled && batched && !flush && channel.isWritable()) {
+         future = channel.write(bytes, promise);
       } else {
          future = channel.writeAndFlush(bytes, promise);
       }
@@ -402,22 +374,6 @@ public class NettyConnection implements Connection {
          if (logger.isDebugEnabled()) {
             logger.debug("Calling write with flush from a thread where it's not allowed");
          }
-      }
-   }
-
-   private ChannelFuture writeBatch(final ByteBuf bytes, final int readableBytes, final ChannelPromise promise) {
-      final int batchBufferSize = batchBufferSize(channel, this.writeBufferHighWaterMark);
-      final int nextBatchSize = batchBufferSize + readableBytes;
-      if (nextBatchSize > batchLimit) {
-         //request to flush before writing, to create the chance to make the channel writable again
-         channel.flush();
-         //let netty use its write batching ability
-         return channel.write(bytes, promise);
-      } else if (nextBatchSize == batchLimit) {
-         return channel.writeAndFlush(bytes, promise);
-      } else {
-         //let netty use its write batching ability
-         return channel.write(bytes, promise);
       }
    }
 
