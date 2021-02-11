@@ -562,7 +562,7 @@ public final class ChannelImpl implements Channel {
    public static String invokeInterceptors(final Packet packet,
                                            final List<Interceptor> interceptors,
                                            final RemotingConnection connection) {
-      if (interceptors != null) {
+      if (interceptors != null && !interceptors.isEmpty()) {
          for (final Interceptor interceptor : interceptors) {
             try {
                boolean callNext = interceptor.intercept(packet, connection);
