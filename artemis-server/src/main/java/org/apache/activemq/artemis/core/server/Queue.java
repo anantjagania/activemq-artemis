@@ -189,7 +189,7 @@ public interface Queue extends Bindable,CriticalComponent {
    ReferenceCounter getConsumersRefCount();
 
    /* Called when a message is cancelled back into the queue */
-   void addSorted(List<MessageReference> refs, boolean scheduling);
+   void addSorted(List<MessageReference> refs);
 
    void reload(MessageReference ref);
 
@@ -200,7 +200,7 @@ public interface Queue extends Bindable,CriticalComponent {
    void addHead(MessageReference ref, boolean scheduling);
 
    /* Called when a message is cancelled back into the queue */
-   void addSorted(MessageReference ref, boolean scheduling);
+   void addSorted(MessageReference ref);
 
    void addHead(List<MessageReference> refs, boolean scheduling);
 
@@ -220,8 +220,7 @@ public interface Queue extends Bindable,CriticalComponent {
 
    void cancel(Transaction tx, MessageReference ref, boolean ignoreRedeliveryCheck);
 
-   /** @param sorted it should use the messageID as a reference to where to add it in the queue */
-   void cancel(MessageReference reference, long timeBase, boolean sorted) throws Exception;
+   void cancel(MessageReference reference, long timeBase) throws Exception;
 
    void deliverAsync();
 

@@ -1111,17 +1111,19 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    /* Called when a message is cancelled back into the queue */
    @Override
-   public void addSorted(final MessageReference ref, boolean scheduling) {
+   public void addSorted(final MessageReference ref) {
       enterCritical(CRITICAL_PATH_ADD_HEAD);
       synchronized (this) {
          try {
-            if (!scheduling && scheduledDeliveryHandler.checkAndSchedule(ref, false)) {
-               return;
+            if (ringSize != -1) {
+               enforceRing(ref, false, true);
             }
 
-            internalAddSorted(ref);
+            if (!ref.isAlreadyAcked()) {
+               internalAddSorted(ref);
 
-            directDeliver = false;
+               directDeliver = false;
+            }
          } finally {
             leaveCritical(CRITICAL_PATH_ADD_HEAD);
          }
@@ -1149,12 +1151,12 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    /* Called when a message is cancelled back into the queue */
    @Override
-   public void addSorted(final List<MessageReference> refs, boolean scheduling) {
+   public void addSorted(final List<MessageReference> refs) {
       enterCritical(CRITICAL_PATH_ADD_HEAD);
       synchronized (this) {
          try {
             for (MessageReference ref : refs) {
-               addSorted(ref, scheduling);
+               addSorted(ref);
             }
 
             resetAllIterators();
@@ -1948,15 +1950,11 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    }
 
    @Override
-   public synchronized void cancel(final MessageReference reference, final long timeBase, boolean sorted) throws Exception {
+   public synchronized void cancel(final MessageReference reference, final long timeBase) throws Exception {
       Pair<Boolean, Boolean> redeliveryResult = checkRedelivery(reference, timeBase, false);
       if (redeliveryResult.getA()) {
          if (!scheduledDeliveryHandler.checkAndSchedule(reference, false)) {
-            if (sorted) {
-               internalAddSorted(reference);
-            } else {
-               internalAddHead(reference);
-            }
+            internalAddSorted(reference);
          }
 
          resetAllIterators();
@@ -2862,6 +2860,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       int priority = getPriority(ref);
 
       messageReferences.addSorted(ref, priority);
+
+      ref.setInDelivery(false);
    }
 
    private int getPriority(MessageReference ref) {
@@ -3933,10 +3933,6 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    }
 
    void postRollback(final LinkedList<MessageReference> refs) {
-      postRollback(refs, false);
-   }
-
-   void postRollback(final LinkedList<MessageReference> refs, boolean sorted) {
       //if we have purged then ignore adding the messages back
       if (purgeOnNoConsumers && getConsumerCount() == 0) {
          purgeAfterRollback(refs);
@@ -3946,11 +3942,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
       // if the queue is non-destructive then any ack is ignored so no need to add messages back onto the queue
       if (!isNonDestructive()) {
-         if (sorted) {
-            addSorted(refs, false);
-         } else {
-            addHead(refs, false);
-         }
+         addSorted(refs);
       }
    }
 

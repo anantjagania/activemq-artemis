@@ -17,6 +17,7 @@
 package org.apache.activemq.artemis.core.server.impl;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -191,6 +192,18 @@ public class LastValueQueue extends QueueImpl {
       } else {
          return (long) pendingMetrics.getMessageCount() + getScheduledCount();
       }
+   }
+
+   /** LVQ has to use regular addHead due to last value queues calculations */
+   @Override
+   public void addSorted(MessageReference ref) {
+      this.addHead(ref, false);
+   }
+
+   /** LVQ has to use regular addHead due to last value queues calculations */
+   @Override
+   public void addSorted(List<MessageReference> refs) {
+      this.addHead(refs, false);
    }
 
    @Override

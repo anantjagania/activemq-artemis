@@ -326,7 +326,7 @@ public class FakeQueue extends CriticalComponentImpl implements Queue {
    }
 
    @Override
-   public void addSorted(MessageReference ref, boolean scheduling) {
+   public void addSorted(MessageReference ref) {
 
    }
 
@@ -423,7 +423,7 @@ public class FakeQueue extends CriticalComponentImpl implements Queue {
    }
 
    @Override
-   public void cancel(final MessageReference reference, final long timeBase, boolean sorted) throws Exception {
+   public void cancel(final MessageReference reference, final long timeBase) throws Exception {
       // no-op
 
    }
@@ -542,7 +542,7 @@ public class FakeQueue extends CriticalComponentImpl implements Queue {
    }
 
    @Override
-   public void addSorted(List<MessageReference> refs, boolean scheduling) {
+   public void addSorted(List<MessageReference> refs) {
 
    }
 
