@@ -41,6 +41,7 @@ import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.logs.AssertionLoggerHandler;
+import org.apache.activemq.artemis.protocol.amqp.connect.mirror.MirrorSourceCompactor;
 import org.apache.activemq.artemis.tests.integration.amqp.AmqpClientTestSupport;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.RandomUtil;
@@ -895,6 +896,86 @@ public class AMQPReplicaTest extends AmqpClientTestSupport {
       validateNoFilesOnLargeDir(server_2.getConfiguration().getLargeMessagesDirectory(), 0);
 
    }
+
+
+   @Test
+   public void testCompactMirrorRegular() throws Exception{
+      testCompactMirror(false, false, false);
+
+   }
+
+   public void testCompactMirror(boolean largeMessage,
+                            boolean pagingTarget,
+                            boolean pagingSource) throws Exception {
+
+      String brokerConnectionName = "brokerConnectionName:" + UUIDGenerator.getInstance().generateStringUUID();
+      server.setIdentity("targetServer");
+      //server.start();
+
+      server_2 = createServer(AMQP_PORT_2, false);
+      server_2.setIdentity("server_2");
+      server_2.getConfiguration().setName("thisone");
+
+      AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration(brokerConnectionName, "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(-1).setRetryInterval(100);
+      AMQPMirrorBrokerConnectionElement replica = new AMQPMirrorBrokerConnectionElement().setMessageAcknowledgements(true);
+      amqpConnection.addElement(replica);
+
+      server_2.getConfiguration().addAMQPConnection(amqpConnection);
+
+      int NUMBER_OF_MESSAGES = 200;
+
+      server_2.start();
+      Wait.assertTrue(server_2::isStarted);
+
+      // We create the address to avoid auto delete on the queue
+      server_2.addAddressInfo(new AddressInfo(getQueueName()).addRoutingType(RoutingType.ANYCAST).setAutoCreated(false));
+      server_2.createQueue(new QueueConfiguration(getQueueName()).setRoutingType(RoutingType.ANYCAST).setAddress(getQueueName()).setAutoCreated(false));
+
+      ConnectionFactory factory = CFUtil.createConnectionFactory("AMQP", "tcp://localhost:" + AMQP_PORT_2);
+      Connection connection = factory.createConnection();
+      Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+      MessageProducer producer = session.createProducer(session.createQueue(getQueueName()));
+      producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+
+      if (pagingSource) {
+         Queue queueOnServer2 = server_2.locateQueue(getQueueName());
+         queueOnServer2.getPagingStore().startPaging();
+      }
+
+      Assert.assertFalse(AssertionLoggerHandler.findText("AMQ222214"));
+
+
+      for (int i = 0; i < NUMBER_OF_MESSAGES; i++) {
+         Message message = session.createTextMessage(getText(largeMessage, i));
+         message.setIntProperty("i", i);
+         producer.send(message);
+      }
+
+
+
+      connection.start();
+      MessageConsumer consumer = session.createConsumer(session.createQueue(getQueueName()));
+
+      for (int i = 0; i < NUMBER_OF_MESSAGES / 2; i++) {
+         Message message = consumer.receive(5000);
+         Assert.assertNotNull(message);
+      }
+
+      Assert.assertFalse(AssertionLoggerHandler.findText("AMQ222214"));
+
+      Queue queueOnServer1;
+
+      Queue snfreplica = server_2.locateQueue(replica.getMirrorSNF());
+
+      MirrorSourceCompactor compactor = new MirrorSourceCompactor(server_2.getStorageManager(), snfreplica);
+      compactor.compact();
+
+
+      Assert.assertNotNull(snfreplica);
+
+   }
+
+
 
    /**
     * this might be helpful for debugging
