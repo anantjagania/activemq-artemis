@@ -78,10 +78,13 @@ import org.apache.activemq.openwire.OpenWireFormatFactory;
 import org.apache.activemq.util.IdGenerator;
 import org.apache.activemq.util.InetAddressUtil;
 import org.apache.activemq.util.LongSequenceGenerator;
+import org.jboss.logging.Logger;
 
 import static org.apache.activemq.artemis.core.protocol.openwire.util.OpenWireUtil.SELECTOR_AWARE_OPTION;
 
 public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, OpenWireInterceptor, OpenWireConnection, OpenWireRedirectHandler> implements ClusterTopologyListener {
+
+   private static final Logger logger = Logger.getLogger(OpenWireProtocolManager.class);
 
    private static final List<String> websocketRegistryNames = Collections.EMPTY_LIST;
 
@@ -96,6 +99,8 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
    private final OpenWireFormatFactory wireFactory;
 
    private boolean prefixPacketSize = true;
+
+   private int maxActorSize = 20;
 
    private BrokerId brokerId;
    protected final ProducerId advisoryProducerId = new ProducerId();
@@ -234,6 +239,15 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
             throw new InvalidClientIDException("No clientID specified for connection disconnect request");
          }
       }
+   }
+
+   public int getMaxActorSize() {
+      return maxActorSize;
+   }
+
+   public OpenWireProtocolManager setMaxActorSize(int maxActorSize) {
+      this.maxActorSize = maxActorSize;
+      return this;
    }
 
    public ScheduledExecutorService getScheduledPool() {

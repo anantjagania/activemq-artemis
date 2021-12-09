@@ -89,8 +89,6 @@ public class AMQSession implements SessionCallback {
 
    private final OpenWireProtocolManager protocolManager;
 
-   private final Runnable enableAutoReadAndTtl;
-
    private final CoreMessageObjectPools coreMessageObjectPools;
 
    private String[] existingQueuesCache;
@@ -110,7 +108,6 @@ public class AMQSession implements SessionCallback {
       this.protocolManager = protocolManager;
       this.scheduledPool = protocolManager.getScheduledPool();
       this.protocolManagerWireFormat = protocolManager.wireFormat().copy();
-      this.enableAutoReadAndTtl = this::enableAutoReadAndTtl;
       this.existingQueuesCache = null;
       this.coreMessageObjectPools = coreMessageObjectPools;
    }
@@ -428,16 +425,13 @@ public class AMQSession implements SessionCallback {
          if (shouldBlockProducer) {
             sendShouldBlockProducer(producerInfo, messageSend, sendProducerAck, store, dest, count, coreMsg, address);
          } else {
-            //non-persistent messages goes here, by default we stop reading from
-            //transport
-            connection.getTransportConnection().setAutoRead(false);
             if (store != null) {
-               if (!store.checkMemory(enableAutoReadAndTtl)) {
-                  enableAutoReadAndTtl();
+               if (!store.checkMemory(true, this::restoreAutoRead, this::disableAutoRead)) {
+                  restoreAutoRead();
                   throw new ResourceAllocationException("Queue is full " + address);
                }
             } else {
-               enableAutoReadAndTtl.run();
+               restoreAutoRead();
             }
 
             getCoreSession().send(coreMsg, false, dest.isTemporary());
@@ -515,7 +509,7 @@ public class AMQSession implements SessionCallback {
          }
       };
       if (store != null) {
-         if (!store.checkMemory(false, task)) {
+         if (!store.checkMemory(false, task, null)) {
             this.connection.getContext().setDontSendReponse(false);
             connection.enableTtl();
             throw new ResourceAllocationException("Queue is full " + address);
@@ -525,9 +519,12 @@ public class AMQSession implements SessionCallback {
       }
    }
 
-   private void enableAutoReadAndTtl() {
-      connection.getTransportConnection().setAutoRead(true);
-      connection.enableTtl();
+   private void restoreAutoRead() {
+      connection.restoreAutoRead();
+   }
+
+   private void disableAutoRead() {
+      connection.disableAutoRead();
    }
 
    public String convertWildcard(ActiveMQDestination openWireDest) {

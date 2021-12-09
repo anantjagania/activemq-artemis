@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import javax.jms.IllegalStateException;
@@ -89,6 +90,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQMessage;
 import org.apache.activemq.command.ActiveMQTempQueue;
 import org.apache.activemq.command.ActiveMQTopic;
+import org.apache.activemq.command.BaseCommand;
 import org.apache.activemq.command.BrokerInfo;
 import org.apache.activemq.command.BrokerSubscriptionInfo;
 import org.apache.activemq.command.Command;
@@ -153,6 +155,20 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
 
    private AMQConnectionContext context;
 
+   private final int maxActorSize;
+
+   private static final Command flushWrite = new BaseCommand() {
+      @Override
+      public Response visit(CommandVisitor commandVisitor) throws Exception {
+         return null;
+      }
+
+      @Override
+      public byte getDataStructureType() {
+         return 0;
+      }
+   };
+
    private final AtomicBoolean stopping = new AtomicBoolean(false);
 
    private final Map<String, SessionId> sessionIdMap = new ConcurrentHashMap<>();
@@ -188,6 +204,16 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
 
    private static final AtomicLongFieldUpdater<OpenWireConnection> LAST_SENT_UPDATER = AtomicLongFieldUpdater.newUpdater(OpenWireConnection.class, "lastSent");
    private volatile long lastSent = -1;
+
+   private static final AtomicIntegerFieldUpdater<OpenWireConnection> PENDING_COMMANDS_UPDATER = AtomicIntegerFieldUpdater.newUpdater(OpenWireConnection.class, "pendingCommands");
+   private volatile int pendingCommands = 0;
+
+   private volatile boolean autoRead = true;
+
+   private static final AtomicIntegerFieldUpdater<OpenWireConnection> SCHEDULED_FUSH_UPDATER = AtomicIntegerFieldUpdater.newUpdater(OpenWireConnection.class, "scheduledFlush");
+   private volatile int scheduledFlush = 0;
+
+
    private ConnectionEntry connectionEntry;
    private boolean useKeepAlive;
    private long maxInactivityDuration;
@@ -213,6 +239,7 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
       this.useKeepAlive = openWireProtocolManager.isUseKeepAlive();
       this.maxInactivityDuration = openWireProtocolManager.getMaxInactivityDuration();
       this.transportConnection.setProtocolConnection(this);
+      this.maxActorSize = openWireProtocolManager.getMaxActorSize();
    }
 
    // SecurityAuth implementation
@@ -273,6 +300,27 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
       logger.trace("connectionID: " + connectionID + " RECEIVED: " + (command == null ? "NULL" : command));
    }
 
+   private void runOnActor(Command command) {
+      int currentPending = PENDING_COMMANDS_UPDATER.incrementAndGet(OpenWireConnection.this);
+      final Actor<Command> localVisibleActor = openWireActor;
+      if (localVisibleActor == null) {
+         act(command);
+      } else {
+         if (logger.isDebugEnabled()) {
+            logger.debug("Current pending on schedule " + currentPending);
+         }
+         localVisibleActor.act(command);
+         if (currentPending > maxActorSize) {
+            if (SCHEDULED_FUSH_UPDATER.compareAndSet(this, 0, 1)) {
+               System.out.println("Flush scheduled");
+               transportConnection.setAutoRead(false);
+               localVisibleActor.act(flushWrite);
+            }
+         }
+      }
+
+   }
+
    @Override
    public void bufferReceived(Object connectionID, ActiveMQBuffer buffer) {
       super.bufferReceived(connectionID, buffer);
@@ -285,12 +333,7 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
             traceBufferReceived(connectionID, command);
          }
 
-         final Actor<Command> localVisibleActor = openWireActor;
-         if (localVisibleActor != null) {
-            openWireActor.act(command);
-         } else {
-            act(command);
-         }
+         runOnActor(command);
       } catch (Exception e) {
          ActiveMQServerLogger.LOGGER.debug(e);
          sendException(e);
@@ -298,8 +341,33 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
 
    }
 
+   public void restoreAutoRead() {
+      if (!autoRead) {
+         autoRead = true;
+         openWireActor.act(flushWrite);
+      }
+   }
+
+   public void disableAutoRead() {
+      autoRead = false;
+      getTransportConnection().setAutoRead(false);
+   }
+
+   protected void actualEnableAutoReadAndTtl() {
+      getTransportConnection().setAutoRead(autoRead);
+      if (autoRead) {
+         enableTtl();
+      }
+   }
+
 
    private void act(Command command) {
+      if (command == flushWrite) {
+         System.out.println("Flush::");
+         scheduledFlush = 0;
+         actualEnableAutoReadAndTtl();
+         return;
+      }
       try {
          recoverOperationContext();
 
@@ -369,6 +437,10 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
          sendException(e);
       } finally {
          clearupOperationContext();
+         int count = PENDING_COMMANDS_UPDATER.decrementAndGet(OpenWireConnection.this);
+         if (scheduledFlush > 0) {
+            System.out.println("Count::" + count);
+         }
       }
    }
 
