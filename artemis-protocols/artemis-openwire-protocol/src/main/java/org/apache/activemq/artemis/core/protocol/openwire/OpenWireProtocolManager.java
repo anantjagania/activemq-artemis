@@ -78,13 +78,10 @@ import org.apache.activemq.openwire.OpenWireFormatFactory;
 import org.apache.activemq.util.IdGenerator;
 import org.apache.activemq.util.InetAddressUtil;
 import org.apache.activemq.util.LongSequenceGenerator;
-import org.jboss.logging.Logger;
 
 import static org.apache.activemq.artemis.core.protocol.openwire.util.OpenWireUtil.SELECTOR_AWARE_OPTION;
 
 public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, OpenWireInterceptor, OpenWireConnection, OpenWireRedirectHandler> implements ClusterTopologyListener {
-
-   private static final Logger logger = Logger.getLogger(OpenWireProtocolManager.class);
 
    private static final List<String> websocketRegistryNames = Collections.EMPTY_LIST;
 
@@ -99,8 +96,6 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
    private final OpenWireFormatFactory wireFactory;
 
    private boolean prefixPacketSize = true;
-
-   private int maxActorSize = 20;
 
    private BrokerId brokerId;
    protected final ProducerId advisoryProducerId = new ProducerId();
@@ -241,15 +236,6 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
       }
    }
 
-   public int getMaxActorSize() {
-      return maxActorSize;
-   }
-
-   public OpenWireProtocolManager setMaxActorSize(int maxActorSize) {
-      this.maxActorSize = maxActorSize;
-      return this;
-   }
-
    public ScheduledExecutorService getScheduledPool() {
       return scheduledPool;
    }
@@ -310,7 +296,7 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
    @Override
    public ConnectionEntry createConnectionEntry(Acceptor acceptorUsed, Connection connection) {
       OpenWireFormat wf = (OpenWireFormat) wireFactory.createWireFormat();
-      OpenWireConnection owConn = new OpenWireConnection(connection, server, this, wf, server.getExecutorFactory().getExecutor());
+      OpenWireConnection owConn = new OpenWireConnection(connection, server, this, wf, server.getExecutorFactory().getExecutor(), acceptorUsed);
       owConn.sendHandshake();
 
       //first we setup ttl to -1
