@@ -23,6 +23,8 @@ import java.util.List;
  */
 public interface RouteContextList {
 
+   boolean isStorageSync();
+
    int getNumberOfNonDurableQueues();
 
    int getNumberOfDurableQueues();

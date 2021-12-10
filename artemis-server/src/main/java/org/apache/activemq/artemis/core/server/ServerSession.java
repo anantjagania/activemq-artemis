@@ -354,7 +354,10 @@ public interface ServerSession extends SecurityAuth {
 
    RoutingStatus send(Message message, boolean direct, boolean noAutoCreateQueue) throws Exception;
 
+   RoutingStatus sendNoStorageSync(Message message, boolean direct, boolean noAutoCreateQueue) throws Exception;
+
    RoutingStatus send(Message message, boolean direct) throws Exception;
+
 
    void forceConsumerDelivery(long consumerID, long sequence) throws Exception;
 

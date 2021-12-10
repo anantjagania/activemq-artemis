@@ -46,6 +46,8 @@ public class RoutingContextImpl implements RoutingContext {
 
    private int queueCount;
 
+   private boolean storageSync = true;
+
    private SimpleString address;
 
    private SimpleString previousAddress;
@@ -129,6 +131,16 @@ public class RoutingContextImpl implements RoutingContext {
    }
 
    @Override
+   public boolean isStorageSync() {
+      return storageSync;
+   }
+
+   @Override
+   public void setStorageSync(boolean sync) {
+      this.storageSync= sync;
+   }
+
+   @Override
    public RoutingContext clear() {
       map.clear();
 
@@ -137,6 +149,8 @@ public class RoutingContextImpl implements RoutingContext {
       this.version = 0;
 
       this.reusable = null;
+
+      this.storageSync = true;
 
       return this;
    }
@@ -264,7 +278,7 @@ public class RoutingContextImpl implements RoutingContext {
    public RouteContextList getContextListing(SimpleString address) {
       RouteContextList listing = map.get(address);
       if (listing == null) {
-         listing = new ContextListing();
+         listing = new ContextListing(this.storageSync);
          map.put(address, listing);
       }
       return listing;
@@ -302,11 +316,22 @@ public class RoutingContextImpl implements RoutingContext {
 
    private static class ContextListing implements RouteContextList {
 
+      final boolean storageSync;
+
+      ContextListing(boolean sync) {
+         this.storageSync = sync;
+      }
+
       private final List<Queue> durableQueue = new ArrayList<>(1);
 
       private final List<Queue> nonDurableQueue = new ArrayList<>(1);
 
       private final List<Queue> ackedQueues = new ArrayList<>();
+
+      @Override
+      public boolean isStorageSync() {
+         return storageSync;
+      }
 
       @Override
       public int getNumberOfDurableQueues() {

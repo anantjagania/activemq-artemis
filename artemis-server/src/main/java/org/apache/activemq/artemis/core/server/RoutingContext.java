@@ -95,5 +95,7 @@ public interface RoutingContext {
 
    RoutingContext setDuplicateDetection(boolean value);
 
+   boolean isStorageSync();
 
+   void setStorageSync(boolean sync);
 }

@@ -86,7 +86,6 @@ import org.apache.activemq.artemis.spi.core.protocol.ConnectionEntry;
 import org.apache.activemq.artemis.spi.core.remoting.Acceptor;
 import org.apache.activemq.artemis.spi.core.remoting.Connection;
 import org.apache.activemq.artemis.utils.UUIDGenerator;
-import org.apache.activemq.artemis.utils.actors.Actor;
 import org.apache.activemq.artemis.utils.actors.BoundActor;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
 import org.apache.activemq.command.ActiveMQDestination;
@@ -233,10 +232,14 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
       this.useKeepAlive = openWireProtocolManager.isUseKeepAlive();
       this.maxInactivityDuration = openWireProtocolManager.getMaxInactivityDuration();
       this.transportConnection.setProtocolConnection(this);
-      if (acceptorUsed == null) {
-         this.maxActorSize = TransportConstants.DEFAULT_TCP_RECEIVEBUFFER_SIZE;
+      if (openWireProtocolManager.getMaxActorSize() > 0) {
+         this.maxActorSize = openWireProtocolManager.getMaxActorSize();
       } else {
-         this.maxActorSize = ((NettyAcceptor) acceptorUsed).getTcpReceiveBufferSize();
+         if (acceptorUsed == null) {
+            this.maxActorSize = TransportConstants.DEFAULT_TCP_RECEIVEBUFFER_SIZE;
+         } else {
+            this.maxActorSize = ((NettyAcceptor) acceptorUsed).getTcpReceiveBufferSize();
+         }
       }
    }
 
@@ -331,11 +334,13 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
    }
 
    public void disableAutoRead() {
+      System.out.println("Disabling reads");
       autoRead = false;
       getTransportConnection().setAutoRead(false);
    }
 
    protected void flushedActor() {
+      System.out.println("Re-enabling reads");
       getTransportConnection().setAutoRead(autoRead);
       if (autoRead) {
          enableTtl();

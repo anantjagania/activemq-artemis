@@ -97,6 +97,8 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
 
    private boolean prefixPacketSize = true;
 
+   private int maxActorSize = -1;
+
    private BrokerId brokerId;
    protected final ProducerId advisoryProducerId = new ProducerId();
 
@@ -234,6 +236,18 @@ public class OpenWireProtocolManager  extends AbstractProtocolManager<Command, O
             throw new InvalidClientIDException("No clientID specified for connection disconnect request");
          }
       }
+   }
+
+   /*** if set, the OpenWire connection will bypass the tcpReadBuferSize and use this value instead.
+    *   This is by default -1, and it should not be used unless in extreme situations like on a slow storage. */
+   public int getMaxActorSize() {
+      return maxActorSize;
+   }
+
+   public OpenWireProtocolManager setMaxActorSize(int maxActorSize) {
+      System.out.println("max actor size " + maxActorSize);
+      this.maxActorSize = maxActorSize;
+      return this;
    }
 
    public ScheduledExecutorService getScheduledPool() {

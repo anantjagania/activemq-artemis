@@ -1759,6 +1759,11 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
    }
 
    @Override
+   public RoutingStatus sendNoStorageSync(Message message, boolean direct, boolean noAutoCreateQueue) throws Exception {
+      return internalSend(getCurrentTransaction(), message, direct, noAutoCreateQueue, routingContext, false);
+   }
+
+   @Override
    public RoutingStatus send(final Message message,
                              final boolean direct,
                              boolean noAutoCreateQueue) throws Exception {
@@ -1774,15 +1779,29 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
    }
 
    @Override
-   public synchronized RoutingStatus send(Transaction tx,
+   public RoutingStatus send(Transaction tx,
                                           Message messageParameter,
                                           final boolean direct,
                                           boolean noAutoCreateQueue,
                                           RoutingContext routingContext) throws Exception {
+      return internalSend(tx, messageParameter, direct, noAutoCreateQueue, routingContext, true);
+   }
+
+
+   private synchronized RoutingStatus internalSend(Transaction tx,
+                                          Message messageParameter,
+                                          final boolean direct,
+                                          boolean noAutoCreateQueue,
+                                          RoutingContext routingContext, boolean storageSync) throws Exception {
+
       final Message message = LargeServerMessageImpl.checkLargeMessage(messageParameter, storageManager);
 
       if (server.hasBrokerMessagePlugins()) {
          server.callBrokerMessagePlugins(plugin -> plugin.beforeSend(this, tx, message, direct, noAutoCreateQueue));
+      }
+
+      if (routingContext != null) {
+         routingContext.setStorageSync(storageSync);
       }
 
       final RoutingStatus result;
@@ -2133,7 +2152,7 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
 
 
    @Override
-   public synchronized RoutingStatus doSend(final Transaction tx,
+   public RoutingStatus doSend(final Transaction tx,
                                             final Message msg,
                                             final SimpleString originalAddress,
                                             final boolean direct,
@@ -2141,15 +2160,13 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
       return doSend(tx, msg, originalAddress, direct, noAutoCreateQueue, routingContext);
    }
 
-
    @Override
-   public synchronized RoutingStatus doSend(final Transaction tx,
+   public RoutingStatus doSend(final Transaction tx,
                                             final Message msg,
                                             final SimpleString originalAddress,
                                             final boolean direct,
                                             final boolean noAutoCreateQueue,
                                             final RoutingContext routingContext) throws Exception {
-
       RoutingStatus result = RoutingStatus.OK;
 
       RoutingType routingType = msg.getRoutingType();
