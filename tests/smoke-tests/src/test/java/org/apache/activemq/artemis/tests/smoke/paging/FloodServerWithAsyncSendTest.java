@@ -112,8 +112,13 @@ public class FloodServerWithAsyncSendTest extends SmokeTestBase {
          Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
          Queue queue = session.createQueue(queueName);
          MessageConsumer consumer = session.createConsumer(queue);
+         int rec = 0;
          while (running) {
             consumer.receive(5000);
+            rec++;
+            if (rec % 10 == 0) {
+               System.out.println(queueName + " receive " + rec);
+            }
          }
       } catch (Throwable e) {
          e.printStackTrace();
@@ -147,7 +152,7 @@ public class FloodServerWithAsyncSendTest extends SmokeTestBase {
          }
 
          while (running) {
-            if (++produced % 100 == 0) {
+            if (++produced % 10 == 0) {
                System.out.println(queueName + " produced " + produced + " messages");
             }
             producer.send(session.createTextMessage(randomString));
