@@ -434,8 +434,7 @@ public class AMQSession implements SessionCallback {
                restoreAutoRead();
             }
 
-            getCoreSession().sendNoStorageSync(coreMsg, false, dest.isTemporary());
-
+            getCoreSession().send(coreMsg, false, dest.isTemporary());
 
             if (count == null || count.decrementAndGet() == 0) {
                if (sendProducerAck) {

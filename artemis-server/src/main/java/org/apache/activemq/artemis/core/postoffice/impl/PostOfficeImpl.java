@@ -1591,7 +1591,7 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          refs.add(reference);
          queue.refUp(reference);
          if (message.isDurable()) {
-            storeDurableReference(storageManager, message, tx, queue, context.isStorageSync() && durableQueuesCount - 1 == i);
+            storeDurableReference(storageManager, message, tx, queue, durableQueuesCount - 1 == i);
             if (deliveryTime != null && deliveryTime > 0) {
                if (tx != null) {
                   storageManager.updateScheduledDeliveryTimeTransactional(tx.getID(), reference);
