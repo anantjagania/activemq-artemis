@@ -109,7 +109,8 @@ public class Main extends ActiveMQTestBase {
 
       consumer.setMessageHandler((msg) -> {
          try {
-            msg.getDataBuffer();
+            msg.getBodyBuffer();
+            msg.acknowledge();
             received.incrementAndGet();
          } catch (Throwable e) {
             e.printStackTrace();

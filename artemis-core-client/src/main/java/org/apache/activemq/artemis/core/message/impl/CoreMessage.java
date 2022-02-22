@@ -255,6 +255,7 @@ public class CoreMessage extends RefCountMessage implements ICoreMessage {
    }
 
    private ActiveMQBuffer getLargeMessageBuffer() throws ActiveMQException {
+      new Exception("large message buffer").printStackTrace();
       LargeBodyReader encoder = getLargeBodyReader();
       encoder.open();
       int bodySize = (int) encoder.getSize();
