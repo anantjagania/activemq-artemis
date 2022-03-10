@@ -17,7 +17,6 @@
 package org.apache.activemq.artemis.tests.unit.util;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -40,7 +39,7 @@ public class FakePagingManager implements PagingManager {
    }
 
    @Override
-   public void addTransaction(final PageTransactionInfo pageTransaction) {
+   public void loadPageTX(final PageTransactionInfo pageTransaction) {
    }
 
    @Override
@@ -137,15 +136,6 @@ public class FakePagingManager implements PagingManager {
    @Override
    public boolean isGlobalFull() {
       return false;
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see org.apache.activemq.artemis.core.paging.PagingManager#getTransactions()
-    */
-   @Override
-   public Map<Long, PageTransactionInfo> getTransactions() {
-      return null;
    }
 
    /*

@@ -16,6 +16,7 @@
  */
 package org.apache.activemq.artemis.core.paging.impl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -96,7 +97,7 @@ public final class PagingManagerImpl implements PagingManager {
 
    private final Queue<Runnable> memoryCallback = new ConcurrentLinkedQueue<>();
 
-   private final ConcurrentMap</*TransactionID*/Long, PageTransactionInfo> transactions = new ConcurrentHashMap<>();
+   private final Map</*TransactionID*/Long, PageTransactionInfo> transactions = new HashMap<>();
 
    private ActiveMQScheduledComponent scheduledComponent = null;
 
@@ -421,19 +422,36 @@ public final class PagingManagerImpl implements PagingManager {
    }
 
    @Override
-   public void addTransaction(final PageTransactionInfo pageTransaction) {
+   public void loadPageTX(final PageTransactionInfo pageTransaction) {
+      new Exception("Add TX").printStackTrace(System.out);
       if (logger.isTraceEnabled()) {
          logger.trace("Adding pageTransaction {}", pageTransaction.getTransactionID());
       }
-      transactions.put(pageTransaction.getTransactionID(), pageTransaction);
+
+      if (pageTransaction.getStoresSize() == 0) {
+         synchronized (transactions) {
+            transactions.put(pageTransaction.getTransactionID(), pageTransaction);
+         }
+      } else {
+         pageTransaction.forEach((s, pages) -> {
+            try {
+               getPageStore(s).registerPageTX(pageTransaction);
+            } catch (Throwable e) {
+               logger.warn(e.getMessage(), e);
+            }
+         });
+      }
    }
 
    @Override
    public void removeTransaction(final long id) {
+      new Exception("remove TX").printStackTrace();
       if (logger.isTraceEnabled()) {
          logger.trace("Removing pageTransaction {}", id);
       }
-      transactions.remove(id);
+      synchronized (transactions) {
+         transactions.remove(id);
+      }
    }
 
    @Override
@@ -441,11 +459,12 @@ public final class PagingManagerImpl implements PagingManager {
       if (logger.isTraceEnabled()) {
          logger.trace("looking up pageTX = {}", id);
       }
-      return transactions.get(id);
+      synchronized (transactions) {
+         return transactions.get(id);
+      }
    }
 
-   @Override
-   public Map<Long, PageTransactionInfo> getTransactions() {
+   Map<Long, PageTransactionInfo> getTransactions() {
       return transactions;
    }
 

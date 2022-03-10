@@ -18,6 +18,7 @@ package org.apache.activemq.artemis.tests.unit.core.paging.impl;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -121,8 +122,9 @@ public class PageTest extends ActiveMQTestBase {
                           final boolean largeMessages) throws Exception {
 
       SequentialFile file = factory.createSequentialFile("00010.page");
+      SequentialFile fileCtr = factory.createSequentialFile("00010.page.ctr");
 
-      Page page = new Page(new SimpleString("something"), storageManager, factory, file, 10);
+      Page page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
 
       Assert.assertEquals(10, page.getPageId());
 
@@ -140,8 +142,9 @@ public class PageTest extends ActiveMQTestBase {
       page.close(false, false);
 
       file = factory.createSequentialFile("00010.page");
+      fileCtr = factory.createSequentialFile("00010.page.ctr");
       file.open();
-      page = new Page(new SimpleString("something"), storageManager, factory, file, 10);
+      page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
 
       LinkedList<PagedMessage> msgs = page.read(storageManager, largeMessages);
 
@@ -158,7 +161,7 @@ public class PageTest extends ActiveMQTestBase {
       }
 
       if (!largeMessages) {
-         Page tmpPage = new Page(new SimpleString("something"), storageManager, factory, file, 10);
+         Page tmpPage = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
          Assert.assertEquals(0, tmpPage.read(storageManager, true).size());
          Assert.assertEquals(numberOfElements, tmpPage.getNumberOfMessages());
       }
@@ -178,8 +181,9 @@ public class PageTest extends ActiveMQTestBase {
    protected void testDamagedPage(final SequentialFileFactory factory, final int numberOfElements) throws Exception {
 
       SequentialFile file = factory.createSequentialFile("00010.page");
+      SequentialFile fileCtr = factory.createSequentialFile("00010.page.ctr");
 
-      Page page = new Page(new SimpleString("something"), new NullStorageManager(), factory, file, 10);
+      Page page = new Page(new SimpleString("something"), new NullStorageManager(), factory, file, fileCtr, 10);
 
       Assert.assertEquals(10, page.getPageId());
 
@@ -220,7 +224,7 @@ public class PageTest extends ActiveMQTestBase {
 
       file = factory.createSequentialFile("00010.page");
       file.open();
-      Page page1 = new Page(new SimpleString("something"), new NullStorageManager(), factory, file, 10);
+      Page page1 = new Page(new SimpleString("something"), new NullStorageManager(), factory, file, fileCtr, 10);
 
       LinkedList<PagedMessage> msgs = page1.read(new NullStorageManager());
 
@@ -261,8 +265,9 @@ public class PageTest extends ActiveMQTestBase {
                           final boolean largeMessages) throws Exception {
 
       SequentialFile file = factory.createSequentialFile("00010.page");
+      SequentialFile fileCtr = factory.createSequentialFile("00010.page.ctr");
 
-      Page page = new Page(new SimpleString("something"), storageManager, factory, file, 10);
+      Page page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
 
       Assert.assertEquals(10, page.getPageId());
 
@@ -282,7 +287,7 @@ public class PageTest extends ActiveMQTestBase {
       page.close(false, false);
 
       file = factory.createSequentialFile("00010.page");
-      page = new Page(new SimpleString("something"), storageManager, factory, file, 10);
+      page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
 
       LinkedList<PagedMessage> msgs = page.getMessages();
 
@@ -372,4 +377,77 @@ public class PageTest extends ActiveMQTestBase {
          page.write(new PagedMessageImpl(msg, new long[0]));
       }
    }
+
+
+   @Test
+   public void testAddControl() throws Exception {
+
+      final boolean largeMessages = false;
+      final int numberOfElements = 100;
+
+      StorageManager storageManager = new NullStorageManager();
+
+      SequentialFileFactory factory = new NIOSequentialFileFactory(getTestDirfile(), 1);
+
+      SequentialFile file = factory.createSequentialFile("00010.page");
+      SequentialFile fileCtr = factory.createSequentialFile("00010.page.ctr");
+
+      Page page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
+
+      Assert.assertEquals(10, page.getPageId());
+
+      page.open();
+      page.openCtr();
+
+      Assert.assertEquals(1, factory.listFiles("page").size());
+      Assert.assertEquals(1, factory.listFiles("page.ctr").size());
+
+      SimpleString simpleDestination = new SimpleString("Test");
+
+      final long startMessageID = 1;
+
+      addPageElements(storageManager, simpleDestination, page, numberOfElements, largeMessages, startMessageID);
+
+      page.sync();
+
+      for (long tx = 33L; tx < 100L; tx++) {
+         page.addTX(tx);
+      }
+      Set<Long> txs = page.readTransactions();
+
+      for (long tx = 33L; tx < 100L; tx++) {
+         Assert.assertTrue(txs.contains(tx));
+      }
+
+
+      page.close(false, false);
+      page.closeCtr();
+   }
+
+
+   @Test
+   public void testEmptyControl() throws Exception {
+      StorageManager storageManager = new NullStorageManager();
+
+      SequentialFileFactory factory = new NIOSequentialFileFactory(getTestDirfile(), 1);
+
+      SequentialFile file = factory.createSequentialFile("00010.page");
+      SequentialFile fileCtr = factory.createSequentialFile("00010.page.ctr");
+
+      Page page = new Page(new SimpleString("something"), storageManager, factory, file, fileCtr, 10);
+      Set<Long> set = page.readTransactions();
+
+      Assert.assertTrue(set == null || set.size() == 0);
+
+      page.openCtr();
+      page.addTX(3L);
+      page.closeCtr();
+      set = page.readTransactions();
+
+      Assert.assertTrue(set.contains(3L));
+
+   }
+
+
+
 }

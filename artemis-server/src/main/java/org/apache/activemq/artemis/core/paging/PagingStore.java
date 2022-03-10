@@ -48,6 +48,8 @@ public interface PagingStore extends ActiveMQComponent, RefCountMessageListener 
 
    long getNumberOfPages();
 
+   void registerPageTX(PageTransactionInfo pgtx);
+
    /**
     * Returns the page id of the current page in which the system is writing files.
     */
@@ -58,6 +60,8 @@ public interface PagingStore extends ActiveMQComponent, RefCountMessageListener 
    File getFolder();
 
    AddressFullMessagePolicy getAddressFullMessagePolicy();
+
+   PageTransactionInfo getTransaction(long txid);
 
    long getFirstPage();
 

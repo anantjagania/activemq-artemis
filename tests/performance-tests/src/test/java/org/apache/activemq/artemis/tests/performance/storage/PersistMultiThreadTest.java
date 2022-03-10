@@ -28,6 +28,7 @@ import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.message.impl.CoreMessage;
+import org.apache.activemq.artemis.core.paging.PageTransactionInfo;
 import org.apache.activemq.artemis.core.paging.PagingManager;
 import org.apache.activemq.artemis.core.paging.PagingStore;
 import org.apache.activemq.artemis.core.paging.cursor.PageCursorProvider;
@@ -292,6 +293,11 @@ public class PersistMultiThreadTest extends ActiveMQTestBase {
       }
 
       @Override
+      public void registerPageTX(PageTransactionInfo pgtx) {
+
+      }
+
+      @Override
       public long getCurrentWritingPage() {
          return 0;
       }
@@ -308,6 +314,11 @@ public class PersistMultiThreadTest extends ActiveMQTestBase {
 
       @Override
       public AddressFullMessagePolicy getAddressFullMessagePolicy() {
+         return null;
+      }
+
+      @Override
+      public PageTransactionInfo getTransaction(long txid) {
          return null;
       }
 

@@ -351,8 +351,14 @@ public class PrintData extends DBOption {
                            out.print(",");
                         }
                      }
-                     if (msg.getTransactionID() >= 0 && !pgTXs.contains(msg.getTransactionID())) {
-                        out.print(", **PG_TX_NOT_FOUND**");
+                     if (msg.getTransactionID() >= 0) {
+                        if (page.getTransactions().contains(msg.getTransactionID())) {
+                           out.println(", **PG_TX_REGISTERED_ON_CTR**");
+                        } else {
+                           if (!pgTXs.contains(msg.getTransactionID())) {
+                              out.print(", **PG_TX_NOT_FOUND**");
+                           }
+                        }
                      }
                      out.println();
 

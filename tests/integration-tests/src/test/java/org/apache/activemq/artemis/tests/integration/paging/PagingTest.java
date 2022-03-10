@@ -90,6 +90,7 @@ import org.apache.activemq.artemis.core.paging.cursor.impl.PageCursorProviderImp
 import org.apache.activemq.artemis.core.paging.cursor.impl.PagePositionImpl;
 import org.apache.activemq.artemis.core.paging.impl.Page;
 import org.apache.activemq.artemis.core.paging.impl.PageTransactionInfoImpl;
+import org.apache.activemq.artemis.core.paging.impl.PagingManagerTestAccessor;
 import org.apache.activemq.artemis.core.paging.impl.PagingStoreFactoryDatabase;
 import org.apache.activemq.artemis.core.paging.impl.PagingStoreFactoryNIO;
 import org.apache.activemq.artemis.core.paging.impl.PagingStoreImpl;
@@ -1481,7 +1482,7 @@ public class PagingTest extends ActiveMQTestBase {
 
       server.stop();
       server.start();
-      Wait.assertEquals(0, ()->server.getPagingManager().getTransactions().size());
+      Wait.assertEquals(0, () -> PagingManagerTestAccessor.getTransactions(server.getPagingManager()).size());
    }
 
    // First page is complete but it wasn't deleted
@@ -3517,14 +3518,7 @@ public class PagingTest extends ActiveMQTestBase {
 
          assertEquals(0, errors.get());
 
-         for (int i = 0; i < 20 && server.getPagingManager().getTransactions().size() != 0; i++) {
-            if (server.getPagingManager().getTransactions().size() != 0) {
-               // The delete may be asynchronous, giving some time case it eventually happen asynchronously
-               Thread.sleep(500);
-            }
-         }
-
-         Wait.assertEquals(0, ()->server.getPagingManager().getTransactions().size());
+         Wait.assertEquals(0, ()->PagingManagerTestAccessor.getTransactions(server.getPagingManager()).size());
 
       } finally {
          running.set(false);
@@ -3677,12 +3671,7 @@ public class PagingTest extends ActiveMQTestBase {
 
       assertFalse(server.getPagingManager().getPageStore(ADDRESS).isPaging());
 
-      for (int i = 0; i < 20 && server.getPagingManager().getTransactions().size() != 0; i++) {
-         // The delete may be asynchronous, giving some time case it eventually happen asynchronously
-         Thread.sleep(500);
-      }
-
-      Wait.assertEquals(0, ()->server.getPagingManager().getTransactions().size());
+      Wait.assertEquals(0, ()->PagingManagerTestAccessor.getTransactions(server.getPagingManager()).size());
 
    }
 
@@ -7790,24 +7779,24 @@ public class PagingTest extends ActiveMQTestBase {
       if (rollbackBeforeDelivery) {
          sendMessages(session, producer, numberOfMessages);
          session.rollback();
-         assertEquals(server.getPagingManager().getTransactions().size(), 1);
-         PageTransactionInfo pageTransactionInfo = server.getPagingManager().getTransactions().values().iterator().next();
+         Wait.assertEquals(1, ()->PagingManagerTestAccessor.getTransactions(server.getPagingManager()).size());
+         PageTransactionInfo pageTransactionInfo = PagingManagerTestAccessor.getTransactions(server.getPagingManager()).values().iterator().next();
          // Make sure rollback happens before delivering messages
          Wait.assertTrue(() -> pageTransactionInfo.isRollback(), 1000, 100);
          ClientConsumer consumer = session.createConsumer(PagingTest.ADDRESS);
          session.start();
          Assert.assertNull(consumer.receiveImmediate());
-         assertTrue(server.getPagingManager().getTransactions().isEmpty());
+         assertTrue(PagingManagerTestAccessor.getTransactions(server.getPagingManager()).isEmpty());
       } else {
          ClientConsumer consumer = session.createConsumer(PagingTest.ADDRESS);
          session.start();
          sendMessages(session, producer, numberOfMessages);
          Assert.assertNull(consumer.receiveImmediate());
-         assertEquals(server.getPagingManager().getTransactions().size(), 1);
-         PageTransactionInfo pageTransactionInfo = server.getPagingManager().getTransactions().values().iterator().next();
+         assertEquals(PagingManagerTestAccessor.getTransactions(server.getPagingManager()).size(), 1);
+         PageTransactionInfo pageTransactionInfo = PagingManagerTestAccessor.getTransactions(server.getPagingManager()).values().iterator().next();
          session.rollback();
          Wait.assertTrue(() -> pageTransactionInfo.isRollback(), 1000, 100);
-         assertTrue(server.getPagingManager().getTransactions().isEmpty());
+         assertTrue(PagingManagerTestAccessor.getTransactions(server.getPagingManager()).isEmpty());
       }
 
       session.close();

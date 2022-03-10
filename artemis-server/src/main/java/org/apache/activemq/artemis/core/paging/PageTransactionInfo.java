@@ -16,12 +16,16 @@
  */
 package org.apache.activemq.artemis.core.paging;
 
+import java.util.function.BiConsumer;
+
+import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.paging.cursor.PageIterator;
 import org.apache.activemq.artemis.core.paging.cursor.PageSubscription;
 import org.apache.activemq.artemis.core.paging.cursor.PagedReference;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
 import org.apache.activemq.artemis.core.transaction.Transaction;
+import org.apache.activemq.artemis.utils.collections.ExpapandableLongArray;
 
 public interface PageTransactionInfo extends EncodingSupport {
 
@@ -43,22 +47,6 @@ public interface PageTransactionInfo extends EncodingSupport {
 
    void store(StorageManager storageManager, PagingManager pagingManager, Transaction tx) throws Exception;
 
-   void storeUpdate(StorageManager storageManager, PagingManager pagingManager, Transaction tx) throws Exception;
-
-   void reloadUpdate(StorageManager storageManager,
-                     PagingManager pagingManager,
-                     Transaction tx,
-                     int increment) throws Exception;
-
-   // To be used after the update was stored or reload
-   boolean onUpdate(int update, StorageManager storageManager, PagingManager pagingManager);
-
-   boolean checkSize(StorageManager storageManager, PagingManager pagingManager);
-
-   void increment(int durableSize, int nonDurableSize);
-
-   int getNumberOfMessages();
-
    /**
     * This method will hold the position to be delivered later in case this transaction is pending.
     * If the tx is not pending, it will return false, so the caller can deliver it right away
@@ -67,4 +55,13 @@ public interface PageTransactionInfo extends EncodingSupport {
     */
    boolean deliverAfterCommit(PageIterator pageIterator, PageSubscription cursor, PagedReference pagedMessage);
 
+   void addPage(PagingStore store, long pageId);
+
+   long[] getPages(SimpleString storeName);
+
+   int getStoresSize();
+
+   void forEach(BiConsumer<SimpleString, ExpapandableLongArray> consumer);
+
+   int removeStore(SimpleString storeName);
 }

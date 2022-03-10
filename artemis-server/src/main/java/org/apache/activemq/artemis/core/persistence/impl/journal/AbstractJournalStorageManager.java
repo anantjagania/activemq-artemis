@@ -28,7 +28,6 @@ import static org.apache.activemq.artemis.core.persistence.impl.journal.JournalR
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -903,8 +902,6 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
 
       List<PreparedTransactionInfo> preparedTransactions = new ArrayList<>();
 
-      Set<PageTransactionInfo> invalidPageTransactions = new HashSet<>();
-
       Map<Long, Message> messages = new HashMap<>();
       try (ArtemisCloseable lock = closeableReadLock()) {
          messageJournal.setRemoveExtraFilesOnLoad(true);
@@ -1053,39 +1050,15 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
                      break;
                   }
                   case JournalRecordIds.PAGE_TRANSACTION: {
-                     PageTransactionInfo invalidPGTx = null;
-                     if (record.isUpdate) {
-                        PageUpdateTXEncoding pageUpdate = new PageUpdateTXEncoding();
-
-                        pageUpdate.decode(buff);
-
-                        PageTransactionInfo pageTX = pagingManager.getTransaction(pageUpdate.pageTX);
-
-                        if (pageTX == null) {
-                           ActiveMQServerLogger.LOGGER.journalCannotFindPageTX(pageUpdate.pageTX);
-                        } else {
-                           if (!pageTX.onUpdate(pageUpdate.records, null, null)) {
-                              invalidPGTx = pageTX;
-                           }
-                        }
-                     } else {
+                     if (!record.isUpdate) {
                         PageTransactionInfoImpl pageTransactionInfo = new PageTransactionInfoImpl();
 
                         pageTransactionInfo.decode(buff);
 
                         pageTransactionInfo.setRecordID(record.id);
 
-                        pagingManager.addTransaction(pageTransactionInfo);
-
-                        if (!pageTransactionInfo.checkSize(null, null)) {
-                           invalidPGTx = pageTransactionInfo;
-                        }
+                        pagingManager.loadPageTX(pageTransactionInfo);
                      }
-
-                     if (invalidPGTx != null) {
-                        invalidPageTransactions.add(invalidPGTx);
-                     }
-
                      break;
                   }
                   case JournalRecordIds.SET_SCHEDULED_DELIVERY_TIME: {
@@ -1268,8 +1241,6 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
 
          journalLoader.postLoad(messageJournal, resourceManager, duplicateIDMap);
 
-         checkInvalidPageTransactions(pagingManager, invalidPageTransactions);
-
          journalLoaded = true;
          return info;
       }
@@ -1294,15 +1265,6 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
    private Message decodeMessage(CoreMessageObjectPools pools, ActiveMQBuffer buff) {
       Message message = MessagePersister.getInstance().decode(buff, null, pools, this);
       return message;
-   }
-
-   public void checkInvalidPageTransactions(PagingManager pagingManager,
-                                            Set<PageTransactionInfo> invalidPageTransactions) {
-      if (invalidPageTransactions != null && !invalidPageTransactions.isEmpty()) {
-         for (PageTransactionInfo pginfo : invalidPageTransactions) {
-            pginfo.checkSize(this, pagingManager);
-         }
-      }
    }
 
    /**
@@ -1843,17 +1805,12 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
 
                pageTransactionInfo.decode(buff);
 
-               if (record.isUpdate) {
-                  PageTransactionInfo pgTX = pagingManager.getTransaction(pageTransactionInfo.getTransactionID());
-                  if (pgTX != null) {
-                     pgTX.reloadUpdate(this, pagingManager, tx, pageTransactionInfo.getNumberOfMessages());
-                  }
-               } else {
-                  pageTransactionInfo.setCommitted(false);
+               if (!record.isUpdate) {
+                  pageTransactionInfo.setCommitted(true);
 
                   tx.putProperty(TransactionPropertyIndexes.PAGE_TRANSACTION, pageTransactionInfo);
 
-                  pagingManager.addTransaction(pageTransactionInfo);
+                  pagingManager.loadPageTX(pageTransactionInfo);
 
                   tx.addOperation(new FinishPageMessageOperation());
                }

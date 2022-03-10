@@ -16,8 +16,6 @@
  */
 package org.apache.activemq.artemis.core.paging;
 
-import java.util.Map;
-
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.ActiveMQComponent;
 import org.apache.activemq.artemis.core.server.files.FileStoreMonitor;
@@ -48,7 +46,7 @@ public interface PagingManager extends ActiveMQComponent, HierarchicalRepository
    /**
     * Point to inform/restoring Transactions used when the messages were added into paging
     */
-   void addTransaction(PageTransactionInfo pageTransaction);
+   void loadPageTX(PageTransactionInfo pageTransaction);
 
    /**
     * Point to inform/restoring Transactions used when the messages were added into paging
@@ -59,8 +57,6 @@ public interface PagingManager extends ActiveMQComponent, HierarchicalRepository
     * @param transactionID
     */
    void removeTransaction(long transactionID);
-
-   Map<Long, PageTransactionInfo> getTransactions();
 
    /**
     * Reload previously created PagingStores into memory
