@@ -15,14 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.activemq.artemis.core.server.impl;
+package org.apache.activemq.artemis.core.paging.cursor;
 
-import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.core.paging.PagedMessage;
 
-public class QueueImplTestAccessor {
+public class QueryPagedReferenceImpl extends PagedReferenceImpl {
 
-   public static long getQueueMemorySize(Queue queue) {
-      return ((QueueImpl)queue).queueMemorySize.getSize();
+   final PagePosition position;
+
+   public QueryPagedReferenceImpl(PagePosition position, PagedMessage message, PageSubscription subscription) {
+      super(message, subscription);
+      this.position = position;
    }
 
+   @Override
+   public synchronized PagedMessage getPagedMessage() {
+      if (message == null) {
+         message = subscription.queryMessage(position);
+      }
+
+      return message;
+   }
 }

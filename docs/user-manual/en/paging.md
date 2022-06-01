@@ -87,7 +87,7 @@ Configuration is done at the address settings in `broker.xml`.
 > is not considered while evaluating if [global-max-size](#global-max-size)
 > is hit and can't cause other non-management addresses to trigger a
 > configured `address-full-policy`.
-
+ 
 This is the list of available parameters on the address settings.
 
 Property Name|Description|Default
@@ -96,11 +96,19 @@ Property Name|Description|Default
 `max-size-messages`|The max number of messages the address could have before entering on page mode.| -1 (disabled)
 `page-size-bytes`|The size of each page file used on the paging system|10MB
 `address-full-policy`|This must be set to `PAGE` for paging to enable. If the value is `PAGE` then further messages will be paged to disk. If the value is `DROP` then further messages will be silently dropped. If the value is `FAIL` then the messages will be dropped and the client message producers will receive an exception. If the value is `BLOCK` then client message producers will block when they try and send further messages.|`PAGE`
-`page-max-cache-size`|The system will keep up to `page-max-cache-size` page files in memory to optimize IO during paging navigation.|5
+`max-read-page-messages` | how many message can be read from paging into the Queue whenever more messages are needed. The system wtill stop reading if `max-read-page-bytes hits the limit first.
+`max-read-page-bytes` | how much memory the messages read from paging can take on the Queue whenever more messages are needed. The system will stop reading if `max-read-page-messages` hits the limit first.
+`page-max-cache-size`|Deprecated and not used: `max-read-page-messages` and `max-read-page-bytes` will replace this functionality.
 
 ### max-size-bytes and max-size-messages simultaneous usage
 
 It is possible to define max-size-messages (as the maximum number of messages) and max-messages-size (as the max number of estimated memory used by the address) concurrently. The configured policy will start based on the first value to reach its mark.
+
+#### Maximum read from page
+
+Similarly to `max-size-bytes` and `max-size-messages`, the same can happen with `max-read-page-bytes` and `max-read-page-messages` when reading messages from paging.
+
+<b>Warning</b>: When messages are read from paging into memory, when they are redelivered (for either a rollback or a closed consumers). Messages will stay in memory until they are delivered again. In these cases of redeliveries it would be expected to have more messages in memory than the configured maximum values.
 
 ## Global Max Size
 
@@ -191,6 +199,12 @@ The pages are synced periodically and the sync period is configured through
 `page-sync-timeout` in nanoseconds. When using NIO journal, by default has
 the same value of `journal-buffer-timeout`. When using ASYNCIO, the default
 should be `3333333`.
+
+## Memory usage from Paged Messages.
+
+The system should keep at least one paged file in memory caching ahead reading messages. 
+Also every active subscription could keep one paged file in memory. So if your system has too many queues (some people would call this an horizontal topology).
+So, if your system has too many queues it is recommended to minimize the page-size.
 
 ## Example
 

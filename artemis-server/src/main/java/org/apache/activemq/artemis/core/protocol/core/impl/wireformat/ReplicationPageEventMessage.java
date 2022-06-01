@@ -23,7 +23,7 @@ import org.apache.activemq.artemis.utils.DataConstants;
 
 public class ReplicationPageEventMessage extends PacketImpl {
 
-   private int pageNumber;
+   private long pageNumber;
 
    private SimpleString storeName;
 
@@ -36,7 +36,7 @@ public class ReplicationPageEventMessage extends PacketImpl {
       super(PacketImpl.REPLICATION_PAGE_EVENT);
    }
 
-   public ReplicationPageEventMessage(final SimpleString storeName, final int pageNumber, final boolean isDelete) {
+   public ReplicationPageEventMessage(final SimpleString storeName, final long pageNumber, final boolean isDelete) {
       this();
       this.pageNumber = pageNumber;
       this.isDelete = isDelete;
@@ -54,7 +54,7 @@ public class ReplicationPageEventMessage extends PacketImpl {
    @Override
    public void encodeRest(final ActiveMQBuffer buffer) {
       buffer.writeSimpleString(storeName);
-      buffer.writeInt(pageNumber);
+      buffer.writeInt((int)pageNumber);
       buffer.writeBoolean(isDelete);
    }
 
@@ -68,7 +68,7 @@ public class ReplicationPageEventMessage extends PacketImpl {
    /**
     * @return the pageNumber
     */
-   public int getPageNumber() {
+   public long getPageNumber() {
       return pageNumber;
    }
 
@@ -98,7 +98,7 @@ public class ReplicationPageEventMessage extends PacketImpl {
       final int prime = 31;
       int result = super.hashCode();
       result = prime * result + (isDelete ? 1231 : 1237);
-      result = prime * result + pageNumber;
+      result = prime * result + (int)pageNumber;
       result = prime * result + ((storeName == null) ? 0 : storeName.hashCode());
       return result;
    }

@@ -1385,6 +1385,19 @@ public class LinkedListTest extends ActiveMQTestBase {
 
    }
 
+
+   @Test
+   public void testGetElement() {
+
+      for (int i = 0; i < 100; i++) {
+         list.addTail(i);
+      }
+
+      for (int i = 0; i < 100; i++) {
+         Assert.assertEquals(i, list.get(i).intValue());
+      }
+   }
+
    @Test
    public void testResizing() {
       int numIters = 1000;

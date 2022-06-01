@@ -17,20 +17,19 @@
 package org.apache.activemq.artemis.core.paging.impl;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.buffers.impl.ChannelBufferWrapper;
+import org.apache.activemq.artemis.core.io.IOCallback;
 import org.apache.activemq.artemis.core.io.SequentialFile;
 import org.apache.activemq.artemis.core.io.SequentialFileFactory;
 import org.apache.activemq.artemis.core.paging.PagedMessage;
-import org.apache.activemq.artemis.core.paging.cursor.LivePageCache;
 import org.apache.activemq.artemis.core.paging.cursor.PageSubscriptionCounter;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
 import org.apache.activemq.artemis.core.server.ActiveMQMessageBundle;
@@ -38,10 +37,19 @@ import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.server.LargeServerMessage;
 import org.apache.activemq.artemis.utils.DataConstants;
 import org.apache.activemq.artemis.utils.Env;
+import org.apache.activemq.artemis.utils.ReferenceCounterUtil;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
+import org.apache.activemq.artemis.utils.collections.EmptyList;
+import org.apache.activemq.artemis.utils.collections.LinkedList;
+import org.apache.activemq.artemis.utils.collections.LinkedListImpl;
+import org.apache.activemq.artemis.utils.collections.LinkedListIterator;
 import org.jboss.logging.Logger;
 
 public final class Page implements Comparable<Page> {
+
+   private static final AtomicInteger factory = new AtomicInteger(0);
+
+   private final int seqInt = factory.incrementAndGet();
 
    private static final Logger logger = Logger.getLogger(Page.class);
 
@@ -51,21 +59,48 @@ public final class Page implements Comparable<Page> {
 
    private static final byte END_BYTE = (byte) '}';
 
+   private final ReferenceCounterUtil referenceCounter = new ReferenceCounterUtil();
 
-   private final int pageId;
+   public void usageReset() {
+      referenceCounter.reset();
+   }
+
+   public int usageUp() {
+      return referenceCounter.increment();
+   }
+
+   public int usageDown() {
+      return referenceCounter.decrement();
+   }
+
+
+   /** This is an utility method to help you call usageDown while using a try (closeable) call.
+    *  */
+   public AutoCloseable refCloseable() {
+      return referenceCounter;
+   }
+
+   /** to be called when the page is supposed to be released */
+   public void releaseTask(Consumer<Page> releaseTask) {
+      referenceCounter.setTask(() -> releaseTask.accept(this));
+   }
+
+   private final long pageId;
 
    private boolean suspiciousRecords = false;
 
-   private final AtomicInteger numberOfMessages = new AtomicInteger(0);
+   private int numberOfMessages;
 
    private final SequentialFile file;
 
    private final SequentialFileFactory fileFactory;
 
+   private volatile LinkedList<PagedMessage> messages;
+
    /**
     * The page cache that will be filled with data as we write more data
     */
-   private volatile LivePageCache pageCache;
+   private volatile Consumer<PagedMessage> callback;
 
    private final AtomicInteger size = new AtomicInteger(0);
 
@@ -78,17 +113,13 @@ public final class Page implements Comparable<Page> {
     */
    private Set<PageSubscriptionCounter> pendingCounters;
 
-   private int lastReadMessageNumber;
    private ByteBuffer readFileBuffer;
-   private final ByteBuffer headerBuffer = ByteBuffer.allocate(HEADER_SIZE);
-   private ChannelBufferWrapper readFileBufferWrapper;
-   private int readProcessedBytes;
 
    public Page(final SimpleString storeName,
                final StorageManager storageManager,
                final SequentialFileFactory factory,
                final SequentialFile file,
-               final int pageId) throws Exception {
+               final long pageId) throws Exception {
       this.pageId = pageId;
       this.file = file;
       fileFactory = factory;
@@ -97,162 +128,62 @@ public final class Page implements Comparable<Page> {
       resetReadMessageStatus();
    }
 
-   public int getPageId() {
+   public long getPageId() {
       return pageId;
    }
 
-   public void setLiveCache(LivePageCache pageCache) {
-      this.pageCache = pageCache;
+   public void setCallback(Consumer<PagedMessage> callback) {
+      this.callback = callback;
    }
 
-   public LivePageCache getLiveCache() {
-      return pageCache;
+   public Consumer<PagedMessage> getCallback() {
+      return callback;
    }
 
    private synchronized void resetReadMessageStatus() {
-      lastReadMessageNumber = -3;
-      readProcessedBytes = 0;
    }
 
-   public synchronized PagedMessage readMessage(int startOffset,
-                                                int startMessageNumber,
-                                                int targetMessageNumber) throws Exception {
-      assert startMessageNumber <= targetMessageNumber;
-
-      if (!file.isOpen()) {
-         if (!file.exists()) {
-            return null;
-         }
-         throw ActiveMQMessageBundle.BUNDLE.invalidPageIO();
-      }
-      final int fileSize = (int) file.size();
-      try {
-         if (readFileBuffer == null) {
-            readProcessedBytes = startOffset;
-
-            if (startOffset > fileSize) {
-               return readMessage(0, 0, targetMessageNumber);
-            }
-
-            file.position(readProcessedBytes);
-            readFileBuffer = fileFactory.allocateDirectBuffer(Math.min(fileSize - readProcessedBytes, MIN_CHUNK_SIZE));
-            //the wrapper is reused to avoid unnecessary allocations
-            readFileBufferWrapper = wrapWhole(readFileBuffer);
-            readFileBuffer.limit(0);
-         } else if (lastReadMessageNumber + 1 != targetMessageNumber) {
-            readProcessedBytes = startOffset;
-            file.position(readProcessedBytes);
-            readFileBuffer.limit(0);
-         } else {
-            startMessageNumber = targetMessageNumber;
-         }
-
-         int remainingBytes = fileSize - readProcessedBytes;
-         int currentMessageNumber = startMessageNumber;
-         // First we search forward for the file position of the target number message
-         while (remainingBytes >= MINIMUM_MSG_PERSISTENT_SIZE && currentMessageNumber < targetMessageNumber) {
-            headerBuffer.clear();
-            file.read(headerBuffer);
-            headerBuffer.position(0);
-
-            if (headerBuffer.remaining() >= HEADER_SIZE && headerBuffer.get() == START_BYTE) {
-               final int encodedSize = headerBuffer.getInt();
-               final int nextPosition = readProcessedBytes + HEADER_AND_TRAILER_SIZE + encodedSize;
-               if (nextPosition <= fileSize) {
-                  final int endPosition = nextPosition - 1;
-                  file.position(endPosition);
-                  headerBuffer.rewind();
-                  headerBuffer.limit(1);
-                  file.read(headerBuffer);
-                  headerBuffer.position(0);
-
-                  if (headerBuffer.remaining() >= 1 && headerBuffer.get() == END_BYTE) {
-                     readProcessedBytes = nextPosition;
-                     currentMessageNumber++;
-                  } else {
-                     markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-                     break;
-                  }
-               } else {
-                  markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-                  break;
-               }
-            } else {
-               markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-               break;
-            }
-            remainingBytes = fileSize - readProcessedBytes;
-         }
-
-         // Then we read the target message
-         if (currentMessageNumber == targetMessageNumber && remainingBytes >= MINIMUM_MSG_PERSISTENT_SIZE) {
-            final ByteBuffer oldFileBuffer = readFileBuffer;
-            readFileBuffer = readIntoFileBufferIfNecessary(readFileBuffer, MINIMUM_MSG_PERSISTENT_SIZE, true);
-            //change wrapper if fileBuffer has changed
-            if (readFileBuffer != oldFileBuffer) {
-               readFileBufferWrapper = wrapWhole(readFileBuffer);
-            }
-            final byte startByte = readFileBuffer.get();
-            if (startByte == Page.START_BYTE) {
-               final int encodedSize = readFileBuffer.getInt();
-               final int nextPosition = readProcessedBytes + HEADER_AND_TRAILER_SIZE + encodedSize;
-               if (nextPosition <= fileSize) {
-                  final ByteBuffer currentFileBuffer = readFileBuffer;
-                  readFileBuffer = readIntoFileBufferIfNecessary(readFileBuffer, encodedSize + 1, true);
-                  //change wrapper if fileBuffer has changed
-                  if (readFileBuffer != currentFileBuffer) {
-                     readFileBufferWrapper = wrapWhole(readFileBuffer);
-                  }
-                  final int endPosition = readFileBuffer.position() + encodedSize;
-                  //this check must be performed upfront decoding
-                  if (readFileBuffer.remaining() >= (encodedSize + 1) && readFileBuffer.get(endPosition) == Page.END_BYTE) {
-                     final PagedMessageImpl msg = new PagedMessageImpl(encodedSize, storageManager);
-                     readFileBufferWrapper.setIndex(readFileBuffer.position(), endPosition);
-                     msg.decode(readFileBufferWrapper);
-                     readFileBuffer.position(endPosition + 1);
-                     assert readFileBuffer.get(endPosition) == Page.END_BYTE : "decoding cannot change end byte";
-                     msg.initMessage(storageManager);
-                     assert validateLargeMessageStorageManager(msg);
-                     if (logger.isTraceEnabled()) {
-                        logger.tracef("Reading message %s on pageId=%d for address=%s", msg, pageId, storeName);
-                     }
-                     readProcessedBytes = nextPosition;
-                     lastReadMessageNumber = targetMessageNumber;
-                     return msg;
-                  } else {
-                     markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-                  }
-               } else {
-                  markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-               }
-            } else {
-               markFileAsSuspect(file.getFileName(), readProcessedBytes, currentMessageNumber);
-            }
-         }
-      } catch (Exception e) {
-         resetReadMessageStatus();
-         throw e;
-      }
-      resetReadMessageStatus();
-
-      ActiveMQServerLogger.LOGGER.pageLookupError(this.pageId, targetMessageNumber, startOffset, startMessageNumber);
-
-      if (startOffset > 0) {
-         return readMessage(0, 0, targetMessageNumber);
-      } else {
-         return null;
-      }
+   public LinkedListIterator<PagedMessage> iterator() throws Exception {
+      LinkedList<PagedMessage> messages = getMessages();
+      return messages.iterator();
    }
 
-   public synchronized List<PagedMessage> read() throws Exception {
+   public synchronized LinkedList<PagedMessage> getMessages() throws Exception {
+      if (messages == null) {
+         boolean wasOpen = file.isOpen();
+         if (!wasOpen) {
+            if (!file.exists()) {
+               return EmptyList.getEmptyList();
+            }
+            file.open();
+         }
+         messages = read(storageManager);
+         if (!wasOpen) {
+            file.close();
+         }
+      }
+
+      return messages;
+   }
+
+   private void addMessage(PagedMessage message) {
+      if (messages == null) {
+         messages = new LinkedListImpl<>();
+      }
+      message.setMessageNr(messages.size());
+      message.setPageNr(this.pageId);
+      messages.addTail(message);
+   }
+
+   public synchronized LinkedList<PagedMessage> read() throws Exception {
       return read(storageManager);
    }
 
-   public synchronized List<PagedMessage> read(StorageManager storage) throws Exception {
+   public synchronized LinkedList<PagedMessage> read(StorageManager storage) throws Exception {
       return read(storage, false);
    }
 
-   public synchronized List<PagedMessage> read(StorageManager storage, boolean onlyLargeMessages) throws Exception {
+   public synchronized LinkedList<PagedMessage> read(StorageManager storage, boolean onlyLargeMessages) throws Exception {
       if (logger.isDebugEnabled()) {
          logger.debugf("reading page %d on address = %s onlyLargeMessages = %b",
             new Object[] {pageId, storeName, onlyLargeMessages});
@@ -260,20 +191,31 @@ public final class Page implements Comparable<Page> {
 
       if (!file.isOpen()) {
          if (!file.exists()) {
-            return Collections.emptyList();
+            return EmptyList.getEmptyList();
          }
          throw ActiveMQMessageBundle.BUNDLE.invalidPageIO();
       }
 
       size.lazySet((int) file.size());
 
-      final List<PagedMessage> messages = new ArrayList<>();
+      final LinkedList<PagedMessage> messages = new LinkedListImpl<>();
 
-      final int totalMessageCount = readFromSequentialFile(storage, messages, onlyLargeMessages);
+      final int totalMessageCount = readFromSequentialFile(storage, messages::addTail, onlyLargeMessages ? ONLY_LARGE : NO_SKIP);
 
-      numberOfMessages.lazySet(totalMessageCount);
+      numberOfMessages = totalMessageCount;
 
       return messages;
+   }
+
+   public String debugMessages() throws Exception {
+      StringBuffer buffer = new StringBuffer();
+      LinkedListIterator<PagedMessage> iter = getMessages().iterator();
+      while (iter.hasNext()) {
+         PagedMessage message = iter.next();
+         buffer.append(message.toString() + "\n");
+      }
+      iter.close();
+      return buffer.toString();
    }
 
    private ByteBuffer allocateAndReadIntoFileBuffer(ByteBuffer fileBuffer, int requiredBytes, boolean direct) throws Exception {
@@ -334,7 +276,13 @@ public final class Page implements Comparable<Page> {
          return true;
       }
       LargeServerMessage largeServerMessage = ((LargeServerMessage) msg.getMessage());
-      return largeServerMessage.getStorageManager() != null;
+
+      boolean storageManager = largeServerMessage.getStorageManager() != null;
+      if (!storageManager) {
+         logger.warn("storage manager is null at " + msg);
+      }
+
+      return storageManager;
    }
 
    private static ChannelBufferWrapper wrapWhole(ByteBuffer fileBuffer) {
@@ -361,9 +309,35 @@ public final class Page implements Comparable<Page> {
    private static final int HEADER_SIZE = HEADER_AND_TRAILER_SIZE - 1;
    private static final int MIN_CHUNK_SIZE = Env.osPageSize();
 
+   interface SkipRecord {
+      boolean skip(ActiveMQBuffer buffer);
+   }
+
+   private static final SkipRecord ONLY_LARGE = new SkipRecord() {
+      @Override
+      public boolean skip(ActiveMQBuffer buffer) {
+         return !PagedMessageImpl.isLargeMessage(buffer);
+      }
+   };
+
+   private static final SkipRecord NO_SKIP = new SkipRecord() {
+      @Override
+      public boolean skip(ActiveMQBuffer buffer) {
+         return false;
+      }
+   };
+
+   private static final SkipRecord SKIP_ALL = new SkipRecord() {
+      @Override
+      public boolean skip(ActiveMQBuffer buffer) {
+         return false;
+      }
+   };
+
+
    private int readFromSequentialFile(StorageManager storage,
-                                                     List<PagedMessage> messages,
-                                                     boolean onlyLargeMessages) throws Exception {
+                                                     Consumer<PagedMessage> messages,
+                                                     SkipRecord skipRecord) throws Exception {
       final int fileSize = (int) file.size();
       file.position(0);
       int processedBytes = 0;
@@ -400,12 +374,7 @@ public final class Page implements Comparable<Page> {
                      //this check must be performed upfront decoding
                      if (fileBuffer.remaining() >= (encodedSize + 1) && fileBuffer.get(endPosition) == Page.END_BYTE) {
                         fileBufferWrapper.setIndex(fileBuffer.position(), endPosition);
-                        final boolean skipMessage;
-                        if (onlyLargeMessages) {
-                           skipMessage = !PagedMessageImpl.isLargeMessage(fileBufferWrapper);
-                        } else {
-                           skipMessage = false;
-                        }
+                        final boolean skipMessage = skipRecord.skip(fileBufferWrapper);
                         if (!skipMessage) {
                            final PagedMessageImpl msg = new PagedMessageImpl(encodedSize, storageManager);
                            msg.decode(fileBufferWrapper);
@@ -415,7 +384,10 @@ public final class Page implements Comparable<Page> {
                            if (logger.isTraceEnabled()) {
                               logger.tracef("Reading message %s on pageId=%d for address=%s", msg, pageId, storeName);
                            }
-                           messages.add(msg);
+                           if (messages != null) {
+                              messages.accept(msg);
+                           }
+                           msg.setPageNr(this.pageId).setMessageNr(totalMessageCount);
                         }
                         totalMessageCount++;
                         fileBuffer.position(endPosition + 1);
@@ -476,11 +448,12 @@ public final class Page implements Comparable<Page> {
       //buffer limit and position are the same
       assert (buffer.remaining() == bufferSize) : "buffer position or limit are changed";
       file.writeDirect(buffer, false);
-      if (pageCache != null) {
-         pageCache.addLiveMessage(message);
+      if (callback != null) {
+         callback.accept(message);
       }
+      addMessage(message);
       //lighter than addAndGet when single writer
-      numberOfMessages.lazySet(numberOfMessages.get() + 1);
+      numberOfMessages++;
       size.lazySet(size.get() + bufferSize);
    }
 
@@ -488,18 +461,28 @@ public final class Page implements Comparable<Page> {
       file.sync();
    }
 
-   public void open(boolean createFile) throws Exception {
+   public boolean isOpen() {
+      return file != null && file.isOpen();
+   }
+
+
+   public boolean open(boolean createFile) throws Exception {
+      boolean isOpen = false;
       if (!file.isOpen() && (createFile || file.exists())) {
          file.open();
+         isOpen = true;
       }
       if (file.isOpen()) {
+         isOpen = true;
          size.set((int) file.size());
          file.position(0);
       }
+      return isOpen;
    }
 
    public void close(boolean sendEvent) throws Exception {
       close(sendEvent, true);
+      this.callback = null;
    }
 
    /**
@@ -515,11 +498,6 @@ public final class Page implements Comparable<Page> {
       if (sendEvent && storageManager != null) {
          storageManager.pageClosed(storeName, pageId);
       }
-      if (pageCache != null) {
-         pageCache.close();
-         // leave it to the soft cache to decide when to release it now
-         pageCache = null;
-      }
       file.close(waitSync, waitSync);
 
       Set<PageSubscriptionCounter> counters = getPendingCounters();
@@ -530,11 +508,7 @@ public final class Page implements Comparable<Page> {
       }
    }
 
-   public boolean isLive() {
-      return pageCache != null;
-   }
-
-   public boolean delete(final PagedMessage[] messages) throws Exception {
+   public boolean delete(final LinkedList<PagedMessage> messages) throws Exception {
       if (storageManager != null) {
          storageManager.pageDeleted(storeName, pageId);
       }
@@ -543,41 +517,67 @@ public final class Page implements Comparable<Page> {
          logger.debugf("Deleting pageNr=%d on store %s", pageId, storeName);
       }
 
-      final List<Long> largeMessageIds;
-      if (messages != null && messages.length > 0) {
-         largeMessageIds = new ArrayList<>();
-         for (PagedMessage msg : messages) {
-            if ((msg.getMessage()).isLargeMessage()) {
-               // this will trigger large message delete: no need to do it
-               // for non-large messages!
-               msg.getMessage().usageDown();
-               largeMessageIds.add(msg.getMessage().getMessageID());
+      if (messages != null) {
+         try (LinkedListIterator<PagedMessage> iter = messages.iterator()) {
+            while (iter.hasNext()) {
+               PagedMessage msg = iter.next();
+               if ((msg.getMessage()).isLargeMessage()) {
+                  ((LargeServerMessage)(msg.getMessage())).deleteFile();
+                  msg.getMessage().usageDown();
+               }
             }
          }
-      } else {
-         largeMessageIds = Collections.emptyList();
+      }
+
+      storageManager.afterCompleteOperations(new IOCallback() {
+         @Override
+         public void done() {
+            try {
+               if (suspiciousRecords) {
+                  ActiveMQServerLogger.LOGGER.pageInvalid(file.getFileName(), file.getFileName());
+                  file.renameTo(file.getFileName() + ".invalidPage");
+               } else {
+                  file.delete();
+               }
+               referenceCounter.reset();
+            } catch (Exception e) {
+               ActiveMQServerLogger.LOGGER.pageDeleteError(e);
+            }
+         }
+
+         @Override
+         public void onError(int errorCode, String errorMessage) {
+
+         }
+      });
+
+      return true;
+   }
+
+   public int readNumberOfMessages() throws Exception {
+      boolean wasOpen = isOpen();
+
+      if (!wasOpen) {
+         if (!open(false)) {
+            return 0;
+         }
       }
 
       try {
-         if (!storageManager.waitOnOperations(5000)) {
-            ActiveMQServerLogger.LOGGER.timedOutWaitingForLargeMessagesDeletion(largeMessageIds);
+         int numberOfMessages = readFromSequentialFile(null, null, SKIP_ALL);
+         if (logger.isDebugEnabled()) {
+            logger.debug(">>> Reading numberOfMessages page " + this.pageId + ", returning " + numberOfMessages);
          }
-         if (suspiciousRecords) {
-            ActiveMQServerLogger.LOGGER.pageInvalid(file.getFileName(), file.getFileName());
-            file.renameTo(file.getFileName() + ".invalidPage");
-         } else {
-            file.delete();
+         return numberOfMessages;
+      } finally {
+         if (!wasOpen) {
+            close(false);
          }
-
-         return true;
-      } catch (Exception e) {
-         ActiveMQServerLogger.LOGGER.pageDeleteError(e);
-         return false;
       }
    }
 
    public int getNumberOfMessages() {
-      return numberOfMessages.intValue();
+      return numberOfMessages;
    }
 
    public int getSize() {
@@ -586,34 +586,29 @@ public final class Page implements Comparable<Page> {
 
    @Override
    public String toString() {
-      return "Page::pageNr=" + this.pageId + ", file=" + this.file;
+      return "Page::seqCreation=" + seqInt + ", pageNr=" + this.pageId + ", file=" + this.file;
    }
 
    @Override
-   public int compareTo(Page otherPage) {
-      return otherPage.getPageId() - this.pageId;
+   public int compareTo(Page o) {
+      return 0;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+      if (o == null || getClass() != o.getClass())
+         return false;
+
+      Page page = (Page) o;
+
+      return pageId == page.pageId;
    }
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + pageId;
-      return result;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      Page other = (Page) obj;
-      if (pageId != other.pageId)
-         return false;
-      return true;
+      return (int) (pageId ^ (pageId >>> 32));
    }
 
    /**

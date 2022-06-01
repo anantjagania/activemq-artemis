@@ -24,6 +24,8 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.ICoreMessage;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.paging.PagedMessage;
+import org.apache.activemq.artemis.core.paging.cursor.PagePosition;
+import org.apache.activemq.artemis.core.paging.cursor.impl.PagePositionImpl;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
 import org.apache.activemq.artemis.core.persistence.impl.journal.codec.LargeMessagePersister;
 import org.apache.activemq.artemis.core.server.LargeServerMessage;
@@ -91,6 +93,10 @@ public class PagedMessageImpl implements PagedMessage {
 
    private final StorageManager storageManager;
 
+   private long pageNr;
+
+   private int messageNr;
+
    public PagedMessageImpl(final Message message, final long[] queueIDs, final long transactionID) {
       this(message, queueIDs);
       this.transactionID = transactionID;
@@ -108,6 +114,28 @@ public class PagedMessageImpl implements PagedMessage {
       this.storedSize = storedSize;
    }
 
+   @Override
+   public long getPageNr() {
+      return pageNr;
+   }
+
+   @Override
+   public PagedMessageImpl setPageNr(long pageNr) {
+      this.pageNr = pageNr;
+      return this;
+   }
+
+   @Override
+   public int getMessageNr() {
+      return this.messageNr;
+   }
+
+   @Override
+   public PagedMessageImpl setMessageNr(int messageNr) {
+      this.messageNr = messageNr;
+      return this;
+   }
+
 
    @Override
    public int getStoredSize() {
@@ -121,6 +149,11 @@ public class PagedMessageImpl implements PagedMessage {
    @Override
    public Message getMessage() {
       return message;
+   }
+
+   @Override
+   public PagePosition newPositionObject() {
+      return new PagePositionImpl(pageNr, messageNr);
    }
 
    @Override
@@ -237,6 +270,8 @@ public class PagedMessageImpl implements PagedMessage {
       return "PagedMessageImpl [queueIDs=" + Arrays.toString(queueIDs) +
          ", transactionID=" +
          transactionID +
+         ", page=" +
+         pageNr + "#" + pageNr +
          ", message=" +
          message +
          "]";

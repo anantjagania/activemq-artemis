@@ -25,7 +25,7 @@ import org.apache.activemq.artemis.utils.DataConstants;
 
 public class ReplicationPageWriteMessage extends PacketImpl implements MessagePacketI {
 
-   private int pageNumber;
+   private long pageNumber;
 
    private PagedMessage pagedMessage;
 
@@ -33,7 +33,7 @@ public class ReplicationPageWriteMessage extends PacketImpl implements MessagePa
       super(PacketImpl.REPLICATION_PAGE_WRITE);
    }
 
-   public ReplicationPageWriteMessage(final PagedMessage pagedMessage, final int pageNumber) {
+   public ReplicationPageWriteMessage(final PagedMessage pagedMessage, final long pageNumber) {
       this();
       this.pageNumber = pageNumber;
       this.pagedMessage = pagedMessage;
@@ -49,7 +49,7 @@ public class ReplicationPageWriteMessage extends PacketImpl implements MessagePa
 
    @Override
    public void encodeRest(final ActiveMQBuffer buffer) {
-      buffer.writeInt(pageNumber);
+      buffer.writeInt((int)pageNumber);
       pagedMessage.encode(buffer);
    }
 
@@ -63,7 +63,7 @@ public class ReplicationPageWriteMessage extends PacketImpl implements MessagePa
    /**
     * @return the pageNumber
     */
-   public int getPageNumber() {
+   public long getPageNumber() {
       return pageNumber;
    }
 
@@ -78,7 +78,7 @@ public class ReplicationPageWriteMessage extends PacketImpl implements MessagePa
    public int hashCode() {
       final int prime = 31;
       int result = super.hashCode();
-      result = prime * result + pageNumber;
+      result = prime * result + (int)pageNumber;
       result = prime * result + ((pagedMessage == null) ? 0 : pagedMessage.hashCode());
       return result;
    }
