@@ -32,11 +32,16 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 
 import org.apache.activemq.artemis.logs.annotation.LogBundle;
@@ -71,9 +76,37 @@ public class LogAnnotationProcessor extends AbstractProcessor {
       }
    }
 
+
+   private static class DocLogging implements Comparable<DocLogging> {
+      DocLogging(String code, String message) {
+         this.code = code;
+         this.message = message;
+      }
+      String code;
+      String message;
+
+      @Override
+      public int compareTo(DocLogging o) {
+         return code.compareTo(o.code);
+      }
+   }
+
+   private static class DocLoggingComparator implements Comparator<DocLogging> {
+
+      @Override
+      public int compare(DocLogging o1, DocLogging o2) {
+         o1.compareTo(o2);
+         return 0;
+      }
+   }
+
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       HashMap<Integer, String> messages = new HashMap<>();
+
+      List<DocLogging> docExceptions = new LinkedList<>();
+      List<DocLogging> docMessages = new LinkedList<>();
+
 
       try {
          for (TypeElement annotation : annotations) {
@@ -150,6 +183,7 @@ public class LogAnnotationProcessor extends AbstractProcessor {
                            debug("... annotated with " + messageAnnotation);
                         }
                         generateMessage(bundleAnnotation, writerOutput, executableMember, messageAnnotation, messages);
+                        docExceptions.add(new DocLogging(bundleAnnotation.projectCode() + messageAnnotation.id(), messageAnnotation.value()));
                      }
 
                      if (logAnnotation != null) {
@@ -158,6 +192,7 @@ public class LogAnnotationProcessor extends AbstractProcessor {
                            debug("... annotated with " + logAnnotation);
                         }
                         generateLogger(bundleAnnotation, writerOutput, executableMember, logAnnotation, messages);
+                        docMessages.add(new DocLogging(bundleAnnotation.projectCode() + logAnnotation.id(), logAnnotation.value()));
                      }
 
                      if (getLogger != null) {
@@ -175,7 +210,6 @@ public class LogAnnotationProcessor extends AbstractProcessor {
 
                writerOutput.println("}");
                writerOutput.close();
-
                if (DEBUG) {
                   debug("done processing " + fullClassName);
                   debug("*******************************************************************************************************************************");
@@ -188,6 +222,18 @@ public class LogAnnotationProcessor extends AbstractProcessor {
          processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
          return false;
       }
+
+      processingEnv.getFiler().createSourceFile("doc" + )
+
+      Collections.sort(docExceptions);
+      Collections.sort(docMessages);
+
+      docMessages.forEach((o) -> {
+         System.out.println("This is a doc for " + o.code + " = " + o.message);
+      });
+      docExceptions.forEach((o) -> {
+         System.out.println("This is a exception for " + o.code + " = " + o.message);
+      });
 
       return true;
    }
