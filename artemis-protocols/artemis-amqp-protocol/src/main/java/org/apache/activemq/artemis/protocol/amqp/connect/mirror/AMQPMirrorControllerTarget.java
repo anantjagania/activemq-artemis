@@ -118,6 +118,11 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
 
       @Override
       public void run() {
+         if (!connection.isHandler()) {
+            logger.trace("Moving execution to proton handler");
+            connectionRun();
+            return;
+         }
          if (logger.isTraceEnabled()) {
             logger.trace("Delivery settling for " + delivery + ", context=" + delivery.getContext());
          }
