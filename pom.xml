@@ -298,6 +298,7 @@
             <scope>test</scope>
             <!-- License: CPL 1.0 -->
          </dependency>
+
          <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
