@@ -158,5 +158,6 @@
       <module>artemis-test-support</module>
       <module>smoke-tests</module>
       <module>e2e-tests</module>
+      <module>leak-tests</module>
    </modules>
 </project>
