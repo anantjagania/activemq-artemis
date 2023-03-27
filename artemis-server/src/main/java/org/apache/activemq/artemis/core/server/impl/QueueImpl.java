@@ -3904,22 +3904,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    /** This will print errors and decide what to do with the errored consumer from the protocol layer. */
    @Override
    public void errorProcessing(Consumer consumer, Throwable t, MessageReference reference) {
-      executor.execute(() -> internalErrorProcessing(consumer, t, reference));
-   }
-
-   private void internalErrorProcessing(Consumer consumer, Throwable t, MessageReference reference) {
-      synchronized (this) {
-         ActiveMQServerLogger.LOGGER.removingBadConsumer(t, consumer, reference);
-         // If the consumer throws an exception we remove the consumer
-         try {
-            removeConsumer(consumer);
-         } catch (Exception e) {
-            ActiveMQServerLogger.LOGGER.errorRemovingConsumer(e);
-         }
-
-         // The message failed to be delivered, hence we try again
-         addHead(reference, false);
-      }
+      ActiveMQServerLogger.LOGGER.removingBadConsumer(consumer, reference, t);
+      executor.execute(() -> consumer.failed(t));
    }
 
    private boolean checkExpired(final MessageReference reference) {
@@ -3951,11 +3937,9 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       try {
          status = consumer.handle(reference);
       } catch (Throwable t) {
-         ActiveMQServerLogger.LOGGER.removingBadConsumer(t, consumer, reference);
-
          // If the consumer throws an exception we remove the consumer
          try {
-            removeConsumer(consumer);
+            errorProcessing(consumer, t, reference);
          } catch (Exception e) {
             ActiveMQServerLogger.LOGGER.errorRemovingConsumer(e);
          }

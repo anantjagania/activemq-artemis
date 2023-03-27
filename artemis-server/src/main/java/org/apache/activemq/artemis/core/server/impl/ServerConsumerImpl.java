@@ -1138,7 +1138,19 @@ public class ServerConsumerImpl implements ServerConsumer, ReadyListener {
 
    @Override
    public void disconnect() {
-      callback.disconnect(this, getQueue().getName());
+      callback.disconnect(this, "Queue deleted: " + getQueue().getName());
+   }
+
+   @Override
+   public void failed(Throwable t) {
+      try {
+         this.close(true);
+      } catch (Throwable e2) {
+         logger.warn(e2.getMessage(), e2);
+      }
+      if (callback != null) {
+         callback.disconnect(this, t.getMessage());
+      }
    }
 
    public float getRate() {

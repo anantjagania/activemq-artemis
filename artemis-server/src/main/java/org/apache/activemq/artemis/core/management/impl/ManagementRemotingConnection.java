@@ -275,8 +275,7 @@ public class ManagementRemotingConnection implements RemotingConnection {
       }
 
       @Override
-      public void disconnect(ServerConsumer consumerId, SimpleString queueName) {
-
+      public void disconnect(ServerConsumer consumerId, String message) {
       }
 
       @Override

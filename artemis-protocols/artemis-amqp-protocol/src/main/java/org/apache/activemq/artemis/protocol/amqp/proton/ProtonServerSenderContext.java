@@ -306,12 +306,14 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       }
       protonSession.removeSender(sender);
 
-      connection.runLater(() -> {
+      connection.runNow(() -> {
          sender.close();
          try {
             sessionSPI.closeSender(brokerConsumer);
          } catch (Exception e) {
             log.warn(e.getMessage(), e);
+         } finally {
+            lmUsageDown();
          }
          sender.close();
          connection.flush();
@@ -351,6 +353,10 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       } catch (Exception e) {
          log.warn(e.getMessage(), e);
          throw new ActiveMQAMQPInternalErrorException(e.getMessage());
+      } finally {
+         // check if there is a pending large message
+         // and ref count down its usage
+         lmUsageDown();
       }
    }
 
@@ -797,7 +803,6 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       if (localRunnable != null) {
          localRunnable.run();
       }
-      pendingLargeMessage = null;
       hasLarge = false;
       brokerConsumer.promptDelivery();
    }
@@ -807,9 +812,10 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       AMQPLargeMessage lm = null;
       if (pendingLargeMessage != null) {
          lm = pendingLargeMessage.message;
+         pendingLargeMessage = null;
       }
       if (lm != null) {
-         lm.usageDown();
+         connection.runNow(lm::usageDown);
       }
    }
 

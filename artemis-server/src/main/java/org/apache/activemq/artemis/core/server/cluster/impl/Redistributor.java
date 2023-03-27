@@ -129,6 +129,12 @@ public class Redistributor implements Consumer {
       // no op
    }
 
+
+   @Override
+   public void failed(Throwable t) {
+      // no op... there's no proceedDeliver on this class
+   }
+
    private void ackRedistribution(final MessageReference reference, final Transaction tx) throws Exception {
       reference.handled();
 
