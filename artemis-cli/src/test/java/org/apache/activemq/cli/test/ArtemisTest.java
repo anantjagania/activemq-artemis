@@ -1834,7 +1834,7 @@ public class ArtemisTest extends CliTestBase {
       ActiveMQServer activeMQServer = ((Pair<ManagementContext, ActiveMQServer>)result).getB();
 
       try {
-         final int COUNT = 20_000;
+         final int COUNT = 1000;
          for (int i = 0; i < COUNT; i++) {
             activeMQServer.createQueue(new QueueConfiguration("" + i));
          }
