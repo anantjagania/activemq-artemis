@@ -141,7 +141,7 @@ public class ThreadLeakCheckRule extends TestWatcher {
          logger.info("ignoring forceGC call since it seems System.gc is not working anyways");
          return;
       }
-      logger.info("#test forceGC");
+      logger.debug("#test forceGC");
       CountDownLatch finalized = new CountDownLatch(1);
       WeakReference<DumbReference> dumbReference = new WeakReference<>(new DumbReference(finalized));
 
@@ -164,7 +164,7 @@ public class ThreadLeakCheckRule extends TestWatcher {
          // a success would reset the count
          failedGCCalls = 0;
       }
-      logger.info("#test forceGC Done ");
+      logger.debug("#test forceGC Done ");
    }
 
    public static void forceGC(final Reference<?> ref, final long timeout) {
