@@ -442,7 +442,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <skipTests>${skipIntegrationTests}</skipTests>
-               <argLine>-Djgroups.bind_addr=::1 ${activemq-surefire-argline} ${its-surefire-extra-args} -Dorg.apache.activemq.SERIALIZABLE_PACKAGES="java.lang,javax.security,java.util,org.apache.activemq,org.fusesource.hawtbuf"</argLine>
+               <argLine>-Xmx2G -Djgroups.bind_addr=::1 ${activemq-surefire-argline} ${its-surefire-extra-args} -Dorg.apache.activemq.SERIALIZABLE_PACKAGES="java.lang,javax.security,java.util,org.apache.activemq,org.fusesource.hawtbuf"</argLine>
             </configuration>
          </plugin>
       </plugins>
