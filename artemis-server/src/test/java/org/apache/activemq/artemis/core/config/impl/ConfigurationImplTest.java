@@ -1163,8 +1163,8 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
 
    @Test
    public void testAddressSettingsPageLimitInvalidConfiguration1() throws Throwable {
-      AssertionLoggerHandler.startCapture();
-      runAfter(AssertionLoggerHandler::stopCapture);
+      AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler();
+      runAfter(() -> loggerHandler.close());
       ConfigurationImpl configuration = new ConfigurationImpl();
 
       Properties properties = new Properties();
@@ -1189,14 +1189,14 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(null, storeImpl.getPageLimitMessages());
       Assert.assertEquals(null, storeImpl.getPageLimitBytes());
       Assert.assertEquals(null, storeImpl.getPageFullMessagePolicy());
-      Assert.assertTrue(AssertionLoggerHandler.findText("AMQ224125"));
+      Assert.assertTrue(loggerHandler.findText("AMQ224125"));
    }
 
 
    @Test
    public void testAddressSettingsPageLimitInvalidConfiguration2() throws Throwable {
-      AssertionLoggerHandler.startCapture();
-      runAfter(AssertionLoggerHandler::stopCapture);
+      AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler();
+      runAfter(() -> loggerHandler.close());
       ConfigurationImpl configuration = new ConfigurationImpl();
 
       Properties properties = new Properties();
@@ -1220,13 +1220,13 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(null, storeImpl.getPageLimitMessages());
       Assert.assertEquals(null, storeImpl.getPageLimitBytes());
       Assert.assertEquals(null, storeImpl.getPageFullMessagePolicy());
-      Assert.assertTrue(AssertionLoggerHandler.findText("AMQ224125"));
+      Assert.assertTrue(loggerHandler.findText("AMQ224125"));
    }
 
    @Test
    public void testAddressSettingsPageLimitInvalidConfiguration3() throws Throwable {
-      AssertionLoggerHandler.startCapture();
-      runAfter(AssertionLoggerHandler::stopCapture);
+      AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler();
+      runAfter(() -> loggerHandler.close());
       ConfigurationImpl configuration = new ConfigurationImpl();
 
       Properties properties = new Properties();
@@ -1250,13 +1250,13 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(null, storeImpl.getPageLimitMessages());
       Assert.assertEquals(null, storeImpl.getPageLimitBytes());
       Assert.assertEquals(null, storeImpl.getPageFullMessagePolicy());
-      Assert.assertTrue(AssertionLoggerHandler.findText("AMQ224125"));
+      Assert.assertTrue(loggerHandler.findText("AMQ224125"));
    }
 
    @Test
    public void testAddressSettingsPageLimitInvalidConfiguration4() throws Throwable {
-      AssertionLoggerHandler.startCapture();
-      runAfter(AssertionLoggerHandler::stopCapture);
+      AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler();
+      runAfter(() -> loggerHandler.close());
       ConfigurationImpl configuration = new ConfigurationImpl();
 
       Properties properties = new Properties();
@@ -1280,7 +1280,7 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(null, storeImpl.getPageLimitMessages());
       Assert.assertEquals(null, storeImpl.getPageLimitBytes());
       Assert.assertEquals(null, storeImpl.getPageFullMessagePolicy());
-      Assert.assertTrue(AssertionLoggerHandler.findText("AMQ224124"));
+      Assert.assertTrue(loggerHandler.findText("AMQ224124"));
    }
 
 
