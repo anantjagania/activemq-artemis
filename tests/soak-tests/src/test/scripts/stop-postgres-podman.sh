@@ -16,7 +16,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This script shows a simple way to stop a mysql with podman
-
 podman kill postgres-artemis-test
 podman rm postgres-artemis-test

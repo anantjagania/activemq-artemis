@@ -16,5 +16,4 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill mysql-artemis-test
-podman rm mysql-artemis-test
+podman exec -it mssql-artemis-test /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ActiveMQ*Artemis

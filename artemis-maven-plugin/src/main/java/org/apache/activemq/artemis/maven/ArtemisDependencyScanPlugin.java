@@ -54,9 +54,6 @@ public class ArtemisDependencyScanPlugin extends ArtemisAbstractPlugin {
    private String[] libList;
 
    @Parameter
-   private String[] extraRepositories;
-
-   @Parameter
    private String variableName;
 
    @Parameter
@@ -82,15 +79,8 @@ public class ArtemisDependencyScanPlugin extends ArtemisAbstractPlugin {
    @Override
    protected void doExecute() throws MojoExecutionException, MojoFailureException {
 
-      int repositories = 0;
-      List<RemoteRepository> listRepo = new ArrayList<>();
-      if (extraRepositories != null) {
-         for (String  strRepo: extraRepositories) {
-            RemoteRepository repo = new RemoteRepository.Builder("repo" + (repositories++), "default", strRepo).build();
-            listRepo.add(repo);
-            remoteRepos.add(repo);
-         }
-      }
+      super.doExecute();
+
       getLog().debug("Local " + localRepository);
       project = (MavenProject) getPluginContext().get("project");
 
@@ -160,9 +150,7 @@ public class ArtemisDependencyScanPlugin extends ArtemisAbstractPlugin {
             throw new MojoFailureException(e.getMessage());
          }
       } finally {
-         for (RemoteRepository repository : listRepo) {
-            remoteRepos.remove(repository);
-         }
+         done();
       }
 
 

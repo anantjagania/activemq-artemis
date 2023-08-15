@@ -16,7 +16,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This script shows a simple way to start a mysql with podman
-
 ./stop-mysql-podman.sh
 podman run -d -p 3306:3306 --name mysql-artemis-test --rm -e MYSQL_ROOT_PASSWORD=artemis -e MYSQL_USER=artemis -e MYSQL_PASSWORD=artemis -e MYSQL_DATABASE=ARTEMIS-TEST mysql:8

@@ -16,5 +16,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill mysql-artemis-test
-podman rm mysql-artemis-test
+podman kill db2-artemis-test
+podman rm -f db2-artemis-test

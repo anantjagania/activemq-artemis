@@ -16,5 +16,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill mysql-artemis-test
-podman rm mysql-artemis-test
+podman exec -it oracle-artemis-test sqlplus system/artemis@FREE
+

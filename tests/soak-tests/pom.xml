@@ -660,6 +660,88 @@
                </execution>
                <execution>
                   <phase>test-compile</phase>
+                  <id>create-database-paging-oracle</id>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <!-- this makes it easier in certain envs -->
+                     <javaOptions>-Djava.net.preferIPv4Stack=true</javaOptions>
+                     <instance>${basedir}/target/database-paging/oracle</instance>
+                     <libFolders>
+                        <!-- you must download the driver here manually before you can use it -->
+                        <arg>${project.basedir}/jdbc-drivers/oracle</arg>
+                     </libFolders>
+                     <args>
+                        <arg>--jdbc</arg>
+                        <arg>--jdbc-connection-url</arg>
+                        <arg>jdbc:oracle:thin:system/artemis@localhost:1521:FREE</arg>
+                        <arg>--jdbc-driver-class-name</arg>
+                        <arg>oracle.jdbc.driver.OracleDriver</arg>
+                        <arg>--global-max-messages</arg>
+                        <arg>100</arg>
+                        <arg>--java-options</arg>
+                        <arg>-ea</arg>
+                     </args>
+                  </configuration>
+               </execution>
+               <execution>
+                  <phase>test-compile</phase>
+                  <id>create-database-paging-mssql</id>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <libList>
+                        <arg>com.microsoft.sqlserver:mssql-jdbc:8.4.1.jre11</arg>
+                     </libList>
+                     <!-- this makes it easier in certain envs -->
+                     <javaOptions>-Djava.net.preferIPv4Stack=true</javaOptions>
+                     <instance>${basedir}/target/database-paging/mssql</instance>
+                     <args>
+                        <arg>--jdbc</arg>
+                        <arg>--jdbc-connection-url</arg>
+                        <arg>jdbc:sqlserver://localhost:1433;user=sa;password=ActiveMQ*Artemis</arg>
+                        <arg>--jdbc-driver-class-name</arg>
+                        <arg>com.microsoft.sqlserver.jdbc.SQLServerDriver</arg>
+                        <arg>--global-max-messages</arg>
+                        <arg>100</arg>
+                        <arg>--java-options</arg>
+                        <arg>-ea</arg>
+                     </args>
+                  </configuration>
+               </execution>
+               <execution>
+                  <phase>test-compile</phase>
+                  <id>create-database-paging-DB2</id>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <libList>
+                        <arg>com.ibm.db2:jcc:11.5.8.0</arg>
+                     </libList>
+                     <!-- <libFolders>
+                        <arg>${project.basedir}/jdbc-drivers/db2</arg>
+                     </libFolders> -->
+                     <!-- this makes it easier in certain envs -->
+                     <javaOptions>-Djava.net.preferIPv4Stack=true</javaOptions>
+                     <instance>${basedir}/target/database-paging/db2</instance>
+                     <args>
+                        <arg>--jdbc</arg>
+                        <arg>--jdbc-connection-url</arg>
+                        <arg>jdbc:db2://localhost:50000/artemis:user=db2inst1;password=artemis;</arg>
+                        <arg>--jdbc-driver-class-name</arg>
+                        <arg>com.ibm.db2.jcc.DB2Driver</arg>
+                        <arg>--global-max-messages</arg>
+                        <arg>100</arg>
+                        <arg>--java-options</arg>
+                        <arg>-ea</arg>
+                     </args>
+                  </configuration>
+               </execution>
+               <execution>
+                  <phase>test-compile</phase>
                   <id>create-paging-export</id>
                   <goals>
                      <goal>create</goal>
