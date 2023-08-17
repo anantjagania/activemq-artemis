@@ -18,7 +18,7 @@
 
 source ./container-define.sh
 
-echo "Notice: This script is provided as a facility/tool to let you run an Microsoft Free Database. You agree with any license issues imposed by Oracle by running this script"
+./print-license.sh "SQL Server" "Microsoft"
 
 ./stop-mssql.sh
 
