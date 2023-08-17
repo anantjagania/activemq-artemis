@@ -16,5 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill oracle-artemis-test
-podman rm oracle-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND logs -f db2-artemis-test

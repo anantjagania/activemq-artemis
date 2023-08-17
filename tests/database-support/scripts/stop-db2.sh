@@ -16,5 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill mysql-artemis-test
-podman rm mysql-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND kill db2-artemis-test
+$CONTAINER_COMMAND rm -f db2-artemis-test

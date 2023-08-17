@@ -16,25 +16,34 @@
 # specific language governing permissions and limitations
 # under the License.
 
+source ./container-define.sh
+
+
+# As documented on https://www.ibm.com/docs/en/db2/11.5?topic=system-linux
+
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <folder_data>"
     echo "       setting folder_data as ./oradb by default"
-    folder_data="./oradb"
+    folder_data="./db2db"
 else
     folder_data="$1"
 fi
 
-./stop-oracle-podman.sh
+./stop-db2.sh
 
-echo "Notice: This script is provided as a facility/tool to let you run an Oracle Free Database. You agree with any license issues imposed by Oracle by running this script"
+print-license.sh "DB2" "IBM"
 
+if [ "$folder_data" = "NO_DATA" ]; then
+    echo "NO_DATA has been specified. not using a data folder"
+    data_argument=""
+else
+   data_argument="-v $folder_data:/database:Z"
+fi
 
-if [ ! -d "$folder_data" ]; then
+if [ ! -d "$folder_data" ] && [ "$folder_data" != "NO_DATA" ]; then
     mkdir "$folder_data"
     chmod 777 $folder_data
     echo "Folder '$folder_data' created."
-else
-    echo "Folder '$folder_data' already exists."
 fi
 
-podman run -d --name oracle-artemis-test -p 1521:1521 -v $folder_data:/opt/oracle/oradata:Z -e ORACLE_PWD=artemis container-registry.oracle.com/database/free:latest
+$CONTAINER_COMMAND run -d -h db2-artemis-test --name db2-artemis-test --privileged=true -p 50000:50000 --env-file db2.env $data_argument icr.io/db2_community/db2

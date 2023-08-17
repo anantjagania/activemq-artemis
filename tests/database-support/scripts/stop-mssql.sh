@@ -16,4 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman logs -f db2-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND kill mssql-artemis-test
+$CONTAINER_COMMAND rm mssql-artemis-test

@@ -16,5 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill mssql-artemis-test
-podman rm mssql-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND exec -it oracle-artemis-test sqlplus system/artemis@FREE
+

@@ -16,5 +16,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill db2-artemis-test
-podman rm -f db2-artemis-test
+source ./container-define.sh
+
+echo ""
+echo "*******************************************************************************************************************************"
+echo "    Notice:"
+echo "    This script is provided just to help you to run a $1 Free Database in a $CONTAINER_COMMAND environment, "
+echo "    in a way to facilitate development and testing, with an image provided by $2."
+echo "    By running this script you agree with all licensing issued by $2 towards the $1 image being downloaded here."
+echo "*******************************************************************************************************************************"
+echo ""

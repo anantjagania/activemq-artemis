@@ -16,5 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-./stop-mysql-podman.sh
-podman run -d -p 3306:3306 --name mysql-artemis-test --rm -e MYSQL_ROOT_PASSWORD=artemis -e MYSQL_USER=artemis -e MYSQL_PASSWORD=artemis -e MYSQL_DATABASE=ARTEMIS-TEST mysql:8
+source ./container-define.sh
+
+$CONTAINER_COMMAND kill oracle-artemis-test
+$CONTAINER_COMMAND rm oracle-artemis-test

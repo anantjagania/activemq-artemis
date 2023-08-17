@@ -16,4 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman exec -it postgres-artemis-test psql -U artemis artemis
+#CONTAINER_COMMAND=$CONTAINER_COMMAND
+
+# you may use 'podman' or 'docker'
+CONTAINER_COMMAND=podman

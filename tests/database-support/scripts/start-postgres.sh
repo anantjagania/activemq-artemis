@@ -16,4 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman logs -f postgres-artemis-test
+source ./container-define.sh
+
+./stop-postgres.sh
+$CONTAINER_COMMAND run --name postgres-artemis-test --rm -d -e POSTGRES_USER=artemis -e POSTGRES_PASSWORD=artemis -e POSTGRES_DB=artemis -p 5432:5432 -p 9876:80 postgres

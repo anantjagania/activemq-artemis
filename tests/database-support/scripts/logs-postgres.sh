@@ -16,27 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
+source ./container-define.sh
 
-# As documented on https://www.ibm.com/docs/en/db2/11.5?topic=system-linux
-
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <folder_data>"
-    echo "       setting folder_data as ./oradb by default"
-    folder_data="./db2db"
-else
-    folder_data="$1"
-fi
-
-./stop-db2-podman.sh
-
-if [ ! -d "$folder_data" ]; then
-    mkdir "$folder_data"
-    chmod 777 $folder_data
-    echo "Folder '$folder_data' created."
-else
-    echo "Folder '$folder_data' already exists."
-fi
-
-echo "Notice: This script is provided as a facility/tool to let you run an DB2 Free Database. You agree with any license issues imposed by IBM by running this script"
-
-podman run -d -h db2-artemis-test --name db2-artemis-test --privileged=true -p 50000:50000 --env-file db2.env -v $folder_data:/database:Z icr.io/db2_community/db2
+$CONTAINER_COMMAND logs -f postgres-artemis-test

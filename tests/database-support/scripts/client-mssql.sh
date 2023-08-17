@@ -16,5 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman kill postgres-artemis-test
-podman rm postgres-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND exec -it mssql-artemis-test /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ActiveMQ*Artemis

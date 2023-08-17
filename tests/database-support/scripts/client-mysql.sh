@@ -16,4 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman exec -it mysql-artemis-test mysql ARTEMIS-TEST -u root --password=artemis
+source ./container-define.sh
+
+$CONTAINER_COMMAND exec -it mysql-artemis-test mysql ARTEMIS-TEST -u root --password=artemis

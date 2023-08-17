@@ -16,4 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman logs -f mssql-artemis-test
+source ./container-define.sh
+
+$CONTAINER_COMMAND logs -f mssql-artemis-test

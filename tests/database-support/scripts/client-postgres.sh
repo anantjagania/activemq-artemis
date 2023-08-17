@@ -16,8 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-echo "Notice: This script is provided as a facility/tool to let you run an Microsoft Free Database. You agree with any license issues imposed by Oracle by running this script"
+source ./container-define.sh
 
-./stop-mssql-podman.sh
-
-podman run -d --name mssql-artemis-test -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=ActiveMQ*Artemis" -p 1433:1433 mcr.microsoft.com/mssql/server:2019-latest
+$CONTAINER_COMMAND exec -it postgres-artemis-test psql -U artemis artemis

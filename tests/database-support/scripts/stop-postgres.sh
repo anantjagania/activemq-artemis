@@ -16,5 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman logs -f oracle-artemis-test
+source ./container-define.sh
 
+$CONTAINER_COMMAND kill postgres-artemis-test
+$CONTAINER_COMMAND rm postgres-artemis-test

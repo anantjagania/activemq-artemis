@@ -16,5 +16,31 @@
 # specific language governing permissions and limitations
 # under the License.
 
-podman exec -it oracle-artemis-test sqlplus system/artemis@FREE
+source ./container-define.sh
 
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <folder_data>"
+    echo "       setting folder_data as ./oradb by default"
+    folder_data="./oradb"
+else
+    folder_data="$1"
+fi
+
+./stop-oracle.sh
+
+./print-license.sh Oracle Oracle
+
+if [ "$folder_data" = "NO_DATA" ]; then
+    echo "NO_DATA has been specified. not using a data folder"
+    data_argument=""
+else
+   data_argument="-v $folder_data:/opt/oracle/oradata:Z"
+fi
+
+if [ ! -d "$folder_data" ] && [ "$folder_data" != "NO_DATA" ]; then
+    mkdir "$folder_data"
+    chmod 777 $folder_data
+    echo "Folder '$folder_data' created."
+fi
+
+$CONTAINER_COMMAND run -d --name oracle-artemis-test -p 1521:1521 $data_argument -e ORACLE_PWD=artemis container-registry.oracle.com/database/free:latest
