@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.activemq.artemis.util;
+package org.apache.activemq.artemis.utils;
 
 import javax.jms.Connection;
 import java.io.BufferedReader;

@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -268,7 +269,12 @@ public class ArtemisCreatePlugin extends ArtemisAbstractPlugin {
          commandLineStream.println("# These are the commands used to create " + instance.getName());
          commandLineStream.println(getCommandline(listCommands));
 
-         Artemis.execute(home, null, null, useSystemOutput, listCommands);
+        File createProperties = new File(instance.getParentFile(), instance.getName() + ".properties");
+        HashMap createMap = (HashMap) Artemis.execute(home, null, null, useSystemOutput, listCommands);
+
+        try (PrintStream propertiesStream = new PrintStream(new FileOutputStream(createProperties))) {
+           createMap.forEach((a, b) -> propertiesStream.println(a + "=" + b.toString().replace("\n", " ")));
+        }
 
          if (configuration != null) {
             String[] list = configuration.list();

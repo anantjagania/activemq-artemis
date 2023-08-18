@@ -19,19 +19,22 @@
 source ./container-define.sh
 
 
+# NOTE: at the time this script was written podman had an issue starting DB2 without a folder specified. Docker ran it without any problems.
+#       If you must use podman you could specify a data folder and it should work fine
+
 # As documented on https://www.ibm.com/docs/en/db2/11.5?topic=system-linux
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <folder_data>"
-    echo "       setting folder_data as ./oradb by default"
-    folder_data="./db2db"
+    echo "       setting folder_data as NO_DATA by default"
+    folder_data="NO_DATA"
 else
     folder_data="$1"
 fi
 
 ./stop-db2.sh
 
-print-license.sh "DB2" "IBM"
+./print-license.sh "DB2" "IBM"
 
 if [ "$folder_data" = "NO_DATA" ]; then
     echo "NO_DATA has been specified. not using a data folder"

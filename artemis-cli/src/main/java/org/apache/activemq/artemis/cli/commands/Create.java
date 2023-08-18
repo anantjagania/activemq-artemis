@@ -868,7 +868,7 @@ public class Create extends InstallAbstract {
          context.out.println(String.format("      \"%s\" uninstall", path(service)));
       }
 
-      return null;
+      return filters;
    }
 
    protected static void addScriptFilters(HashMap<String, String> filters,

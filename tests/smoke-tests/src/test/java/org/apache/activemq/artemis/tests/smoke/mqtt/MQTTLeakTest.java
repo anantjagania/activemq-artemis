@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;

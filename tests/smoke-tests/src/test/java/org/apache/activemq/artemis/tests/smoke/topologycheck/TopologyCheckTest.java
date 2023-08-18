@@ -26,7 +26,7 @@ import org.apache.activemq.artemis.json.JsonArray;
 import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.json.JsonString;
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.apache.activemq.artemis.utils.Wait;
 import org.junit.Assert;
 import org.junit.Before;

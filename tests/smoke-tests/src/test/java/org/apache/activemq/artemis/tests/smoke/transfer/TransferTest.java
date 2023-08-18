@@ -30,7 +30,7 @@ import java.util.Collection;
 
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -47,7 +47,7 @@ import org.apache.activemq.artemis.core.client.impl.TopologyMemberImpl;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.apache.activemq.artemis.utils.SpawnedVMSupport;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.activemq.artemis.utils.network.NetUtil;

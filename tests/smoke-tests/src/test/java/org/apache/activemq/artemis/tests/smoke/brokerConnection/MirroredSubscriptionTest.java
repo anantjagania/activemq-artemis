@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.activemq.artemis.api.core.management.SimpleManagement;
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.apache.activemq.artemis.utils.Wait;
 import org.junit.Assert;
 import org.junit.Before;

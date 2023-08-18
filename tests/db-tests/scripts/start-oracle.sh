@@ -20,8 +20,8 @@ source ./container-define.sh
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <folder_data>"
-    echo "       setting folder_data as ./oradb by default"
-    folder_data="./oradb"
+    echo "       setting folder_data as NO_DATA by default"
+    folder_data="NO_DATA"
 else
     folder_data="$1"
 fi

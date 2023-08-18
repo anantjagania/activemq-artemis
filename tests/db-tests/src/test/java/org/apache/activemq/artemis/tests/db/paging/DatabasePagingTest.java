@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.activemq.artemis.tests.soak.paging;
+package org.apache.activemq.artemis.tests.db.paging;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.activemq.artemis.tests.soak.SoakTestBase;
+import org.apache.activemq.artemis.tests.db.common.DBTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
-import org.apache.activemq.artemis.tests.util.RandomUtil;
+import org.apache.activemq.artemis.utils.RandomUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +40,10 @@ import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.activemq.artemis.tests.soak.TestParameters.testProperty;
+import static org.apache.activemq.artemis.utils.TestParameters.testProperty;
 
 @RunWith(Parameterized.class)
-public class DatabasePagingTest extends SoakTestBase {
+public class DatabasePagingTest extends DBTestBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -51,7 +51,7 @@ public class DatabasePagingTest extends SoakTestBase {
 
    // you can use ./start-${database}-podman.sh scripts from ./src/test/scripts to start the databases.
    // support values are derby, mysql and postgres
-   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "derby");
+   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "derby,db2,mssql");
 
    private static final int MAX_MESSAGES = Integer.parseInt(testProperty(TEST_NAME, "MAX_MESSAGES", "200"));
 
@@ -80,7 +80,7 @@ public class DatabasePagingTest extends SoakTestBase {
 
    public DatabasePagingTest(String database) {
       this.database = database;
-      serverName = "database-paging/" + database;
+      serverName = database;
    }
 
 

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.activemq.artemis.tests.smoke.common;
+package org.apache.activemq.artemis.tests.db.common;
 
 import org.apache.activemq.artemis.utils.RealServerTestBase;
 
-public class SmokeTestBase extends RealServerTestBase {
+public class DBTestBase extends RealServerTestBase {
 }
