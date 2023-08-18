@@ -19,4 +19,4 @@
 #CONTAINER_COMMAND=$CONTAINER_COMMAND
 
 # you may use 'podman' or 'docker'
-CONTAINER_COMMAND=docker
+CONTAINER_COMMAND=podman
