@@ -31,6 +31,11 @@
       <sts-surefire-extra-args />
       <artemis-distribuiton-lib-dir>-Ddistribution.lib="${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}/lib"</artemis-distribuiton-lib-dir>
       <sts-http-host>localhost</sts-http-host>
+      <db2.uri>jdbc:db2://localhost:50000/artemis:user=db2inst1;password=artemis;</db2.uri>
+      <mysql.uri>jdbc:mysql://localhost/ARTEMIS-TEST?user=root&amp;#38;password=artemis</mysql.uri>
+      <postgres.uri>jdbc:postgresql:artemis?user=artemis&amp;#38;password=artemis</postgres.uri>
+      <oracle.uri>jdbc:oracle:thin:system/artemis@localhost:1521:FREE</oracle.uri>
+      <mssql.uri>jdbc:sqlserver://localhost:1433;user=sa;password=ActiveMQ*Artemis</mssql.uri>
    </properties>
 
    <dependencies>
@@ -278,7 +283,7 @@
                      <args>
                         <arg>--jdbc</arg>
                         <arg>--jdbc-connection-url</arg>
-                        <arg>jdbc:mysql://localhost/ARTEMIS-TEST?user=root&amp;#38;password=artemis</arg>
+                        <arg>${mysql.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
                         <arg>com.mysql.cj.jdbc.Driver</arg>
                         <arg>--global-max-messages</arg>
@@ -305,7 +310,7 @@
                      <args>
                         <arg>--jdbc</arg>
                         <arg>--jdbc-connection-url</arg>
-                        <arg>jdbc:postgresql:artemis?user=artemis&amp;#38;password=artemis</arg>
+                        <arg>${postgres.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
                         <arg>org.postgresql.Driver</arg>
                         <arg>--global-max-messages</arg>
@@ -332,7 +337,7 @@
                      <args>
                         <arg>--jdbc</arg>
                         <arg>--jdbc-connection-url</arg>
-                        <arg>jdbc:oracle:thin:system/artemis@localhost:1521:FREE</arg>
+                        <arg>${oracle.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
                         <arg>oracle.jdbc.driver.OracleDriver</arg>
                         <arg>--global-max-messages</arg>
@@ -358,7 +363,7 @@
                      <args>
                         <arg>--jdbc</arg>
                         <arg>--jdbc-connection-url</arg>
-                        <arg>jdbc:sqlserver://localhost:1433;user=sa;password=ActiveMQ*Artemis</arg>
+                        <arg>${mssql.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
                         <arg>com.microsoft.sqlserver.jdbc.SQLServerDriver</arg>
                         <arg>--global-max-messages</arg>
@@ -387,7 +392,7 @@
                      <args>
                         <arg>--jdbc</arg>
                         <arg>--jdbc-connection-url</arg>
-                        <arg>jdbc:db2://localhost:50000/artemis:user=db2inst1;password=artemis;</arg>
+                        <arg>${db2.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
                         <arg>com.ibm.db2.jcc.DB2Driver</arg>
                         <arg>--global-max-messages</arg>
