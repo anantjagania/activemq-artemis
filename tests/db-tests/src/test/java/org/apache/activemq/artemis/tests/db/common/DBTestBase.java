@@ -16,7 +16,61 @@
  */
 package org.apache.activemq.artemis.tests.db.common;
 
+import java.io.File;
+import java.lang.invoke.MethodHandles;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.ResultSet;
+
 import org.apache.activemq.artemis.utils.RealServerTestBase;
+import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DBTestBase extends RealServerTestBase {
+
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+   public ClassLoader defineClassLoader(File location) throws Exception {
+      String classPathValue = null;
+      File[] jars = location.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+
+      URL[] url = new URL[jars.length];
+
+      for (int i = 0; i < jars.length; i++) {
+         url[i] = jars[i].toURI().toURL();
+      }
+
+      return new URLClassLoader(url, Thread.currentThread().getContextClassLoader());
+   }
+
+   public void dropDatabase(String serverName) throws Exception {
+      String uri = System.getProperty(serverName + ".uri");
+      String clazzName = System.getProperty(serverName + ".class");
+      Assert.assertNotNull(uri);
+      Assert.assertNotNull(clazzName);
+
+      uri = uri.replace("&#38;", "&");
+      logger.info("uri {}", uri);
+
+      String serverLocation = getServerLocation(serverName);
+      File lib = new File(serverLocation + "/lib");
+      ClassLoader loader = defineClassLoader(lib);
+      Class clazz = loader.loadClass(clazzName);
+      Driver driver = (Driver) clazz.getDeclaredConstructor().newInstance();
+      try (Connection connection = driver.connect(uri, null)) {
+         ResultSet data = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
+         while (data.next()) {
+            try {
+               connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
+               logger.info("Dropped {}", data.getString("TABLE_NAME"));
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+         }
+      }
+   }
+
 }
