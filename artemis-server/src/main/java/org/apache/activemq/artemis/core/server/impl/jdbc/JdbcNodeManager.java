@@ -27,7 +27,7 @@ import org.apache.activemq.artemis.core.server.ActiveMQLockAcquisitionTimeoutExc
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.server.NodeManager;
 import org.apache.activemq.artemis.core.server.impl.CleaningActivateCallback;
-import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 import org.apache.activemq.artemis.utils.ExecutorFactory;
@@ -84,7 +84,7 @@ public final class JdbcNodeManager extends NodeManager {
                                                   long lockRenewPeriodMillis,
                                                   long lockAcquisitionTimeoutMillis,
                                                   long allowedTimeDiff,
-                                                  JDBCConnectionProvider connectionProvider,
+                                                  ConnectionProvider connectionProvider,
                                                   SQLProvider provider,
                                                   ScheduledExecutorService scheduledExecutorService,
                                                   ExecutorFactory executorFactory) {

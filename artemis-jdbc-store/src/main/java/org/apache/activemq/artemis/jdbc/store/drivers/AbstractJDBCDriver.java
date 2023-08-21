@@ -39,12 +39,12 @@ public abstract class AbstractJDBCDriver {
 
    protected SQLProvider sqlProvider;
 
-   protected JDBCConnectionProvider connectionProvider;
+   protected ConnectionProvider connectionProvider;
 
    public AbstractJDBCDriver() {
    }
 
-   public AbstractJDBCDriver(JDBCConnectionProvider connectionProvider, SQLProvider provider) {
+   public AbstractJDBCDriver(ConnectionProvider connectionProvider, SQLProvider provider) {
       this.connectionProvider = connectionProvider;
       this.sqlProvider = provider;
    }
@@ -188,11 +188,11 @@ public abstract class AbstractJDBCDriver {
       this.sqlProvider = sqlProvider;
    }
 
-   public void setJdbcConnectionProvider(JDBCConnectionProvider connectionProvider) {
+   public void setJdbcConnectionProvider(ConnectionProvider connectionProvider) {
       this.connectionProvider = connectionProvider;
    }
 
-   public JDBCConnectionProvider getJdbcConnectionProvider() {
+   public ConnectionProvider getJdbcConnectionProvider() {
       return this.connectionProvider;
    }
 

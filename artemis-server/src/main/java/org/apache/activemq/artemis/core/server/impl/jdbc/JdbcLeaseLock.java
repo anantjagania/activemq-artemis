@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
-import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
@@ -39,7 +39,7 @@ class JdbcLeaseLock implements LeaseLock {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
    private static final int MAX_HOLDER_ID_LENGTH = 128;
-   private final JDBCConnectionProvider connectionProvider;
+   private final ConnectionProvider connectionProvider;
    private final String holderId;
    private final String tryAcquireLock;
    private final String tryReleaseLock;
@@ -59,7 +59,7 @@ class JdbcLeaseLock implements LeaseLock {
     * whose life cycle will be managed externally.
     */
    JdbcLeaseLock(String holderId,
-                 JDBCConnectionProvider connectionProvider,
+                 ConnectionProvider connectionProvider,
                  String tryAcquireLock,
                  String tryReleaseLock,
                  String renewLock,

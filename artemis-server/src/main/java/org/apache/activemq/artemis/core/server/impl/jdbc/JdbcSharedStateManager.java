@@ -23,7 +23,7 @@ import java.sql.SQLException;
 import java.util.function.Supplier;
 
 import org.apache.activemq.artemis.jdbc.store.drivers.AbstractJDBCDriver;
-import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 import org.apache.activemq.artemis.utils.UUID;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ final class JdbcSharedStateManager extends AbstractJDBCDriver implements SharedS
    public static JdbcSharedStateManager usingConnectionProvider(String holderId,
                                                                 long locksExpirationMillis,
                                                                 long allowedTimeDiff,
-                                                                JDBCConnectionProvider connectionProvider,
+                                                                ConnectionProvider connectionProvider,
                                                                 SQLProvider provider) {
       return usingConnectionProvider(holderId, locksExpirationMillis, allowedTimeDiff, -1, connectionProvider, provider);
    }
@@ -62,7 +62,7 @@ final class JdbcSharedStateManager extends AbstractJDBCDriver implements SharedS
                                                                 long locksExpirationMillis,
                                                                 long queryTimeoutMillis,
                                                                 long allowedTimeDiff,
-                                                                JDBCConnectionProvider connectionProvider,
+                                                                ConnectionProvider connectionProvider,
                                                                 SQLProvider provider) {
       final JdbcSharedStateManager sharedStateManager = new JdbcSharedStateManager(holderId, locksExpirationMillis,
                                                                                    queryTimeoutMillis, allowedTimeDiff);
@@ -87,7 +87,7 @@ final class JdbcSharedStateManager extends AbstractJDBCDriver implements SharedS
    }
 
    static JdbcLeaseLock createLiveLock(String holderId,
-                                       JDBCConnectionProvider connectionProvider,
+                                       ConnectionProvider connectionProvider,
                                        SQLProvider sqlProvider,
                                        long expirationMillis,
                                        long allowedTimeDiff) {
@@ -95,7 +95,7 @@ final class JdbcSharedStateManager extends AbstractJDBCDriver implements SharedS
    }
 
    static JdbcLeaseLock createLiveLock(String holderId,
-                                       JDBCConnectionProvider connectionProvider,
+                                       ConnectionProvider connectionProvider,
                                        SQLProvider sqlProvider,
                                        long expirationMillis,
                                        long queryTimeoutMillis,
@@ -108,7 +108,7 @@ final class JdbcSharedStateManager extends AbstractJDBCDriver implements SharedS
    }
 
    static JdbcLeaseLock createBackupLock(String holderId,
-                                         JDBCConnectionProvider connectionProvider,
+                                         ConnectionProvider connectionProvider,
                                          SQLProvider sqlProvider,
                                          long expirationMillis,
                                          long queryTimeoutMillis,

@@ -18,4 +18,4 @@
 
 source ./container-define.sh
 
-$CONTAINER_COMMAND exec -it mysql-artemis-test mysql ARTEMIS-TEST -u root --password=artemis
+$CONTAINER_COMMAND logs -f mysql-artemis-test

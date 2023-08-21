@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 
 import org.apache.activemq.artemis.utils.RealServerTestBase;
@@ -33,8 +34,13 @@ public class DBTestBase extends RealServerTestBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+   public ClassLoader defineClassLoader(String serverName) throws Exception {
+      String serverLocation = getServerLocation(serverName);
+      File lib = new File(serverLocation + "/lib");
+      return defineClassLoader(lib);
+   }
+
    public ClassLoader defineClassLoader(File location) throws Exception {
-      String classPathValue = null;
       File[] jars = location.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
 
       URL[] url = new URL[jars.length];
@@ -44,6 +50,15 @@ public class DBTestBase extends RealServerTestBase {
       }
 
       return new URLClassLoader(url, Thread.currentThread().getContextClassLoader());
+   }
+
+   public void registerDriver(String serverName) throws Exception {
+      String uri = System.getProperty(serverName + ".uri");
+      String clazzName = System.getProperty(serverName + ".class");
+      Assert.assertNotNull(clazzName);
+      ClassLoader loader = defineClassLoader(serverName);
+      Class clazz = loader.loadClass(clazzName);
+      DriverManager.registerDriver((Driver)clazz.getDeclaredConstructor().newInstance());
    }
 
    public void dropDatabase(String serverName) throws Exception {

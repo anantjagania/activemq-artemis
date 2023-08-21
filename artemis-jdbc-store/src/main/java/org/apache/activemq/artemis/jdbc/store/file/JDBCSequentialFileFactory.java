@@ -30,7 +30,7 @@ import org.apache.activemq.artemis.core.io.SequentialFile;
 import org.apache.activemq.artemis.core.io.SequentialFileFactory;
 import org.apache.activemq.artemis.core.io.nio.NIOSequentialFileFactory;
 import org.apache.activemq.artemis.core.server.ActiveMQComponent;
-import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public class JDBCSequentialFileFactory implements SequentialFileFactory, ActiveM
 
    private final IOCriticalErrorListener criticalErrorListener;
 
-   public JDBCSequentialFileFactory(final JDBCConnectionProvider connectionProvider,
+   public JDBCSequentialFileFactory(final ConnectionProvider connectionProvider,
                                     final SQLProvider sqlProvider,
                                     Executor executor,
                                     IOCriticalErrorListener criticalErrorListener) throws Exception {

@@ -51,7 +51,7 @@ public class DatabasePagingTest extends DBTestBase {
 
    // you can use ./start-${database}-podman.sh scripts from ./src/test/scripts to start the databases.
    // support values are derby, mysql and postgres
-   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "postgres,mssql");
+   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "mssql,postgres");
 
    private static final int MAX_MESSAGES = Integer.parseInt(testProperty(TEST_NAME, "MAX_MESSAGES", "200"));
 
@@ -65,12 +65,12 @@ public class DatabasePagingTest extends DBTestBase {
 
    final String serverName;
 
-   @Parameterized.Parameters(name = "protocol={0}")
+   @Parameterized.Parameters(name = "db={0}")
    public static Collection<Object[]> parameters() {
-      String[] protocols = DB_LIST.split(",");
+      String[] databases = DB_LIST.split(",");
 
       ArrayList<Object[]> parameters = new ArrayList<>();
-      for (String str : protocols) {
+      for (String str : databases) {
          logger.info("Adding {} to the list for the test", str);
          parameters.add(new Object[]{str});
       }

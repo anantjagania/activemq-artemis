@@ -20,7 +20,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
@@ -32,7 +32,7 @@ public final class Db2SequentialFileDriver extends JDBCSequentialFileFactoryDriv
       super();
    }
 
-   public Db2SequentialFileDriver(JDBCConnectionProvider connectionProvider, SQLProvider provider) {
+   public Db2SequentialFileDriver(ConnectionProvider connectionProvider, SQLProvider provider) {
       super(connectionProvider, provider);
    }
 
