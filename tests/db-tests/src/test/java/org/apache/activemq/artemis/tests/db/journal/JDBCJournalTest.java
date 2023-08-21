@@ -57,7 +57,7 @@ public class JDBCJournalTest extends DBTestBase {
 
    // you can use ./start-${database}-podman.sh scripts from ./src/test/scripts to start the databases.
    // support values are derby, mysql and postgres
-   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "mssql");
+   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "mssql,postgres,mysql,db2");
 
    private JDBCJournalImpl journal;
 
@@ -89,7 +89,7 @@ public class JDBCJournalTest extends DBTestBase {
    @Override
    public void tearDown() throws Exception {
       super.tearDown();
-      journal.destroy();
+      journal.stop();
       scheduledExecutorService.shutdownNow();
       scheduledExecutorService = null;
       executorService.shutdown();
@@ -122,6 +122,7 @@ public class JDBCJournalTest extends DBTestBase {
 
    @Before
    public void setup() throws Exception {
+      disableCheckThread(); // it's ok as tests are isolated on this module
       dropDatabase(database);
       dbConf = createDefaultDatabaseStorageConfiguration();
       String driverName = System.getProperty(database + ".class");
@@ -154,7 +155,7 @@ public class JDBCJournalTest extends DBTestBase {
    public void testConcurrentEmptyJournal() throws SQLException {
       Assert.assertTrue(journal.isStarted());
       Assert.assertEquals(0, journal.getNumberOfRecords());
-      final JDBCJournalImpl secondJournal = new JDBCJournalImpl(dbConf.getConnectionProvider(),
+      final JDBCJournalImpl secondJournal = new JDBCJournalImpl(() -> getConnection(database),
                                                                           sqlProvider, scheduledExecutorService,
                                                                           executorService, (code, message, file) -> {
          Assert.fail(message);
