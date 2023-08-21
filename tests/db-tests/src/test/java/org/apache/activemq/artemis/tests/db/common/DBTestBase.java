@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import org.apache.activemq.artemis.utils.RealServerTestBase;
 import org.junit.Assert;
@@ -34,8 +35,9 @@ public class DBTestBase extends RealServerTestBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-   public ClassLoader defineClassLoader(String serverName) throws Exception {
-      String serverLocation = getServerLocation(serverName);
+   // There is one artemis server for each database we provide on the tests
+   public ClassLoader defineClassLoader(String database) throws Exception {
+      String serverLocation = getServerLocation(database);
       File lib = new File(serverLocation + "/lib");
       return defineClassLoader(lib);
    }
@@ -52,34 +54,42 @@ public class DBTestBase extends RealServerTestBase {
       return new URLClassLoader(url, Thread.currentThread().getContextClassLoader());
    }
 
-   public void registerDriver(String serverName) throws Exception {
-      String uri = System.getProperty(serverName + ".uri");
-      String clazzName = System.getProperty(serverName + ".class");
+   public void registerDriver(String database) throws Exception {
+      String uri = System.getProperty(database + ".uri");
+      String clazzName = System.getProperty(database + ".class");
       Assert.assertNotNull(clazzName);
-      ClassLoader loader = defineClassLoader(serverName);
+      ClassLoader loader = defineClassLoader(database);
       Class clazz = loader.loadClass(clazzName);
       DriverManager.registerDriver((Driver)clazz.getDeclaredConstructor().newInstance());
    }
 
-   public void dropDatabase(String serverName) throws Exception {
-      String uri = System.getProperty(serverName + ".uri");
-      String clazzName = System.getProperty(serverName + ".class");
-      Assert.assertNotNull(uri);
-      Assert.assertNotNull(clazzName);
+   public Connection getConnection(String database) throws SQLException {
+      try {
+         String uri = System.getProperty(database + ".uri");
+         String clazzName = System.getProperty(database + ".class");
+         Assert.assertNotNull(uri);
+         Assert.assertNotNull(clazzName);
+         uri = uri.replace("&#38;", "&");
+         logger.info("uri {}", uri);
 
-      uri = uri.replace("&#38;", "&");
-      logger.info("uri {}", uri);
+         String serverLocation = getServerLocation(database);
+         File lib = new File(serverLocation + "/lib");
+         ClassLoader loader = defineClassLoader(lib);
+         Class clazz = loader.loadClass(clazzName);
+         Driver driver = (Driver) clazz.getDeclaredConstructor().newInstance();
+         return driver.connect(uri, null);
+      } catch (Exception e) {
+         throw new SQLException(e.getMessage(), e);
+      }
+   }
 
-      String serverLocation = getServerLocation(serverName);
-      File lib = new File(serverLocation + "/lib");
-      ClassLoader loader = defineClassLoader(lib);
-      Class clazz = loader.loadClass(clazzName);
-      Driver driver = (Driver) clazz.getDeclaredConstructor().newInstance();
-      try (Connection connection = driver.connect(uri, null)) {
+   public void dropDatabase(String database) throws Exception {
+      //new Exception("Dropping").printStackTrace();
+      try (Connection connection = getConnection(database)) {
          ResultSet data = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
          while (data.next()) {
             try {
-               connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
+               //connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
                logger.info("Dropped {}", data.getString("TABLE_NAME"));
             } catch (Exception e) {
                e.printStackTrace();

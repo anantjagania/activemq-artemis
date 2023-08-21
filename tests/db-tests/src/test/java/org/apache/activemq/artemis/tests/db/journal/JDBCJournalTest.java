@@ -122,16 +122,17 @@ public class JDBCJournalTest extends DBTestBase {
 
    @Before
    public void setup() throws Exception {
+      dropDatabase(database);
       dbConf = createDefaultDatabaseStorageConfiguration();
       String driverName = System.getProperty(database + ".class");
-      dbConf.setJdbcDriverClassName(null);
+      dbConf.setJdbcDriverClassName(driverName);
       sqlProvider = JDBCUtils.getSQLProvider(
          dbConf.getJdbcDriverClassName(),
          dbConf.getMessageTableName(),
          SQLProvider.DatabaseStoreType.MESSAGE_JOURNAL);
       scheduledExecutorService = new ScheduledThreadPoolExecutor(5);
       executorService = Executors.newSingleThreadExecutor();
-      journal = new JDBCJournalImpl(dbConf.getConnectionProvider(), sqlProvider, scheduledExecutorService, executorService, new IOCriticalErrorListener() {
+      journal = new JDBCJournalImpl(() -> getConnection(database), sqlProvider, scheduledExecutorService, executorService, new IOCriticalErrorListener() {
          @Override
          public void onIOException(Throwable code, String message, String file) {
 
