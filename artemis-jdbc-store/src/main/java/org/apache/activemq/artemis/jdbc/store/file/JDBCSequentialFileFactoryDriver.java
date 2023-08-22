@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.activemq.artemis.jdbc.store.drivers.AbstractJDBCDriver;
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class JDBCSequentialFileFactoryDriver extends AbstractJDBCDriver {
       super();
    }
 
-   JDBCSequentialFileFactoryDriver(ConnectionProvider connectionProvider, SQLProvider provider) {
+   JDBCSequentialFileFactoryDriver(JDBCConnectionProvider connectionProvider, SQLProvider provider) {
       super(connectionProvider, provider);
    }
 

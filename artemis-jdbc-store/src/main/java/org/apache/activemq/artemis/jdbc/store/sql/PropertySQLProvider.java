@@ -27,7 +27,6 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -383,7 +382,7 @@ public class PropertySQLProvider implements SQLProvider {
          this(investigateDialect(dataSourceProperties));
       }
 
-      public Factory(ConnectionProvider connectionProvider) {
+      public Factory(JDBCConnectionProvider connectionProvider) {
          this(investigateDialect(connectionProvider));
       }
 
@@ -422,7 +421,7 @@ public class PropertySQLProvider implements SQLProvider {
          return dialect;
       }
 
-      private static SQLDialect investigateDialect(ConnectionProvider connectionProvider) {
+      private static SQLDialect investigateDialect(JDBCConnectionProvider connectionProvider) {
          try (Connection connection = connectionProvider.getConnection()) {
             return investigateDialect(connection);
          } catch (Exception e) {

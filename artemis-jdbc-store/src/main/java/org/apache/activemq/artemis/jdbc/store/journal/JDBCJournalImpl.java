@@ -51,7 +51,7 @@ import org.apache.activemq.artemis.core.journal.impl.JournalFile;
 import org.apache.activemq.artemis.core.journal.impl.SimpleWaitIOCallback;
 import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
 import org.apache.activemq.artemis.jdbc.store.drivers.AbstractJDBCDriver;
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 import org.apache.activemq.artemis.utils.collections.SparseArrayLinkedList;
 import org.slf4j.Logger;
@@ -109,7 +109,7 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
 
    private final IOCriticalErrorListener criticalIOErrorListener;
 
-   public JDBCJournalImpl(ConnectionProvider connectionProvider,
+   public JDBCJournalImpl(JDBCConnectionProvider connectionProvider,
                           SQLProvider provider,
                           ScheduledExecutorService scheduledExecutorService,
                           Executor completeExecutor,

@@ -23,7 +23,6 @@ import java.util.concurrent.Executor;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.core.config.StoreConfiguration;
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.drivers.JDBCDataSourceUtils;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
@@ -54,7 +53,7 @@ public class DatabaseStorageConfiguration implements StoreConfiguration {
 
    private Map<String, Object> dataSourceProperties = new HashMap();
 
-   private ConnectionProvider connectionProvider;
+   private JDBCConnectionProvider connectionProvider;
 
    private SQLProvider.Factory sqlProviderFactory;
 
@@ -200,7 +199,7 @@ public class DatabaseStorageConfiguration implements StoreConfiguration {
       this.dataSource = dataSource;
    }
 
-   public ConnectionProvider getConnectionProvider() {
+   public JDBCConnectionProvider getConnectionProvider() {
       if (connectionProvider == null) {
          // commons-dbcp2 doesn't support DataSource::getConnection(user, password)
          if (dataSourceClassName == ActiveMQDefaultConfiguration.getDefaultDataSourceClassName()) {
@@ -213,15 +212,13 @@ public class DatabaseStorageConfiguration implements StoreConfiguration {
    }
 
    public DatabaseStorageConfiguration setConnectionProviderNetworkTimeout(Executor executor, int ms) {
-      if (getConnectionProvider() instanceof JDBCConnectionProvider) {
-         ((JDBCConnectionProvider) getConnectionProvider()).setNetworkTimeout(executor, ms);
-      }
+      getConnectionProvider().setNetworkTimeout(executor, ms);
       return this;
    }
 
    public DatabaseStorageConfiguration clearConnectionProviderNetworkTimeout() {
-      if (connectionProvider != null && connectionProvider instanceof JDBCConnectionProvider) {
-         ((JDBCConnectionProvider)connectionProvider).setNetworkTimeout(null, -1);
+      if (connectionProvider != null) {
+         connectionProvider.setNetworkTimeout(null, -1);
       }
       return this;
    }

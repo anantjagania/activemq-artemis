@@ -25,7 +25,7 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.storage.DatabaseStorageConfiguration;
 import org.apache.activemq.artemis.core.io.IOCriticalErrorListener;
 import org.apache.activemq.artemis.core.io.nio.NIOSequentialFileFactory;
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.file.JDBCSequentialFileFactory;
 import org.apache.activemq.artemis.jdbc.store.journal.JDBCJournalImpl;
 import org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider;
@@ -56,7 +56,7 @@ public class JDBCJournalStorageManager extends JournalStorageManager {
    protected synchronized void init(Configuration config, IOCriticalErrorListener criticalErrorListener) {
       try {
          final DatabaseStorageConfiguration dbConf = (DatabaseStorageConfiguration) config.getStoreConfiguration();
-         final ConnectionProvider connectionProvider = dbConf.getConnectionProvider();
+         final JDBCConnectionProvider connectionProvider = dbConf.getConnectionProvider();
          final JDBCJournalImpl bindingsJournal;
          final JDBCJournalImpl messageJournal;
          final JDBCSequentialFileFactory largeMessagesFactory;

@@ -23,7 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
@@ -36,7 +36,7 @@ public final class PostgresSequentialSequentialFileDriver extends JDBCSequential
       super();
    }
 
-   public PostgresSequentialSequentialFileDriver(ConnectionProvider connectionProvider, SQLProvider provider) {
+   public PostgresSequentialSequentialFileDriver(JDBCConnectionProvider connectionProvider, SQLProvider provider) {
       super();
       this.setJdbcConnectionProvider(connectionProvider);
       this.setSqlProvider(provider);

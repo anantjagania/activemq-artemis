@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
-public class JDBCConnectionProvider implements ConnectionProvider {
+public class JDBCConnectionProvider {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
    private DataSource dataSource;
@@ -53,7 +53,6 @@ public class JDBCConnectionProvider implements ConnectionProvider {
       addDerbyShutdownHook();
    }
 
-   @Override
    public synchronized Connection getConnection() throws SQLException {
       Connection connection;
       try {

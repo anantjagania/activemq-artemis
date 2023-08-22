@@ -19,7 +19,7 @@ package org.apache.activemq.artemis.jdbc.store.file;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.activemq.artemis.jdbc.store.drivers.ConnectionProvider;
+import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
 
@@ -28,7 +28,7 @@ import static org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider.Fac
 
 class JDBCFileUtils {
 
-   static JDBCSequentialFileFactoryDriver getDBFileDriver(ConnectionProvider connectionProvider, SQLProvider provider) throws SQLException {
+   static JDBCSequentialFileFactoryDriver getDBFileDriver(JDBCConnectionProvider connectionProvider, SQLProvider provider) throws SQLException {
       final JDBCSequentialFileFactoryDriver dbDriver;
       final PropertySQLProvider.Factory.SQLDialect sqlDialect;
       try (Connection connection = connectionProvider.getConnection()) {
