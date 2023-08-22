@@ -70,8 +70,6 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
       // no op on JDBC
    }
 
-   private Connection connection;
-
    @Override
    public boolean isRemoveExtraFilesOnLoad() {
       return false;
@@ -92,12 +90,6 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
    private String deleteJournalRecords;
 
    private String deleteJournalTxRecords;
-
-   private PreparedStatement deleteJournalRecordsStatement;
-
-   private PreparedStatement deleteJournalTxRecordsStatement;
-
-   private PreparedStatement insertJournalRecordsStatement;
 
    private boolean started;
 
@@ -144,7 +136,6 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
    @Override
    public void start() throws SQLException {
       super.start();
-      connection = connectionProvider.getConnection();
       syncTimer = new JDBCJournalSync(scheduledExecutorService, completeExecutor, syncDelay, TimeUnit.MILLISECONDS, this);
       started = true;
    }
@@ -188,13 +179,6 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
          if (sync)
             sync();
          started = false;
-         if (connection != null) {
-            try {
-               connection.close();
-            } catch (Exception ignored){
-            }
-            connection = null;
-         }
          super.stop();
       }
    }
@@ -227,18 +211,12 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
       List<Long> committedTransactions = new ArrayList<>();
 
       TransactionHolder holder;
-      if (deleteJournalRecordsStatement == null || deleteJournalTxRecordsStatement == null || insertJournalRecordsStatement == null) {
-         try {
-            deleteJournalRecordsStatement = connection.prepareStatement(this.deleteJournalRecords);
-            deleteJournalTxRecordsStatement = connection.prepareStatement(this.deleteJournalTxRecords);
-            insertJournalRecordsStatement = connection.prepareStatement(this.insertJournalRecords);
-         } catch (Exception e) {
-            handleException(recordRef, e);
-            return 0;
-         }
-      }
 
-      try {
+      try (Connection connection = connectionProvider.getConnection();
+           PreparedStatement deleteJournalRecords = connection.prepareStatement(this.deleteJournalRecords);
+           PreparedStatement deleteJournalTxRecords = connection.prepareStatement(this.deleteJournalTxRecords);
+           PreparedStatement insertJournalRecords = connection.prepareStatement(this.insertJournalRecords)) {
+
          connection.setAutoCommit(false);
 
          for (JDBCJournalRecord record : recordRef) {
@@ -249,12 +227,12 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
                case JDBCJournalRecord.DELETE_RECORD:
                   // Standard SQL Delete Record, Non transactional delete
                   deletedRecords.add(record.getId());
-                  record.writeDeleteRecord(deleteJournalRecordsStatement);
+                  record.writeDeleteRecord(deleteJournalRecords);
                   break;
                case JDBCJournalRecord.ROLLBACK_RECORD:
                   // Roll back we remove all records associated with this TX ID.  This query is always performed last.
-                  deleteJournalTxRecordsStatement.setLong(1, record.getTxId());
-                  deleteJournalTxRecordsStatement.addBatch();
+                  deleteJournalTxRecords.setLong(1, record.getTxId());
+                  deleteJournalTxRecords.addBatch();
                   break;
                case JDBCJournalRecord.COMMIT_RECORD:
                   // We perform all the deletes and add the commit record in the same Database TX
@@ -262,28 +240,28 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
                   for (RecordInfo info : holder.recordsToDelete) {
                      deletedRecords.add(record.getId());
                      deletedRecords.add(info.id);
-                     deleteJournalRecordsStatement.setLong(1, info.id);
-                     deleteJournalRecordsStatement.addBatch();
+                     deleteJournalRecords.setLong(1, info.id);
+                     deleteJournalRecords.addBatch();
                   }
-                  record.writeRecord(insertJournalRecordsStatement);
+                  record.writeRecord(insertJournalRecords);
                   committedTransactions.add(record.getTxId());
                   break;
                default:
                   // Default we add a new record to the DB
-                  record.writeRecord(insertJournalRecordsStatement);
+                  record.writeRecord(insertJournalRecords);
                   break;
             }
          }
 
-         insertJournalRecordsStatement.executeBatch();
-         deleteJournalRecordsStatement.executeBatch();
-         deleteJournalTxRecordsStatement.executeBatch();
+         insertJournalRecords.executeBatch();
+         deleteJournalRecords.executeBatch();
+         deleteJournalTxRecords.executeBatch();
 
          connection.commit();
          logger.trace("JDBC commit worked");
 
-         if (cleanupTxRecords(deletedRecords, committedTransactions, deleteJournalTxRecordsStatement)) {
-            deleteJournalTxRecordsStatement.executeBatch();
+         if (cleanupTxRecords(deletedRecords, committedTransactions, deleteJournalTxRecords)) {
+            deleteJournalTxRecords.executeBatch();
             connection.commit();
             logger.trace("JDBC commit worked on cleanupTxRecords");
          }
@@ -845,7 +823,8 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
       JDBCJournalReaderCallback jrc = new JDBCJournalReaderCallback(reloadManager);
       JDBCJournalRecord r;
 
-      try (PreparedStatement selectJournalRecords = connection.prepareStatement(this.selectJournalRecords)) {
+      try (Connection connection = connectionProvider.getConnection();
+           PreparedStatement selectJournalRecords = connection.prepareStatement(this.selectJournalRecords)) {
          try (ResultSet rs = selectJournalRecords.executeQuery()) {
             int noRecords = 0;
             while (rs.next()) {
@@ -939,9 +918,10 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
    }
 
    @Override
-   public synchronized int getNumberOfRecords() {
+   public int getNumberOfRecords() {
       int count = 0;
-      try (PreparedStatement countJournalRecords = connection.prepareStatement(this.countJournalRecords)) {
+      try (Connection connection = connectionProvider.getConnection();
+           PreparedStatement countJournalRecords = connection.prepareStatement(this.countJournalRecords)) {
          try (ResultSet rs = countJournalRecords.executeQuery()) {
             rs.next();
             count = rs.getInt(1);

@@ -28,13 +28,11 @@
 
    <properties>
       <activemq.basedir>${project.basedir}/../../</activemq.basedir>
-      <db-extra-args>-Dpostgres.uri=${postgres.uri} -Dpostgres.class=${postgres.class} -Dmssql.uri=${mssql.uri} -Dmssql.class=${mssql.class} -Dmysql.uri=${mysql.uri} -Dmysql.class=${mysql.class} -Ddb2.class=${db2.class} -Ddb2.uri=${db2.uri}</db-extra-args>
+      <sts-surefire-extra-args>-Dpostgres.uri=${postgres.uri} -Dpostgres.class=${postgres.class} -Dmssql.uri=${mssql.uri} -Dmssql.class=${mssql.class}</sts-surefire-extra-args>
       <artemis-distribuiton-lib-dir>-Ddistribution.lib="${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}/lib"</artemis-distribuiton-lib-dir>
       <sts-http-host>localhost</sts-http-host>
       <db2.uri>jdbc:db2://localhost:50000/artemis:user=db2inst1;password=artemis;</db2.uri>
-      <db2.class>com.ibm.db2.jcc.DB2Driver</db2.class>
       <mysql.uri>jdbc:mysql://localhost/ARTEMIS-TEST?user=root&amp;#38;password=artemis</mysql.uri>
-      <mysql.class>com.mysql.cj.jdbc.Driver</mysql.class>
       <postgres.uri>jdbc:postgresql:artemis?user=artemis&amp;#38;password=artemis</postgres.uri>
       <postgres.class>org.postgresql.Driver</postgres.class>
       <oracle.uri>jdbc:oracle:thin:system/artemis@localhost:1521:FREE</oracle.uri>
@@ -289,7 +287,7 @@
                         <arg>--jdbc-connection-url</arg>
                         <arg>${mysql.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
-                        <arg>${mysql.class}</arg>
+                        <arg>com.mysql.cj.jdbc.Driver</arg>
                         <arg>--global-max-messages</arg>
                         <arg>100</arg>
                         <arg>--java-options</arg>
@@ -398,7 +396,7 @@
                         <arg>--jdbc-connection-url</arg>
                         <arg>${db2.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
-                        <arg>${db2.class}</arg>
+                        <arg>com.ibm.db2.jcc.DB2Driver</arg>
                         <arg>--global-max-messages</arg>
                         <arg>100</arg>
                         <arg>--java-options</arg>
@@ -422,7 +420,7 @@
                <forkCount>1</forkCount>
                <reuseForks>false</reuseForks>
                <skipTests>${skipSmokeTests}</skipTests>
-               <argLine>${db-extra-args} ${activemq-surefire-argline} ${artemis-distribuiton-lib-dir}</argLine>
+               <argLine>${sts-surefire-extra-args} ${activemq-surefire-argline} ${artemis-distribuiton-lib-dir}</argLine>
                <systemProperties>
                   <postgres.uri>${postgres.uri}</postgres.uri>
                </systemProperties>

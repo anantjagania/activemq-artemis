@@ -65,7 +65,6 @@ public class DBTestBase extends RealServerTestBase {
 
    public Connection getConnection(String database) throws SQLException {
       try {
-         logger.info("new connection", new Exception("trace"));
          String uri = System.getProperty(database + ".uri");
          String clazzName = System.getProperty(database + ".class");
          Assert.assertNotNull(uri);
@@ -90,10 +89,10 @@ public class DBTestBase extends RealServerTestBase {
          ResultSet data = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
          while (data.next()) {
             try {
-               connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
+               //connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
                logger.info("Dropped {}", data.getString("TABLE_NAME"));
             } catch (Exception e) {
-               logger.debug(e.getMessage(), e);
+               e.printStackTrace();
             }
          }
       }
