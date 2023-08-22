@@ -36,13 +36,13 @@ public class DBTestBase extends RealServerTestBase {
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    // There is one artemis server for each database we provide on the tests
-   public ClassLoader defineClassLoader(String database) throws Exception {
+   public static ClassLoader defineClassLoader(String database) throws Exception {
       String serverLocation = getServerLocation(database);
       File lib = new File(serverLocation + "/lib");
       return defineClassLoader(lib);
    }
 
-   public ClassLoader defineClassLoader(File location) throws Exception {
+   public static ClassLoader defineClassLoader(File location) throws Exception {
       File[] jars = location.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
 
       URL[] url = new URL[jars.length];
@@ -55,15 +55,17 @@ public class DBTestBase extends RealServerTestBase {
    }
 
    public void registerDriver(String database) throws Exception {
-      String uri = System.getProperty(database + ".uri");
+      ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+      runAfter(() -> Thread.currentThread().setContextClassLoader(originalClassLoader));
       String clazzName = System.getProperty(database + ".class");
       Assert.assertNotNull(clazzName);
       ClassLoader loader = defineClassLoader(database);
+      Thread.currentThread().setContextClassLoader(loader);
       Class clazz = loader.loadClass(clazzName);
       DriverManager.registerDriver((Driver)clazz.getDeclaredConstructor().newInstance());
    }
 
-   public Connection getConnection(String database) throws SQLException {
+   public static Connection getConnection(String database) throws SQLException {
       try {
          String uri = System.getProperty(database + ".uri");
          String clazzName = System.getProperty(database + ".class");
@@ -83,16 +85,16 @@ public class DBTestBase extends RealServerTestBase {
       }
    }
 
-   public void dropDatabase(String database) throws Exception {
+   public static void dropDatabase(String database) throws Exception {
       //new Exception("Dropping").printStackTrace();
       try (Connection connection = getConnection(database)) {
          ResultSet data = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
          while (data.next()) {
             try {
-               //connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
+               connection.prepareStatement("DROP TABLE " + data.getString("TABLE_NAME")).execute();
                logger.info("Dropped {}", data.getString("TABLE_NAME"));
             } catch (Exception e) {
-               e.printStackTrace();
+               logger.debug("Error dropping table {}", data.getString("TABLE_NAME"), e);
             }
          }
       }

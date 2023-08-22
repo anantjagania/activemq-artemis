@@ -28,7 +28,7 @@
 
    <properties>
       <activemq.basedir>${project.basedir}/../../</activemq.basedir>
-      <db-extra-args>-Dpostgres.uri=${postgres.uri} -Dpostgres.class=${postgres.class} -Dmssql.uri=${mssql.uri} -Dmssql.class=${mssql.class} -Dmysql.uri=${mysql.uri} -Dmysql.class=${mysql.class} -Ddb2.class=${db2.class} -Ddb2.uri=${db2.uri}</db-extra-args>
+      <db-extra-args>-Dpostgres.uri=${postgres.uri} -Dpostgres.class=${postgres.class} -Dmssql.uri=${mssql.uri} -Dmssql.class=${mssql.class} -Dmysql.uri=${mysql.uri} -Dmysql.class=${mysql.class} -Ddb2.class=${db2.class} -Ddb2.uri=${db2.uri} -Doracle.uri=${oracle.uri} -Doracle.class=${oracle.class}</db-extra-args>
       <artemis-distribuiton-lib-dir>-Ddistribution.lib="${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}/lib"</artemis-distribuiton-lib-dir>
       <sts-http-host>localhost</sts-http-host>
       <db2.uri>jdbc:db2://localhost:50000/artemis:user=db2inst1;password=artemis;</db2.uri>
@@ -38,6 +38,7 @@
       <postgres.uri>jdbc:postgresql:artemis?user=artemis&amp;#38;password=artemis</postgres.uri>
       <postgres.class>org.postgresql.Driver</postgres.class>
       <oracle.uri>jdbc:oracle:thin:system/artemis@localhost:1521:FREE</oracle.uri>
+      <oracle.class>oracle.jdbc.driver.OracleDriver</oracle.class>
       <mssql.uri>jdbc:sqlserver://localhost:1433;user=sa;password=ActiveMQ*Artemis</mssql.uri>
       <mssql.class>com.microsoft.sqlserver.jdbc.SQLServerDriver</mssql.class>
    </properties>
@@ -343,7 +344,7 @@
                         <arg>--jdbc-connection-url</arg>
                         <arg>${oracle.uri}</arg>
                         <arg>--jdbc-driver-class-name</arg>
-                        <arg>oracle.jdbc.driver.OracleDriver</arg>
+                        <arg>${oracle.class}</arg>
                         <arg>--global-max-messages</arg>
                         <arg>100</arg>
                         <arg>--java-options</arg>

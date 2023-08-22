@@ -40,6 +40,7 @@ import org.apache.activemq.artemis.tests.db.common.DBTestBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -57,7 +58,7 @@ public class JDBCJournalTest extends DBTestBase {
 
    // you can use ./start-${database}-podman.sh scripts from ./src/test/scripts to start the databases.
    // support values are derby, mysql and postgres
-   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "mssql,postgres,mysql,db2");
+   private static final String DB_LIST = testProperty(TEST_NAME, "DB_LIST", "mssql,oracle");
 
    private JDBCJournalImpl journal;
 
@@ -72,13 +73,19 @@ public class JDBCJournalTest extends DBTestBase {
    @Parameterized.Parameter
    public String database;
 
-   @Parameterized.Parameters(name = "protocol={0}")
+   @Parameterized.Parameters(name = "database={0}")
    public static Collection<Object[]> parameters() {
-      String[] protocols = DB_LIST.split(",");
+      String[] databases = DB_LIST.split(",");
 
       ArrayList<Object[]> parameters = new ArrayList<>();
-      for (String str : protocols) {
+      for (String str : databases) {
          logger.info("Adding {} to the list for the test", str);
+         try {
+            dropDatabase(str);
+         } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
+            continue;
+         }
          parameters.add(new Object[]{str});
       }
 
@@ -89,7 +96,7 @@ public class JDBCJournalTest extends DBTestBase {
    @Override
    public void tearDown() throws Exception {
       super.tearDown();
-      journal.stop();
+      journal.destroy();
       scheduledExecutorService.shutdownNow();
       scheduledExecutorService = null;
       executorService.shutdown();
@@ -123,7 +130,7 @@ public class JDBCJournalTest extends DBTestBase {
    @Before
    public void setup() throws Exception {
       disableCheckThread(); // it's ok as tests are isolated on this module
-      dropDatabase(database);
+      registerDriver(database);
       dbConf = createDefaultDatabaseStorageConfiguration();
       String driverName = System.getProperty(database + ".class");
       dbConf.setJdbcDriverClassName(driverName);
@@ -133,7 +140,7 @@ public class JDBCJournalTest extends DBTestBase {
          SQLProvider.DatabaseStoreType.MESSAGE_JOURNAL);
       scheduledExecutorService = new ScheduledThreadPoolExecutor(5);
       executorService = Executors.newSingleThreadExecutor();
-      journal = new JDBCJournalImpl(() -> getConnection(database), sqlProvider, scheduledExecutorService, executorService, new IOCriticalErrorListener() {
+      journal = new JDBCJournalImpl(dbConf.getConnectionProvider(), sqlProvider, scheduledExecutorService, executorService, new IOCriticalErrorListener() {
          @Override
          public void onIOException(Throwable code, String message, String file) {
 
@@ -155,7 +162,7 @@ public class JDBCJournalTest extends DBTestBase {
    public void testConcurrentEmptyJournal() throws SQLException {
       Assert.assertTrue(journal.isStarted());
       Assert.assertEquals(0, journal.getNumberOfRecords());
-      final JDBCJournalImpl secondJournal = new JDBCJournalImpl(() -> getConnection(database),
+      final JDBCJournalImpl secondJournal = new JDBCJournalImpl(dbConf.getConnectionProvider(),
                                                                           sqlProvider, scheduledExecutorService,
                                                                           executorService, (code, message, file) -> {
          Assert.fail(message);
