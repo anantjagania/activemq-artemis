@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 import org.apache.activemq.artemis.cli.commands.Create;
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.apache.activemq.artemis.utils.RetryRule;
 import org.junit.After;
 import org.junit.Assume;

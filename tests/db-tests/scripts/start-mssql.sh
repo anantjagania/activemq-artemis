@@ -16,7 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This script shows a simple way to start a mysql with podman
+source ./container-define.sh
 
-./stop-mysql-podman.sh
-podman run -d -p 3306:3306 --name mysql-artemis-test --rm -e MYSQL_ROOT_PASSWORD=artemis -e MYSQL_USER=artemis -e MYSQL_PASSWORD=artemis -e MYSQL_DATABASE=ARTEMIS-TEST mysql:8
+./print-license.sh "SQL Server" "Microsoft"
+
+./stop-mssql.sh
+
+$CONTAINER_COMMAND run -d --name mssql-artemis-test -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=ActiveMQ*Artemis" -p 1433:1433 mcr.microsoft.com/mssql/server:2019-latest

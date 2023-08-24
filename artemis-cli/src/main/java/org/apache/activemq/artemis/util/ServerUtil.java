@@ -32,6 +32,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
 /**
  * A tool to let clients start, stop and kill Artemis servers
+ * this class is Deprecated: use the one from artemis-test-support
  */
 public class ServerUtil {
 

@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
@@ -71,6 +72,8 @@ public class JDBCSequentialFileFactoryTest {
 
    private ExecutorService executor;
 
+   private ScheduledExecutorService scheduledExecutorService;
+
    @Parameterized.Parameter
    public boolean useAuthentication;
    private String user = null;
@@ -84,6 +87,7 @@ public class JDBCSequentialFileFactoryTest {
    @Before
    public void setup() throws Exception {
       executor = Executors.newSingleThreadExecutor(ActiveMQThreadFactory.defaultThreadFactory(getClass().getName()));
+      scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(ActiveMQThreadFactory.defaultThreadFactory(getClass().getName()));
       Map<String, Object> dataSourceProperties = new HashMap<>();
       if (useAuthentication) {
          user = "testuser";
@@ -97,7 +101,7 @@ public class JDBCSequentialFileFactoryTest {
       dataSourceProperties.put("driverClassName", className);
       String tableName = "FILES";
       String jdbcDatasourceClass = ActiveMQDefaultConfiguration.getDefaultDataSourceClassName();
-      factory = new JDBCSequentialFileFactory(new JDBCConnectionProvider(JDBCDataSourceUtils.getDataSource(jdbcDatasourceClass, dataSourceProperties)), JDBCUtils.getSQLProvider(dataSourceProperties, tableName, SQLProvider.DatabaseStoreType.PAGE), executor, new IOCriticalErrorListener() {
+      factory = new JDBCSequentialFileFactory(new JDBCConnectionProvider(JDBCDataSourceUtils.getDataSource(jdbcDatasourceClass, dataSourceProperties)), JDBCUtils.getSQLProvider(dataSourceProperties, tableName, SQLProvider.DatabaseStoreType.PAGE), executor, scheduledExecutorService, 100, new IOCriticalErrorListener() {
          @Override
          public void onIOException(Throwable code, String message, String file) {
          }
@@ -108,6 +112,7 @@ public class JDBCSequentialFileFactoryTest {
    @After
    public void tearDown() throws Exception {
       executor.shutdown();
+      scheduledExecutorService.shutdown();
       factory.destroy();
    }
 

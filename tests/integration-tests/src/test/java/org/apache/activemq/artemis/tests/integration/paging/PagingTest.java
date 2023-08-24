@@ -130,6 +130,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
+
 @RunWith(Parameterized.class)
 public class PagingTest extends ActiveMQTestBase {
 
@@ -4137,7 +4138,7 @@ public class PagingTest extends ActiveMQTestBase {
          } else {
             ClientConsumer consumer = sessionNonTX.createConsumer(PagingTest.ADDRESS);
             for (int j = 0; j < 20; j++) {
-               ClientMessage msgReceived = consumer.receive(10000);
+               ClientMessage msgReceived = consumer.receive(1000);
                assertNotNull(msgReceived);
                msgReceived.acknowledge();
             }
@@ -5229,7 +5230,7 @@ public class PagingTest extends ActiveMQTestBase {
 
          PagingStore store = paging.getPageStore(ADDRESS);
 
-         store.sync();
+         store.addSyncPoint(OperationContextImpl.getContext());
 
          assertTrue(pageUp.await(10, TimeUnit.SECONDS));
 
@@ -5267,7 +5268,7 @@ public class PagingTest extends ActiveMQTestBase {
 
       PagingStore store = paging.getPageStore(ADDRESS);
 
-      store.sync();
+      store.addSyncPoint(OperationContextImpl.getContext());
 
       assertTrue(pageUp.await(10, TimeUnit.SECONDS));
 

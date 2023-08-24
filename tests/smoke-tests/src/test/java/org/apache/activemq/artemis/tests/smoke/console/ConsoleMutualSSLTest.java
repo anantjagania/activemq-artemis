@@ -18,7 +18,7 @@ package org.apache.activemq.artemis.tests.smoke.console;
 
 import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
-import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.ServerUtil;
 import org.apache.activemq.artemis.utils.RetryRule;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.http.client.methods.CloseableHttpResponse;
