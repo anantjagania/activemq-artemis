@@ -69,7 +69,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
    private static final int PAGE_SIZE = 10 * 1024;
 
 
-   static final SimpleString ADDRESS = new SimpleString("SimpleAddress");
+   static final SimpleString ADDRESS = new SimpleString("TestQueue");
 
    private Connection conn;
 
@@ -96,7 +96,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
       server.addAddressInfo(new AddressInfo(ADDRESS, RoutingType.ANYCAST));
       server.createQueue(new QueueConfiguration(ADDRESS).setRoutingType(RoutingType.ANYCAST));
 
-      ClientProducer producer = session.createProducer(PagingTest.ADDRESS);
+      ClientProducer producer = session.createProducer(ADDRESS);
 
       byte[] body = new byte[messageSize];
 
@@ -188,7 +188,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
 
       Queue q2 = server.createQueue(new QueueConfiguration(new SimpleString("inactive")).setAddress(ADDRESS).setRoutingType(RoutingType.MULTICAST));
 
-      ClientProducer producer = session.createProducer(PagingTest.ADDRESS);
+      ClientProducer producer = session.createProducer(ADDRESS);
 
       byte[] body = new byte[messageSize];
 
@@ -318,7 +318,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
 
       Queue q2 = server.createQueue(new QueueConfiguration(new SimpleString("inactive")).setAddress(ADDRESS).setRoutingType(RoutingType.MULTICAST));
 
-      ClientProducer producer = session.createProducer(PagingTest.ADDRESS);
+      ClientProducer producer = session.createProducer(ADDRESS);
 
       byte[] body = new byte[messageSize];
 
@@ -410,7 +410,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
       server.addAddressInfo(new AddressInfo(ADDRESS, RoutingType.ANYCAST));
       server.createQueue(new QueueConfiguration(ADDRESS).setRoutingType(RoutingType.ANYCAST));
 
-      ClientProducer producer = session.createProducer(PagingTest.ADDRESS);
+      ClientProducer producer = session.createProducer(ADDRESS);
 
       byte[] body = new byte[messageSize];
 
@@ -495,7 +495,7 @@ public class PagingOrderTest extends ActiveMQTestBase {
       server.addAddressInfo(new AddressInfo(ADDRESS, RoutingType.ANYCAST));
       QueueImpl queue = (QueueImpl) server.createQueue(new QueueConfiguration(ADDRESS).setRoutingType(RoutingType.ANYCAST));
 
-      ClientProducer producer = session.createProducer(PagingTest.ADDRESS);
+      ClientProducer producer = session.createProducer(ADDRESS);
 
       byte[] body = new byte[messageSize];
 
