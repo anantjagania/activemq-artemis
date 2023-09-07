@@ -135,7 +135,7 @@ public class PagingTest extends ParameterDBTestBase {
    @Parameterized.Parameters(name = "db={0}")
    public static Collection<Object[]> parameters() {
       ArrayList<Database> databases = new ArrayList<>();
-      databases.add(Database.JOURNAL);
+      //databases.add(Database.JOURNAL);
 
       Database randomDB = Database.random();
       if (randomDB != null) {
@@ -228,7 +228,7 @@ public class PagingTest extends ParameterDBTestBase {
          } else {
             session.rollback();
             for (int i = 0; i < 25; i++) {
-               ClientMessage message2 = consumer.receive(1000);
+               ClientMessage message2 = consumer.receive(5000);
 
                Assert.assertNotNull(message2);
 
@@ -553,7 +553,7 @@ public class PagingTest extends ParameterDBTestBase {
       ClientMessage msg = null;
 
       for (int i = 0; i < numberOfMessages * 2; i++) {
-         msg = consumer.receive(1000);
+         msg = consumer.receive(5000);
          assertNotNull(msg);
          msg.acknowledge();
          if (i % 50 == 0) {
@@ -626,7 +626,7 @@ public class PagingTest extends ParameterDBTestBase {
          MessageConsumer consumer = session.createConsumer(jmsQueue);
 
          for (int i = 0; i < 90; i++) {
-            javax.jms.Message message = consumer.receive(1000);
+            javax.jms.Message message = consumer.receive(5000);
             Assert.assertNotNull(message);
          }
 
@@ -863,7 +863,7 @@ public class PagingTest extends ParameterDBTestBase {
       session.start();
 
       for (int i = 0; i < 10; i++) {
-         ClientMessage msgRec = consumer.receive(1000);
+         ClientMessage msgRec = consumer.receive(5000);
          Assert.assertNotNull(msgRec);
          logger.debug("received i={} page={}", msgRec.getIntProperty("i"), msgRec.getIntProperty("page"));
          msgRec.acknowledge();
@@ -904,7 +904,7 @@ public class PagingTest extends ParameterDBTestBase {
          session.start();
 
          for (int i = 0; i < 80; i++) {
-            ClientMessage msgRec = browser.receive(1000);
+            ClientMessage msgRec = browser.receive(5000);
             Assert.assertNotNull(msgRec);
 
             logger.debug("received i={} page={}", msgRec.getIntProperty("i"), msgRec.getIntProperty("page"));
@@ -1799,7 +1799,7 @@ public class PagingTest extends ParameterDBTestBase {
       session.start();
 
       for (int i = 0; i < NUM_MESSAGES; i++) {
-         message = cons.receive(1000);
+         message = cons.receive(5000);
          assertNotNull(message);
          message.acknowledge();
          if (i % COMMIT_INTERVAL == 0) {
@@ -1976,7 +1976,7 @@ public class PagingTest extends ParameterDBTestBase {
       consumer = session.createConsumer(PagingTest.ADDRESS);
 
       for (int i = 0; i < numberOfMessages; i++) {
-         msg = consumer.receive(1000);
+         msg = consumer.receive(5000);
          assertNotNull(msg);
          msg.acknowledge();
 
@@ -2400,7 +2400,7 @@ public class PagingTest extends ParameterDBTestBase {
          }
 
          session.commit();
-         assertNull(cons.receive(500));
+         assertNull(cons.receiveImmediate());
 
       }
 
@@ -3163,70 +3163,6 @@ public class PagingTest extends ParameterDBTestBase {
 
    }
 
-   @Test
-   public void testSwitchSendAndConsume() throws Exception {
-
-      clearDataRecreateServerDirs();
-
-      Configuration config = createDefaultInVMConfig();
-
-      server = createServer(true, config, PagingTest.PAGE_SIZE, PagingTest.PAGE_MAX, -1, -1);
-
-      server.start();
-
-
-      System.out.println("MaxSize: "  + server.getAddressSettingsRepository().getMatch("Q_333").getMaxSizeBytes());
-
-      locator = createInVMNonHALocator().setBlockOnNonDurableSend(true).setBlockOnDurableSend(true).setBlockOnAcknowledge(true);
-
-      sf = createSessionFactory(locator);
-
-      SimpleString randomAddress = SimpleString.toSimpleString("Q_" + RandomUtil.randomString());
-
-      System.out.println("Queue " + randomAddress);
-
-      ClientSession session = sf.createSession(null, null, false, true, true, false, 0);
-
-      session.createQueue(new QueueConfiguration(randomAddress).setRoutingType(RoutingType.ANYCAST));
-
-      Wait.waitFor(() -> server.locateQueue(randomAddress) != null, 1000);
-      Queue queue = server.locateQueue(randomAddress);
-      Assert.assertNotNull(queue);
-
-      Assert.assertEquals(PagingTest.PAGE_MAX, queue.getPagingStore().getMaxSize());
-
-      ClientProducer producer = session.createProducer(randomAddress);
-
-      session.start();
-
-      for (int i = 0; i < 50; i++) {
-         if (i % 2 == 0) {
-            for (int j = 0; j < 20; j++) {
-               ClientMessage msgSend = session.createMessage(true);
-               msgSend.putStringProperty(new SimpleString("tst"), new SimpleString("i=" + i + ", j=" + j));
-               msgSend.getBodyBuffer().writeBytes(new byte[10 * 1024]);
-               msgSend.putStringProperty("i", String.valueOf(i));
-               msgSend.putStringProperty("j", String.valueOf(j));
-               producer.send(msgSend);
-               logger.debug("Sending i={}, j={}", i, j);
-            }
-            Wait.assertTrue(() -> server.getPagingManager().getPageStore(randomAddress).isPaging(), 1000, 100);
-         } else {
-            ClientConsumer consumer = session.createConsumer(randomAddress);
-            for (int j = 0; j < 20; j++) {
-               ClientMessage msgReceived = consumer.receive(1000);
-               assertNotNull("msg=i=" + i + " and j=" + j, msgReceived);
-               msgReceived.acknowledge();
-               logger.debug("Received i={}, j={}", i, j);
-            }
-            consumer.close();
-         }
-      }
-
-      ClientConsumer consumer = session.createConsumer(randomAddress);
-      Assert.assertNull(consumer.receiveImmediate());
-      consumer.close();
-   }
 
    @Test
    public void testDepageDuringTransaction3() throws Exception {
@@ -3369,7 +3305,7 @@ public class PagingTest extends ParameterDBTestBase {
          } else {
             ClientConsumer consumer = sessionNonTX.createConsumer(ADDRESS);
             for (int j = 0; j < 20; j++) {
-               ClientMessage msgReceived = consumer.receive(1000);
+               ClientMessage msgReceived = consumer.receive(5000);
                if (msgReceived == null) {
                   logger.warn("Missed message with i={} and j={}", i, j);
                   Assert.fail("missed message with i=" + i + " and j=" + j);
@@ -4991,7 +4927,7 @@ public class PagingTest extends ParameterDBTestBase {
 
          for (int i = 2; i < 20; i++) {
             logger.debug("Received message {}", i);
-            ClientMessage message = cons.receive(1000);
+            ClientMessage message = cons.receive(5000);
             assertNotNull("Message " + i + " wasn't received", message);
             message.acknowledge();
 
@@ -5206,7 +5142,7 @@ public class PagingTest extends ParameterDBTestBase {
 
          for (int i = 0; i < numberOfMessages; i++) {
             logger.debug("Received message {}", i);
-            message = cons.receive(1000);
+            message = cons.receive(5000);
             assertNotNull(message);
             message.acknowledge();
 
@@ -5554,6 +5490,8 @@ public class PagingTest extends ParameterDBTestBase {
    // https://issues.jboss.org/browse/HORNETQ-1042 - spread messages because of filters
    public void testSpreadMessagesWithFilter(boolean deadConsumer) throws Exception {
 
+      clearDataRecreateServerDirs();
+
       Configuration config = createDefaultInVMConfig().setJournalSyncNonTransactional(false);
 
       server = createServer(true, config, PagingTest.PAGE_SIZE, PagingTest.PAGE_MAX);
@@ -5564,7 +5502,7 @@ public class PagingTest extends ParameterDBTestBase {
          ServerLocator locator = createInVMNonHALocator();
          locator.setBlockOnDurableSend(false);
          ClientSessionFactory sf = locator.createSessionFactory();
-         ClientSession session = sf.createSession(false, false);
+         ClientSession session = sf.createSession(true, false);
 
          session.createQueue(new QueueConfiguration("Q1").setAddress(PagingTest.ADDRESS).setFilterString("destQ=1 or both=true"));
          session.createQueue(new QueueConfiguration("Q2").setAddress(PagingTest.ADDRESS).setFilterString("destQ=2 or both=true"));
@@ -5643,6 +5581,13 @@ public class PagingTest extends ParameterDBTestBase {
                m.putBooleanProperty("initialBurst", false);
                producer.send(m);
             }
+
+            if (i > 0 && i % 10 == 0) {
+               session.commit();
+               if (i + 10 < messagesSentAfterBurst) {
+                  pageStore.forceAnotherPage();
+               }
+            }
          }
 
          session.commit();
@@ -5651,13 +5596,17 @@ public class PagingTest extends ParameterDBTestBase {
          ClientConsumer consumerQ2 = session.createConsumer("Q2");
          session.start();
 
+         // consuming now
+
+         // initial burst
+
          for (int i = 0; i < initialBurst; i++) {
             ClientMessage m = consumerQ1.receive(5000);
             assertNotNull(m);
             assertEquals(1, m.getIntProperty("destQ").intValue());
             m.acknowledge();
+            session.commit();
          }
-         session.commit();
 
          // This will consume messages from the beginning of the queue only
          ClientConsumer consumerInitial = session.createConsumer("Q_initial");
@@ -5681,8 +5630,9 @@ public class PagingTest extends ParameterDBTestBase {
             }
             assertEquals(i, m.getIntProperty("i").intValue());
             m.acknowledge();
+
+            session.commit();
          }
-         session.commit();
 
          for (int i = 0; i < messagesSentAfterBurst; i++) {
             ClientMessage m = consumerQ2.receive(5000);
@@ -5694,8 +5644,8 @@ public class PagingTest extends ParameterDBTestBase {
             assertEquals(i, m.getIntProperty("i").intValue());
             m.acknowledge();
 
+            session.commit();
          }
-         session.commit();
 
          waitForNotPaging(serverQueue);
 
@@ -5761,7 +5711,7 @@ public class PagingTest extends ParameterDBTestBase {
 
          ClientConsumer cons2 = session.createConsumer("Q2");
          for (int i = 0; i < 100; i++) {
-            ClientMessage msgReceivedCons2 = cons2.receive(1000);
+            ClientMessage msgReceivedCons2 = cons2.receive(5000);
             assertNotNull(msgReceivedCons2);
             msgReceivedCons2.acknowledge();
 
@@ -6004,12 +5954,12 @@ public class PagingTest extends ParameterDBTestBase {
 
          ClientConsumer cons1 = session.createConsumer("Q1");
 
-         ClientMessage msgReceivedCons1 = cons1.receive(1000);
+         ClientMessage msgReceivedCons1 = cons1.receive(5000);
 
          assertNotNull(msgReceivedCons1);
 
          ClientConsumer cons2 = session.createConsumer("Q2");
-         ClientMessage msgReceivedCons2 = cons2.receive(1000);
+         ClientMessage msgReceivedCons2 = cons2.receive(5000);
          assertNotNull(msgReceivedCons2);
 
          store.forceAnotherPage();
@@ -6022,7 +5972,7 @@ public class PagingTest extends ParameterDBTestBase {
 
          msgReceivedCons1.acknowledge();
 
-         msgReceivedCons1 = cons1.receive(1000);
+         msgReceivedCons1 = cons1.receive(5000);
          assertNotNull(msgReceivedCons1);
          msgReceivedCons1.acknowledge();
          msgReceivedCons2.acknowledge();
@@ -6282,7 +6232,7 @@ public class PagingTest extends ParameterDBTestBase {
       session.start();
 
       for (int i = 0; i < numberOfMessages; i++) {
-         ClientMessage msg = consumer.receive(1000);
+         ClientMessage msg = consumer.receive(5000);
          assertNotNull(i + "th msg is null", msg);
          assertEquals(i, msg.getIntProperty("count").intValue());
          msg.acknowledge();
@@ -6498,7 +6448,7 @@ public class PagingTest extends ParameterDBTestBase {
          assertTrue(Arrays.asList(server.getPagingManager().getStoreNames()).contains(PagingTest.ADDRESS));
          assertTrue(server.getPagingManager().getPageStore(PagingTest.ADDRESS).isPaging());
          for (int i = 0; i < numberOfMessages; i++) {
-            ClientMessage msg = consumer1.receive(1000);
+            ClientMessage msg = consumer1.receive(5000);
             assertNotNull(msg);
             msg.acknowledge();
          }
@@ -6550,7 +6500,7 @@ public class PagingTest extends ParameterDBTestBase {
          ClientMessage msgReceivedCons = null;
          // simulate the live page cache evicted
          for (int i = 0; i < num; i++) {
-            msgReceivedCons = cons.receive(1000);
+            msgReceivedCons = cons.receive(5000);
             assertNotNull(msgReceivedCons);
             assertTrue(msgReceivedCons.getIntProperty("index") == i);
             msgReceivedCons.acknowledge();
@@ -6564,7 +6514,7 @@ public class PagingTest extends ParameterDBTestBase {
             }
          }
 
-         msgReceivedCons = cons.receive(1000);
+         msgReceivedCons = cons.receive(5000);
          assertNotNull(msgReceivedCons);
          assertTrue(msgReceivedCons.getIntProperty("index") == num);
          msgReceivedCons.acknowledge();

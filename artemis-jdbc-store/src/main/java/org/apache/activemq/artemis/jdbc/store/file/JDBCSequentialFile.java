@@ -235,13 +235,27 @@ public class JDBCSequentialFile implements SequentialFile {
 
       ArrayList<ScheduledWrite> writeList = new ArrayList<>(writeQueue.size()); // the size here is just an estimate
 
+      byte[] bytes = extractBytes(writeList);
+
+      internalWrite(bytes, null, true);
+      writeList.forEach(this::doCallback);
+   }
+
+   /* Even though I would love to have a reusable byte[] for the following buffer
+      PreparedStatement.setData takes a byte[] without any sizing on the interface.
+      Blob interface would support setBytes with an offset and size, but some of the databases we are using
+      (DB2 specifically) is not allowing us to use Blob (at least during our dev time).
+      for that reason I'm using this byte[] with the very specific size that needs to be written
+
+      Also Notice that our PagingManager will make sure that this size wouldn't go beyond our page-size limit
+      which we also limit at the JDBC storage, which should be 100K. */
+   private byte[] extractBytes(ArrayList<ScheduledWrite> writeList) {
       int totalSize = 0;
       ScheduledWrite write;
       while ((write = writeQueue.poll()) != null) {
          writeList.add(write);
          totalSize += write.readable();
       }
-
       byte[] bytes = new byte[totalSize];
 
       int writePosition = 0;
@@ -251,14 +265,7 @@ public class JDBCSequentialFile implements SequentialFile {
          el.releaseBuffer();
       }
 
-      executor.execute(() -> doWrite(writeList, bytes));
-   }
-
-   private void doWrite(ArrayList<ScheduledWrite> writeList, byte[] bytes) {
-      internalWrite(bytes, null, true);
-      bytes = null; // giving a hand to GC
-
-      writeList.forEach(this::doCallback);
+      return bytes;
    }
 
    private void doCallback(ScheduledWrite write) {
