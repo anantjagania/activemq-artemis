@@ -30,7 +30,7 @@
       <activemq.basedir>${project.basedir}/../../</activemq.basedir>
       <!-- note: I am passing these properties through command line as opposed to syste-properties on surefire as IntelijIDEA wouldn't pick up these properties automatically. It was the simplest way to make it work -->
       <db-extra-args>-Dderby.load=${derby.load} -Dpostgres.load=${postgres.load} -Dpostgres.uri=${postgres.uri} -Dpostgres.class=${postgres.class} -Dmssql.load=${mssql.load} -Dmssql.uri=${mssql.uri} -Dmssql.class=${mssql.class} -Dmysql.load=${mysql.load} -Dmysql.uri=${mysql.uri} -Dmysql.class=${mysql.class} -Ddb2.load=${db2.load} -Ddb2.class=${db2.class} -Ddb2.uri=${db2.uri} -Doracle.load=${oracle.load} -Doracle.uri=${oracle.uri} -Doracle.class=${oracle.class}</db-extra-args>
-      <artemis-distribuiton-lib-dir>-Ddistribution.lib="${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}/lib"</artemis-distribuiton-lib-dir>
+      <artemis-distribution-lib-dir>-Ddistribution.lib="${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}/lib"</artemis-distribution-lib-dir>
 
       <derby.load>false</derby.load>
 
@@ -395,7 +395,7 @@
                <forkCount>1</forkCount>
                <reuseForks>false</reuseForks>
                <skipTests>${skipDBTests}</skipTests>
-               <argLine>${db-extra-args} ${activemq-surefire-argline} ${artemis-distribuiton-lib-dir}</argLine>
+               <argLine>${db-extra-args} ${activemq-surefire-argline} ${artemis-distribution-lib-dir}</argLine>
                <systemProperties>
                   <postgres.uri>${postgres.uri}</postgres.uri>
                </systemProperties>

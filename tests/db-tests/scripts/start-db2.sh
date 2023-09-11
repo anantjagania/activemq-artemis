@@ -24,24 +24,31 @@ source ./container-define.sh
 
 # As documented on https://www.ibm.com/docs/en/db2/11.5?topic=system-linux
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <folder_data>"
-    echo "       setting folder_data as NO_DATA by default"
-    folder_data="NO_DATA"
+export LICENSE=reject
+
+if [ $# -ge 1 ]; then
+    # Check if the first argument is --accept-license
+    if [ "$1" == "--accept-license" ]; then
+        ./print-license.sh "DB2" "IBM"
+        export LICENSE=accept
+    else
+        echo "Warning: you must accept the DB2 license. Run ./logs-db2.sh to check the log output."
+        echo "Usage: $0 --accept-license <folder_data>"
+    fi
 else
-    folder_data="$1"
+    echo "Warning: you must accept the DB2 license. Run ./logs-db2.sh to check the log output."
+    echo "Usage: $0 --accept-license <folder_data>"
 fi
 
-./stop-db2.sh
-
-./print-license.sh "DB2" "IBM"
-
-if [ "$folder_data" = "NO_DATA" ]; then
+if [ $# -ne 2 ]; then
     echo "NO_DATA has been specified. not using a data folder"
     data_argument=""
+    folder_data="NO_DATA"
 else
    data_argument="-v $folder_data:/database:Z"
 fi
+
+./stop-db2.sh
 
 if [ ! -d "$folder_data" ] && [ "$folder_data" != "NO_DATA" ]; then
     mkdir "$folder_data"
@@ -49,4 +56,4 @@ if [ ! -d "$folder_data" ] && [ "$folder_data" != "NO_DATA" ]; then
     echo "Folder '$folder_data' created."
 fi
 
-$CONTAINER_COMMAND run -d -h db2-artemis-test --name db2-artemis-test --privileged=true -p 50000:50000 --env-file db2.env $data_argument icr.io/db2_community/db2
+$CONTAINER_COMMAND run -d -h db2-artemis-test --name db2-artemis-test --privileged=true -p 50000:50000 -eLICENSE=$LICENSE --env-file db2.env $data_argument icr.io/db2_community/db2
