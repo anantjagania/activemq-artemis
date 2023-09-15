@@ -32,7 +32,6 @@ import java.lang.invoke.MethodHandles;
 public class Wait {
    private static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-   public static final long MAX_WAIT_MILLIS = 30 * 1000;
    public static final int SLEEP_MILLIS = 100;
    public static final String DEFAULT_FAILURE_MESSAGE = "Condition wasn't met";
 
@@ -67,19 +66,6 @@ public class Wait {
       int getCount() throws Exception;
    }
 
-   public static boolean waitFor(Condition condition) throws Exception {
-      return waitFor(condition, MAX_WAIT_MILLIS);
-   }
-
-   public static void assertEquals(Object obj, ObjectCondition condition) throws Exception {
-      assertEquals(obj, condition, MAX_WAIT_MILLIS, SLEEP_MILLIS);
-   }
-
-
-   public static void assertEquals(long size, LongCondition condition) throws Exception {
-      assertEquals(size, condition, MAX_WAIT_MILLIS);
-   }
-
    public static void assertEquals(long size, LongCondition condition, long timeout) throws Exception {
       assertEquals(size, condition, timeout, SLEEP_MILLIS);
    }
@@ -100,15 +86,9 @@ public class Wait {
       }
    }
 
-
-   public static void assertEquals(int size, IntCondition condition) throws Exception {
-      assertEquals(size, condition, MAX_WAIT_MILLIS);
-   }
-
    public static void assertEquals(int size, IntCondition condition, long timeout) throws Exception {
       assertEquals(size, condition, timeout, SLEEP_MILLIS);
    }
-
 
    public static void assertEquals(Object obj, ObjectCondition condition, long timeout, long sleepMillis) throws Exception {
       boolean result = waitFor(() -> (obj == condition || (obj != null && obj.equals(condition.getObject()))), timeout, sleepMillis);
@@ -126,18 +106,6 @@ public class Wait {
       }
    }
 
-   public static void assertTrue(Condition condition) {
-      assertTrue(DEFAULT_FAILURE_MESSAGE, condition);
-   }
-
-   public static void assertFalse(Condition condition) {
-      assertTrue(() -> !condition.isSatisfied());
-   }
-
-   public static void assertFalse(String failureMessage, Condition condition) {
-      assertTrue(failureMessage, () -> !condition.isSatisfied());
-   }
-
    public static void assertFalse(String failureMessage, Condition condition, final long duration) {
       assertTrue(failureMessage, () -> !condition.isSatisfied(), duration, SLEEP_MILLIS);
    }
@@ -148,10 +116,6 @@ public class Wait {
 
    public static void assertTrue(Condition condition, final long duration) {
       assertTrue(DEFAULT_FAILURE_MESSAGE, condition, duration, SLEEP_MILLIS);
-   }
-
-   public static void assertTrue(String failureMessage, Condition condition) {
-      assertTrue(failureMessage, condition, MAX_WAIT_MILLIS);
    }
 
    public static void assertTrue(String failureMessage, Condition condition, final long duration) {
