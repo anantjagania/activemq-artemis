@@ -72,7 +72,7 @@ public class ThresholdActorTest {
          Assert.assertFalse(open.get());
 
          semaphore.release();
-         Wait.assertTrue(open::get);
+         Wait.assertTrue(open::get, 1000);
 
          Assert.assertEquals(1, timesClose.get());
          Assert.assertEquals(1, timesOpen.get());
@@ -84,7 +84,7 @@ public class ThresholdActorTest {
 
          // measuring after forced flush
          Wait.assertEquals(2, timesOpen::get, 5000, 1);
-         Wait.assertTrue(open::get);
+         Wait.assertTrue(open::get, 1000);
       } finally {
          executorService.shutdown();
       }
