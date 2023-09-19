@@ -27,13 +27,16 @@ import javax.jms.MapMessage;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
+import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.StreamMessage;
 import javax.jms.TextMessage;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
@@ -70,6 +73,7 @@ import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.ProtonServerSenderContext;
 import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
 import org.apache.activemq.artemis.utils.ByteUtil;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
@@ -224,6 +228,26 @@ public class ConsumerTest extends ActiveMQTestBase {
       Assert.assertNull(consumer.receiveImmediate());
 
       session.close();
+   }
+
+
+   @Test
+   public void testDeleteme() throws Throwable {
+      ConnectionFactory factory = CFUtil.createConnectionFactory("core", "tcp://localhost:61616");
+      try (Connection connection = factory.createConnection()) {
+         connection.start();
+         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         javax.jms.Queue queue = session.createQueue(getName());
+         MessageProducer producer = session.createProducer(queue);
+         producer.send(session.createTextMessage("hello"));
+         List<QueueBrowser> browserList = new ArrayList<>();
+         for (int i = 0; i < 1000; i++) {
+            QueueBrowser consumer = session.createBrowser(queue);
+            Assert.assertTrue(consumer.getEnumeration().hasMoreElements());
+            browserList.add(consumer);
+         }
+         Thread.sleep(50000);
+      }
    }
 
    @Test

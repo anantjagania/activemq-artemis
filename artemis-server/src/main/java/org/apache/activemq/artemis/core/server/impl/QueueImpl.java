@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -77,6 +78,7 @@ import org.apache.activemq.artemis.core.postoffice.impl.LocalQueueBinding;
 import org.apache.activemq.artemis.core.postoffice.impl.PostOfficeImpl;
 import org.apache.activemq.artemis.core.remoting.server.RemotingService;
 import org.apache.activemq.artemis.core.server.ActiveMQMessageBundle;
+import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.server.Consumer;
@@ -213,6 +215,24 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
          this.nodeStore = nodeStore;
          messageReferences.setNodeStore(nodeStore);
       }
+   }
+
+   class Tester extends ActiveMQScheduledComponent {
+
+      public Tester(ScheduledExecutorService scheduledExecutorService,
+                    Executor executor) {
+         super(scheduledExecutorService, executor, 0, 2, TimeUnit.SECONDS, false);
+      }
+
+      @Override
+      public void run() {
+         debugRefs();
+      }
+   }
+
+   public void debugRefs() {
+      int iters = messageReferences.numIters();
+      System.out.println("There are " + iters + " on queue " + name);
    }
 
    // The quantity of pagedReferences on messageReferences priority list
@@ -738,7 +758,12 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       }
 
       this.ringSize = queueConfiguration.getRingSize() == null ? ActiveMQDefaultConfiguration.getDefaultRingSize() : queueConfiguration.getRingSize();
+
+      tester = new Tester(scheduledExecutor, null);
+      tester.start();
    }
+
+   Tester tester;
 
    // Bindable implementation -------------------------------------------------------------------------------------
 

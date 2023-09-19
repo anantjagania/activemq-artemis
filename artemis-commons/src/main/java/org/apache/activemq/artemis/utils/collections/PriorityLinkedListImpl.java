@@ -44,6 +44,20 @@ public class PriorityLinkedListImpl<E> implements PriorityLinkedList<E> {
       this(priorities, null);
    }
 
+   @Override
+   public int numIters() {
+
+      int size = 0;
+      for (LinkedListImpl i : levels) {
+         if (i != null) {
+            size += i.numIters();
+         }
+      }
+      return size;
+   }
+
+
+
 
    public PriorityLinkedListImpl(final int priorities, Comparator<E> comparator) {
       levels = (LinkedListImpl<E>[]) Array.newInstance(LinkedListImpl.class, priorities);

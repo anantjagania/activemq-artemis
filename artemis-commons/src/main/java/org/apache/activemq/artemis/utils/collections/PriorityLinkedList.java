@@ -36,6 +36,8 @@ public interface PriorityLinkedList<E> {
 
    void clear();
 
+   int numIters();
+
    /**
     * @see LinkedList#setNodeStore(NodeStore)
     * @param supplier

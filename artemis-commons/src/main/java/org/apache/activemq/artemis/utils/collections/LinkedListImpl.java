@@ -16,11 +16,15 @@
  */
 package org.apache.activemq.artemis.utils.collections;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -150,7 +154,6 @@ public class LinkedListImpl<E> implements LinkedList<E> {
       removeAfter(node.prev);
       return node.val();
    }
-
 
    @Override
    public void forEach(Consumer<E> consumer) {
@@ -376,7 +379,38 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    public int numIters() {
+
+      if (numIters > 100) {
+         HashMap<String, AtomicInteger> locations = new HashMap<>();
+         for (Iterator i : iters) {
+            String local = printStream(i.location);
+            AtomicInteger valueInt = locations.get(local);
+            if (valueInt == null) {
+               valueInt = new AtomicInteger(0);
+               locations.put(local, valueInt);
+            }
+            valueInt.incrementAndGet();
+         }
+
+         locations.forEach((a, b) -> {
+            System.out.println("*******************************************************************************************************************************");
+            System.out.println("Containing " + b);
+            System.out.println(a);
+         });
+      }
       return numIters;
+   }
+
+   String printStream(Exception e) {
+
+      try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+         PrintStream stream = new PrintStream(byteArrayOutputStream);
+         e.printStackTrace(stream);
+         return byteArrayOutputStream.toString();
+      } catch (Exception e2) {
+         e2.printStackTrace();
+         return e2.toString();
+      }
    }
 
    private Iterator[] createIteratorArray(int size) {
@@ -426,6 +460,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
       iters[nextIndex++] = iter;
 
       numIters++;
+      new Exception("Adding iterator " + numIters).printStackTrace();
    }
 
    private synchronized void resize(int newSize) {
@@ -437,6 +472,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    private synchronized void removeIter(Iterator iter) {
+      new Exception("Removing iterator").printStackTrace();
       if (logger.isTraceEnabled()) {
          logger.trace("Removing iterator at", new Exception("trace location"));
       }
@@ -524,10 +560,10 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    public class Iterator implements LinkedListIterator<E> {
+
+      public Exception location = new Exception("created here");
       Node<E> last;
-
       Node<E> current = head.next;
-
       boolean repeat;
 
       Iterator() {
@@ -620,6 +656,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
 
       @Override
       public void close() {
+         new Exception("Removing").printStackTrace();
          removeIter(this);
       }
 
