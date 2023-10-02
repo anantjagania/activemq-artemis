@@ -84,7 +84,7 @@ public class Artemis {
          dirs.add(new File(fileInstance, "lib"));
       }
 
-      String extraLibs = System.getenv("ARTEMIS_EXTRA_LIBS");
+      String extraLibs = System.getProperty("ARTEMIS_EXTRA_LIBS");
       if (extraLibs != null) {
          for (String extraLib: extraLibs.split(",")) {
             dirs.add(new File(extraLib));
