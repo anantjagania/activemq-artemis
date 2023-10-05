@@ -61,6 +61,19 @@ public final class BindingsImpl implements Bindings {
    // This is public as we use on test assertions
    public static final int MAX_GROUP_RETRY = 10;
 
+   private boolean hasLocal;
+
+   private void checkBinding(Long bindingID, Binding binding) {
+      if (binding instanceof LocalQueueBinding) {
+         hasLocal = true;
+      }
+   }
+
+   private void checkBindinsIdMap() {
+      hasLocal = false;
+      bindingsIdMap.forEach(this::checkBinding);
+   }
+
    private final CopyOnWriteBindings routingNameBindingMap = new CopyOnWriteBindings();
 
    private final Map<Long, Binding> bindingsIdMap = new ConcurrentHashMap<>();
@@ -158,6 +171,7 @@ public final class BindingsImpl implements Bindings {
 
    private void updated() {
       version.set(sequenceVersion.incrementAndGet());
+      checkBindinsIdMap();
    }
 
    @Override
@@ -201,14 +215,8 @@ public final class BindingsImpl implements Bindings {
    }
 
    @Override
-   public boolean contains(Class clazz) {
-      for (Binding binding : getBindings()) {
-         if (clazz.isInstance(binding)) {
-            return true;
-         }
-      }
-
-      return false;
+   public boolean hasLocalBinding() {
+      return hasLocal;
    }
 
 

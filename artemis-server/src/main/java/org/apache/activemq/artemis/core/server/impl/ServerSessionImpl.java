@@ -1826,7 +1826,7 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
          if (server.locateQueue(unPrefixedQueue) == null) {
             // The queue doesn't exist.
             Bindings bindings = server.getPostOffice().lookupBindingsForAddress(unPrefixedAddress);
-            if (bindings != null && bindings.contains(LocalQueueBinding.class) && !queueConfig.isFqqn()) {
+            if (bindings != null && bindings.hasLocalBinding() && !queueConfig.isFqqn()) {
                // The address has another queue with a different name, which is fine. Just ignore it.
                result = AutoCreateResult.EXISTED;
             } else if (addressSettings.isAutoCreateQueues() || queueConfig.isTemporary()) {
