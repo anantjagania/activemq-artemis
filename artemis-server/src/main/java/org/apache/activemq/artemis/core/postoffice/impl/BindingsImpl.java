@@ -470,6 +470,11 @@ public final class BindingsImpl implements Bindings {
          // if no bindings were found, we will apply a secondary level on the routing logic
          if (lastLowPriorityBinding != -1) {
             nextBinding = bindings[lastLowPriorityBinding];
+            if (nextBinding != null && loadBalancingType.equals(MessageLoadBalancingType.OFF_WITH_REDISTRIBUTION)) {
+               //return before changing bindingIndex, otherwise every incoming message sets the index to the same position.
+               //bindingIndex is shared with the redistributor
+               return nextBinding;
+            }
             nextPosition = moveNextPosition(lastLowPriorityBinding, bindingsCount);
          }
       }
