@@ -202,19 +202,19 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    public void addSorted(E e) {
       final Node<E> localLastAdd = lastAdd;
 
-      logger.trace("**** addSorted element {}", e);
+      logger.debug("**** addSorted element {}", e);
 
       if (comparator == null) {
          throw new NullPointerException("comparator=null");
       }
 
       if (size == 0) {
-         logger.trace("adding head as there are no elements {}", e);
+         logger.debug("adding head as there are no elements {}", e);
          addHead(e);
       } else {
          if (comparator.compare(head.next.val(), e) < 0) {
-            if (logger.isTraceEnabled()) {
-               logger.trace("addHead as e={} and head={}", e, head.next.val());
+            if (logger.isDebugEnabled()) {
+               logger.debug("addHead as e={} and head={}", e, head.next.val());
             }
             addHead(e);
             return;
@@ -226,7 +226,7 @@ public class LinkedListImpl<E> implements LinkedList<E> {
          // This would be an optimization for our usage.
          // avoiding scanning the entire List just to add at the end, so we compare the end first.
          if (comparator.compare(tail.val(), e) >= 0) {
-            logger.trace("addTail as e={} and tail={}", e, tail.val());
+            logger.debug("addTail as e={} and tail={}", e, tail.val());
             addTail(e);
             return;
          }
@@ -293,22 +293,26 @@ public class LinkedListImpl<E> implements LinkedList<E> {
    }
 
    protected boolean addSortedScan(E e) {
-      logger.trace("addSortedScan {}...", e);
+      logger.debug("addSortedScan {}...", e);
       Node<E> fetching = head.next;
       while (fetching.next != null) {
          int compareNext = comparator.compare(fetching.next.val(), e);
          if (compareNext <= 0) {
             addAfter(fetching, e);
-            logger.trace("... addSortedScan done, returning true");
+            logger.debug("... addSortedScan done, returning true");
             return true;
          }
          fetching = fetching.next;
       }
-      logger.trace("... addSortedScan done, could not find a spot, returning false");
+      logger.debug("... addSortedScan done, could not find a spot, returning false");
       return false;
    }
 
    private void addAfter(Node<E> node, E e) {
+
+      if (logger.isDebugEnabled()) {
+         logger.debug("adding {} {}", e, node.val());
+      }
       Node<E> newNode = Node.with(e);
       Node<E> nextNode = node.next;
       node.next = newNode;

@@ -445,7 +445,11 @@ public class AMQPSessionCallback implements SessionCallback {
    }
 
    public AMQPStandardMessage createStandardMessage(Delivery delivery, ReadableBuffer data) {
-      return new AMQPStandardMessage(delivery.getMessageFormat(), data, null, coreMessageObjectPools);
+      AMQPStandardMessage message = new AMQPStandardMessage(delivery.getMessageFormat(), data, null, coreMessageObjectPools);
+      if (storageManager != null) { // this could be null on tests
+         message.setMessageID(storageManager.generateID());
+      }
+      return message;
    }
 
    public void serverSend(ProtonServerReceiverContext context,

@@ -2995,6 +2995,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
     * @param ref
     */
    private void internalAddSorted(final MessageReference ref) {
+      logger.trace("Add sorted {}", ref);
       if (RefCountMessage.isRefTraceEnabled()) {
          RefCountMessage.deferredDebug(ref.getMessage(), "add sorted queue {}", this.getAddress());
       }

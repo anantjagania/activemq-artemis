@@ -53,6 +53,7 @@ import org.apache.activemq.artemis.core.filter.Filter;
 import org.apache.activemq.artemis.core.filter.impl.FilterImpl;
 import org.apache.activemq.artemis.core.io.IOCallback;
 import org.apache.activemq.artemis.core.management.impl.view.ProducerField;
+import org.apache.activemq.artemis.core.message.impl.CoreMessage;
 import org.apache.activemq.artemis.core.paging.PagingManager;
 import org.apache.activemq.artemis.core.paging.PagingStore;
 import org.apache.activemq.artemis.core.persistence.OperationContext;
@@ -1898,7 +1899,9 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
 
          //large message may come from StompSession directly, in which
          //case the id header already generated.
-         if (!message.isLargeMessage()) {
+
+         // AMQP Messages will have their ID stored as part of the protocol head.
+         if (!message.isLargeMessage() && (message.getMessageID() <= 0 || message instanceof CoreMessage)) {
             long id = storageManager.generateID();
             // This will re-encode the message
             message.setMessageID(id);
