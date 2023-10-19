@@ -258,6 +258,9 @@
       <testFailureIgnore>true</testFailureIgnore>
       <fast-tests>false</fast-tests>
 
+      <!-- for tests that will need a new server created -->
+      <artemis.bin.output>${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}</artemis.bin.output>
+
       <project.build.outputTimestamp>2023-09-15T18:40:46Z</project.build.outputTimestamp>
    </properties>
 

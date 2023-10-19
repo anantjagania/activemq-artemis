@@ -54,7 +54,6 @@ public class ArtemisCreatePlugin extends ArtemisAbstractPlugin {
    /**
     * Directory to replace the configuration with
     */
-   @Parameter(defaultValue = "${basedir}/target/classes/activemq/server0", required = true)
    private File configuration;
 
    @Parameter(defaultValue = "${activemq.basedir}", required = true)
