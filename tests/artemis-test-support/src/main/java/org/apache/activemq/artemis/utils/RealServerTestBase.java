@@ -93,6 +93,11 @@ public class RealServerTestBase extends ActiveMQTestBase {
       return basedir + "/target/" + serverName;
    }
 
+   public static File getFileServerLocation(String serverName) {
+      return new File(getServerLocation(serverName));
+   }
+
+
    public static boolean cleanupData(String serverName) {
       String location = getServerLocation(serverName);
       boolean result = deleteDirectory(new File(location, "data"));

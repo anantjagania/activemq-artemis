@@ -33,10 +33,12 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.tests.soak.SoakTestBase;
 import org.apache.activemq.artemis.util.ServerUtil;
 import org.apache.activemq.artemis.utils.ReusableLatch;
+import org.apache.activemq.artemis.utils.cliHelper.CLICreate;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ReplicationFlowControlTest extends SoakTestBase {
@@ -44,6 +46,63 @@ public class ReplicationFlowControlTest extends SoakTestBase {
 
    public static final String SERVER_NAME_0 = "replicated-static0";
    public static final String SERVER_NAME_1 = "replicated-static1";
+
+   /*
+                  <execution>
+                  <phase>test-compile</phase>
+                  <id>created-static0</id>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <!-- this makes it easier in certain envs -->
+                     <javaOptions>-Djava.net.preferIPv4Stack=true</javaOptions>
+                     <instance>${basedir}/target/replicated-static0</instance>
+                     <configuration>${basedir}/target/classes/servers/replicated-static0</configuration>
+                  </configuration>
+               </execution>
+               <execution>
+                  <phase>test-compile</phase>
+                  <id>create-replicated-static1</id>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <!-- this makes it easier in certain envs -->
+                     <javaOptions>-Djava.net.preferIPv4Stack=true</javaOptions>
+                     <instance>${basedir}/target/replicated-static1</instance>
+                     <configuration>${basedir}/target/classes/servers/replicated-static1</configuration>
+                     <args>
+                        <arg>--java-options</arg>
+                        <arg>-ea</arg>
+                     </args>
+                  </configuration>
+               </execution>
+    */
+
+   @BeforeClass
+   public static void createServers() throws Exception {
+      {
+         File serverLocation = getFileServerLocation(SERVER_NAME_0);
+         deleteDirectory(serverLocation);
+
+         CLICreate cliCreateServer = new CLICreate();
+         cliCreateServer.setAllowAnonymous(true).setNoWeb(true).setArtemisInstance(serverLocation);
+         cliCreateServer.setConfiguration("./src/main/resources/servers/replicated-static0");
+         cliCreateServer.createServer();
+      }
+      {
+         File serverLocation = getFileServerLocation(SERVER_NAME_1);
+         deleteDirectory(serverLocation);
+
+         CLICreate cliCreateServer = new CLICreate();
+         cliCreateServer.setAllowAnonymous(true).setNoWeb(true).setArtemisInstance(serverLocation);
+         cliCreateServer.setConfiguration("./src/main/resources/servers/replicated-static1");
+         cliCreateServer.createServer();
+      }
+   }
+
+
 
    ArrayList<Consumer> consumers = new ArrayList<>();
    private static Process server0;
