@@ -991,70 +991,6 @@
                      <instance>${basedir}/target/transfer2</instance>
                   </configuration>
                </execution>
-               <!-- used on BrokerConnectionBridgeSecurityTest  -->
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>createBrokerConnectBridgeSecurityA</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <allowAnonymous>false</allowAnonymous>
-                     <user>A</user>
-                     <password>A</password>
-                     <noWeb>true</noWeb>
-                     <instance>${basedir}/target/brokerConnect/bridgeSecurityA</instance>
-                     <configuration>${basedir}/target/classes/servers/brokerConnect/bridgeSecurityA</configuration>
-                  </configuration>
-               </execution>
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>createBrokerConnectBridgeSecurityB</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <allowAnonymous>false</allowAnonymous>
-                     <user>B</user>
-                     <password>B</password>
-                     <noWeb>true</noWeb>
-                     <portOffset>100</portOffset>
-                     <instance>${basedir}/target/brokerConnect/bridgeSecurityB</instance>
-                     <configuration>${basedir}/target/classes/servers/brokerConnect/bridgeSecurityB</configuration>
-                  </configuration>
-               </execution>
-               <!-- used on BrokerConnectionBridgeSecurityTest  -->
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>createBrokerConnectMirrorSecurityA</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <allowAnonymous>false</allowAnonymous>
-                     <user>A</user>
-                     <password>A</password>
-                     <noWeb>true</noWeb>
-                     <instance>${basedir}/target/brokerConnect/mirrorSecurityA</instance>
-                     <configuration>${basedir}/target/classes/servers/brokerConnect/mirrorSecurityA</configuration>
-                  </configuration>
-               </execution>
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>createBrokerConnectMirrorSecurityB</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <allowAnonymous>false</allowAnonymous>
-                     <user>B</user>
-                     <password>B</password>
-                     <noWeb>true</noWeb>
-                     <portOffset>1</portOffset>
-                     <instance>${basedir}/target/brokerConnect/mirrorSecurityB</instance>
-                     <configuration>${basedir}/target/classes/servers/brokerConnect/mirrorSecurityB</configuration>
-                  </configuration>
-               </execution>
 
                <!-- used on DualFederationTest  -->
                <execution>
@@ -1156,39 +1092,7 @@
                      <configuration>${basedir}/target/classes/servers/brokerConnect/pagedB</configuration>
                   </configuration>
                </execution>
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>create-bridge-transfer-A</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <role>amq</role>
-                     <user>artemis</user>
-                     <password>artemis</password>
-                     <allowAnonymous>true</allowAnonymous>
-                     <noWeb>true</noWeb>
-                     <instance>${basedir}/target/bridgeTransfer/serverA</instance>
-                     <configuration>${basedir}/target/classes/servers/bridgeTransfer/serverA</configuration>
-                  </configuration>
-               </execution>
-               <execution>
-                  <phase>test-compile</phase>
-                  <id>create-bridge-transfer-B</id>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <role>amq</role>
-                     <user>artemis</user>
-                     <password>artemis</password>
-                     <allowAnonymous>true</allowAnonymous>
-                     <noWeb>true</noWeb>
-                     <instance>${basedir}/target/bridgeTransfer/serverB</instance>
-                     <configuration>${basedir}/target/classes/servers/bridgeTransfer/serverB</configuration>
-                  </configuration>
-               </execution>
-               <!-- Used on TestRetention -->
+                <!-- Used on TestRetention -->
                <execution>
                   <phase>test-compile</phase>
                   <id>create-replay</id>
