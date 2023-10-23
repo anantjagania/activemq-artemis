@@ -60,6 +60,7 @@ import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPNotFound
 import org.apache.activemq.artemis.protocol.amqp.exceptions.ActiveMQAMQPResourceLimitExceededException;
 import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolLogger;
 import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolMessageBundle;
+import org.apache.activemq.artemis.protocol.amqp.proton.handler.ProtonHandler;
 import org.apache.activemq.artemis.protocol.amqp.proton.transaction.ProtonTransactionImpl;
 import org.apache.activemq.artemis.protocol.amqp.util.NettyReadable;
 import org.apache.activemq.artemis.protocol.amqp.util.NettyWritable;
@@ -92,6 +93,7 @@ import org.apache.qpid.proton.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton.codec.ReadableBuffer;
 import org.apache.qpid.proton.codec.WritableBuffer;
+import org.apache.qpid.proton.engine.Connection;
 import org.apache.qpid.proton.engine.Delivery;
 import org.apache.qpid.proton.engine.EndpointState;
 import org.apache.qpid.proton.engine.Link;
@@ -295,6 +297,7 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       } catch (ActiveMQException e) {
          throw e;
       } catch (Exception e) {
+         logger.warn(e.getMessage(), e);
          throw ActiveMQAMQPProtocolMessageBundle.BUNDLE.errorCreatingConsumer(e.getMessage());
       }
    }
@@ -980,6 +983,19 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
 
       @Override
       public Consumer init(ProtonServerSenderContext senderContext) throws Exception {
+         {
+            ProtonHandler handler;
+            Connection qpidConnection;
+            // Avoiding possible NPEs that could happen on mock tests
+            if (connection != null &&
+               (handler = connection.getHandler()) != null && (qpidConnection = handler.getConnection()) != null) {
+               if (qpidConnection.getRemoteState() == EndpointState.CLOSED) {
+                  logger.warn("AMQP Connection creating invalid consumer for closed connection", connection);
+                  throw new IllegalStateException("AMQP connection " + connection.getRemoteAddress() + " creating invalid consumer for closed connection");
+               }
+            }
+         }
+
          Source source = (Source) sender.getRemoteSource();
          final Map<Symbol, Object> supportedFilters = new HashMap<>();
 
