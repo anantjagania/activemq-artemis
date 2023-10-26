@@ -40,6 +40,7 @@ import org.apache.activemq.artemis.core.io.IOCallback;
 import org.apache.activemq.artemis.core.message.LargeBodyReader;
 import org.apache.activemq.artemis.core.persistence.OperationContext;
 import org.apache.activemq.artemis.core.postoffice.impl.LocalQueueBinding;
+import org.apache.activemq.artemis.core.server.ActiveMQMessageBundle;
 import org.apache.activemq.artemis.core.server.AddressQueryResult;
 import org.apache.activemq.artemis.core.server.Consumer;
 import org.apache.activemq.artemis.core.server.MessageReference;
@@ -983,18 +984,7 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
 
       @Override
       public Consumer init(ProtonServerSenderContext senderContext) throws Exception {
-         {
-            ProtonHandler handler;
-            Connection qpidConnection;
-            // Avoiding possible NPEs that could happen on mock tests
-            if (connection != null &&
-               (handler = connection.getHandler()) != null && (qpidConnection = handler.getConnection()) != null) {
-               if (qpidConnection.getRemoteState() == EndpointState.CLOSED) {
-                  logger.warn("AMQP Connection creating invalid consumer for closed connection", connection);
-                  throw new IllegalStateException("AMQP connection " + connection.getRemoteAddress() + " creating invalid consumer for closed connection");
-               }
-            }
-         }
+         validateConnectionState();
 
          Source source = (Source) sender.getRemoteSource();
          final Map<Symbol, Object> supportedFilters = new HashMap<>();
@@ -1348,6 +1338,20 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
                //ignore on close, its temp anyway and will be removed later
             }
          }
+      }
+   }
+
+   private void validateConnectionState() throws ActiveMQException {
+      ProtonHandler handler;
+      Connection qpidConnection;
+
+      if (connection == null || (handler = connection.getHandler()) == null || (qpidConnection = handler.getConnection()) == null) {
+         ActiveMQAMQPProtocolLogger.LOGGER.invalidAMQPConnectionState("null", "null");
+         throw ActiveMQAMQPProtocolMessageBundle.BUNDLE.invalidAMQPConnectionState("null");
+      }
+      if (qpidConnection.getRemoteState() == EndpointState.CLOSED) {
+         ActiveMQAMQPProtocolLogger.LOGGER.invalidAMQPConnectionState(qpidConnection.getRemoteState(), connection.getRemoteAddress());
+         throw ActiveMQAMQPProtocolMessageBundle.BUNDLE.invalidAMQPConnectionState(qpidConnection.getRemoteState());
       }
    }
 }

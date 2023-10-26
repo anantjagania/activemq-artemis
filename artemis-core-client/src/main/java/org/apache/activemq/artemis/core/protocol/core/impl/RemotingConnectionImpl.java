@@ -198,6 +198,8 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
             return;
          }
 
+         logger.warn("Failed here", new Exception("trace"));
+
          destroyed = true;
       }
 
@@ -234,6 +236,7 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
             return;
          }
 
+         logger.warn("destroyed", new Exception("Trace"));
          destroyed = true;
       }
 

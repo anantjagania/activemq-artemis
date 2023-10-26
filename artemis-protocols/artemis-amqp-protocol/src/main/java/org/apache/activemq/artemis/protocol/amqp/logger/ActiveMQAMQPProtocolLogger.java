@@ -16,10 +16,12 @@
  */
 package org.apache.activemq.artemis.protocol.amqp.logger;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.logs.annotation.LogBundle;
 import org.apache.activemq.artemis.logs.annotation.LogMessage;
 import org.apache.activemq.artemis.logs.BundleFactory;
+import org.apache.activemq.artemis.logs.annotation.Message;
 
 /**
  * Logger Code 11
@@ -55,4 +57,7 @@ public interface ActiveMQAMQPProtocolLogger {
 
    @LogMessage(id = 111006, value = "Unable to send message {} to Dead Letter Address.", level = LogMessage.Level.WARN)
    void unableToSendMessageToDLA(MessageReference ref, Throwable t);
+
+   @LogMessage(id = 111007, value = "Invalid Connection State: {} for remote IP {}", level = LogMessage.Level.WARN)
+   void invalidAMQPConnectionState(Object state, Object remoteIP);
 }
