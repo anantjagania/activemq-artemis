@@ -30,6 +30,7 @@ import org.apache.activemq.artemis.protocol.amqp.sasl.SASLResult;
 import org.apache.activemq.artemis.spi.core.protocol.AbstractRemotingConnection;
 import org.apache.activemq.artemis.spi.core.remoting.Connection;
 import org.apache.qpid.proton.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton.engine.EndpointState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,10 +79,27 @@ public class ActiveMQProtonRemotingConnection extends AbstractRemotingConnection
 
       destroyed = true;
 
-      amqpConnection.runNow(() -> {
-         //filter it like the other protocols
-         ActiveMQClientLogger.LOGGER.connectionFailureDetected(amqpConnection.getConnectionCallback().getTransportConnection().getRemoteAddress(), me.getMessage(), me.getType());
+      if (logger.isInfoEnabled()) {
+         try {
+            logger.debug("Connection failure detected. amqpConnection.getHandler().getConnection().getRemoteState() = {}, remoteIP={}", amqpConnection.getHandler().getConnection().getRemoteState(), amqpConnection.getConnectionCallback().getTransportConnection().getRemoteAddress());
+         } catch (Throwable e) { // just to avoid a possible NPE from the debug statement itself
+            logger.debug(e.getMessage(), e);
+            logger.warn(e.getMessage(), e);
+         }
+      }
 
+      try {
+         if (amqpConnection.getHandler().getConnection().getRemoteState() != EndpointState.CLOSED) {
+            // A remote close was received on the client, on that case it's just a normal operation and we don't need to log this.
+            ActiveMQClientLogger.LOGGER.connectionFailureDetected(amqpConnection.getConnectionCallback().getTransportConnection().getRemoteAddress(), me.getMessage(), me.getType());
+         }
+      } catch (Throwable e) { // avoiding NPEs from te logging statement. I don't think this would happen, but just in case
+         logger.warn(e.getMessage(), e);
+      }
+
+
+
+      amqpConnection.runNow(() -> {
          // Then call the listeners
          callFailureListeners(me, scaleDownTargetNodeID);
 

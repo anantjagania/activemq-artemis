@@ -170,7 +170,7 @@ public class InVMConnector extends AbstractConnector {
       }
 
       for (Connection connection : connections.values()) {
-         listener.connectionDestroyed(connection.getID());
+         listener.connectionDestroyed(connection.getID(), false);
       }
 
       started = false;
@@ -268,7 +268,7 @@ public class InVMConnector extends AbstractConnector {
       }
 
       @Override
-      public void connectionDestroyed(final Object connectionID) {
+      public void connectionDestroyed(final Object connectionID, boolean failed) {
          if (connections.remove(connectionID) != null) {
             // Close the corresponding connection on the other side
             acceptor.disconnect((String) connectionID);
@@ -277,7 +277,7 @@ public class InVMConnector extends AbstractConnector {
             closeExecutor.execute(new Runnable() {
                @Override
                public void run() {
-                  listener.connectionDestroyed(connectionID);
+                  listener.connectionDestroyed(connectionID, failed);
                }
             });
          }

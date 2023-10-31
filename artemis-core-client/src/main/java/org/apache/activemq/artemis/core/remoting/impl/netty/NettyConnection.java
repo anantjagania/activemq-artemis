@@ -242,7 +242,7 @@ public class NettyConnection implements Connection {
 
       closed = true;
 
-      listener.connectionDestroyed(getID());
+      listener.connectionDestroyed(getID(), false);
    }
 
    @Override

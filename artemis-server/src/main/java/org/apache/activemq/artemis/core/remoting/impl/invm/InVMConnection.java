@@ -150,7 +150,7 @@ public class InVMConnection implements Connection {
 
       synchronized (this) {
          if (!closed) {
-            listener.connectionDestroyed(id);
+            listener.connectionDestroyed(id, false);
 
             closed = true;
          }

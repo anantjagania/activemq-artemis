@@ -37,6 +37,7 @@ import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.logs.AssertionLoggerHandler;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.utils.RandomUtil;
@@ -114,6 +115,8 @@ public class ConnectionDroppedTest extends ActiveMQTestBase {
 
       CountDownLatch done = new CountDownLatch(NUMBER_OF_CONNECTIONS);
       AtomicInteger errors = new AtomicInteger(0);
+      AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler();
+      runAfter(loggerHandler::stop);
 
       for (int i = 0; i < NUMBER_OF_CONNECTIONS; i++) {
          executorService.execute(() -> {
@@ -146,6 +149,12 @@ public class ConnectionDroppedTest extends ActiveMQTestBase {
       Assert.assertTrue(done.await(10, TimeUnit.SECONDS));
 
       Assert.assertEquals(0, errors.get());
+
+      Assert.assertFalse(loggerHandler.findText("AMQ212037"));
+      Assert.assertFalse(loggerHandler.findText("Connection failure"));
+      Assert.assertFalse(loggerHandler.findText("REMOTE_DISCONNECT"));
+      Assert.assertFalse(loggerHandler.findText("AMQ222061"));
+      Assert.assertFalse(loggerHandler.findText("AMQ222107"));
 
       Wait.assertEquals(0, () -> serverQueue.getConsumers().size(), 5000, 100);
       Wait.assertEquals(0, server::getConnectionCount, 5000);
@@ -195,7 +204,7 @@ public class ConnectionDroppedTest extends ActiveMQTestBase {
                boolean alreadyStarted = false;
                AtomicBoolean ex = new AtomicBoolean(true);
                while (running.get()) {
-                  try  {
+                  try {
                      // do not be tempted to use try (connection = factory.createConnection())
                      // this is because we don't need to close the connection after a network failure on this test.
                      Connection connection = factory.createConnection();

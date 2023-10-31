@@ -2154,6 +2154,7 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
          return;
 
       try {
+         new Exception("failed").printStackTrace(System.out);
          ActiveMQServerLogger.LOGGER.clientConnectionFailed(name);
 
          close(true);
