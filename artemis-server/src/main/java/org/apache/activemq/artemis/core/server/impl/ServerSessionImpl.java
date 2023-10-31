@@ -460,6 +460,7 @@ public class ServerSessionImpl implements ServerSession, FailureListener {
             serverProducers.clear();
          }
       } catch (Throwable e) {
+         logger.warn(e.getMessage(), e);
       }
 
 

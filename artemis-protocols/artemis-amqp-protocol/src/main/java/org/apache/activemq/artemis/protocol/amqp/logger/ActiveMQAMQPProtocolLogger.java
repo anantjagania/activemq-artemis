@@ -16,12 +16,10 @@
  */
 package org.apache.activemq.artemis.protocol.amqp.logger;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.logs.annotation.LogBundle;
 import org.apache.activemq.artemis.logs.annotation.LogMessage;
 import org.apache.activemq.artemis.logs.BundleFactory;
-import org.apache.activemq.artemis.logs.annotation.Message;
 
 /**
  * Logger Code 11

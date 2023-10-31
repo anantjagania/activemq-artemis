@@ -80,8 +80,6 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
 
    private final SimpleString nodeID;
 
-   private boolean serverSide;
-
    /*
     * Create a client side connection
     */
@@ -105,7 +103,6 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
                           final SimpleString nodeID,
                           final Executor connectionExecutor) {
       this(packetDecoder, transportConnection, -1, -1, incomingInterceptors, outgoingInterceptors, false, nodeID, connectionExecutor);
-      this.serverSide = true;
    }
 
    private RemotingConnectionImpl(final PacketDecoder packetDecoder,
@@ -198,15 +195,9 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
             return;
          }
 
-         logger.warn("Failed here", new Exception("trace"));
-
          destroyed = true;
       }
 
-      doFail(me, scaleDownTargetNodeID);
-   }
-
-   private void doFail(ActiveMQException me, String scaleDownTargetNodeID) {
       if (!(me instanceof ActiveMQRemoteDisconnectException) && !(me instanceof ActiveMQRoutingException)) {
          ActiveMQClientLogger.LOGGER.connectionFailureDetected(transportConnection.getRemoteAddress(), me.getMessage(), me.getType());
       }
@@ -236,7 +227,6 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
             return;
          }
 
-         logger.warn("destroyed", new Exception("Trace"));
          destroyed = true;
       }
 
