@@ -219,6 +219,11 @@ public class ServerConsumerImpl implements ServerConsumer, ReadyListener {
                              final boolean supportLargeMessage,
                              final Integer credits,
                              final ActiveMQServer server) throws Exception {
+
+      if (session != null && session.getRemotingConnection() != null && session.getRemotingConnection().isDestroyed()) {
+         throw ActiveMQMessageBundle.BUNDLE.connectionDestroyed(session.getRemotingConnection().getRemoteAddress());
+      }
+
       this.id = id;
 
       this.sequentialID = server.getStorageManager().generateID();
