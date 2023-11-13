@@ -142,23 +142,18 @@ public class BeanSupport {
       synchronized (beanUtils) {
          PropertyDescriptor[] descriptors = beanUtils.getPropertyUtils().getPropertyDescriptors(bean);
          for (PropertyDescriptor descriptor : descriptors) {
-            if (BeanSupport.isNumber(descriptor.getPropertyType())) {
+            if (descriptor.getReadMethod() != null && isWriteable(descriptor, null)) {
                try {
                   Object value = descriptor.getReadMethod().invoke(bean);
-                  //logger.trace("Reading {} = value={}", descriptor.getName(), value);
+                  logger.info("Reading {} = value={}", descriptor.getName(), value);
                   consumer.accept(descriptor.getName(), value);
                } catch (Throwable e) {
                   logger.warn(e.getMessage(), e);
                }
-            } else {
-               String value = beanUtils.getProperty(bean, descriptor.getName());
-               logger.info("Value {}={}", descriptor.getName(), value);
-               consumer.accept(descriptor.getName(), value);
             }
          }
       }
    }
-
 
    public static void setData(URI uri,
                               HashMap<String, Object> properties,
