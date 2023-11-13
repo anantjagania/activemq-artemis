@@ -216,7 +216,7 @@ public class BeanSupport {
          return false;
       }
       Class<?> type = descriptor.getPropertyType();
-      if (type.isInstance(Enum.class)) {
+      if (type.isAssignableFrom(Enum.class)) {
          return true;
       } else {
          return isNative(type);
