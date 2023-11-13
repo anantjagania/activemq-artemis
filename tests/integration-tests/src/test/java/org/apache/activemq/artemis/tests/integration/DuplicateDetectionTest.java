@@ -139,7 +139,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testDisabledDuplicateDetection() throws Exception {
       server.stop();
 
-      config = createDefaultInVMConfig().setIdCacheSize(0);
+      config = createDefaultInVMConfig().setIDCacheSize(0);
 
       server = createServer(config);
 
@@ -314,7 +314,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testShrinkCache() throws Exception {
       Assume.assumeTrue("This test would restart the server", persistCache);
       server.stop();
-      server.getConfiguration().setIdCacheSize(150);
+      server.getConfiguration().setIDCacheSize(150);
       server.start();
 
       final int TEST_SIZE = 200;
@@ -347,7 +347,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
 
       server.stop();
 
-      server.getConfiguration().setIdCacheSize(100);
+      server.getConfiguration().setIDCacheSize(100);
 
       server.start();
 
@@ -588,9 +588,9 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
       final SimpleString globalSettingsQueueName = new SimpleString("GlobalIdCacheSizeQueue");
       final SimpleString addressSettingsQueueName = new SimpleString("AddressIdCacheSizeQueue");
       AddressSettings testAddressSettings = new AddressSettings();
-      testAddressSettings.setIdCacheSize(addressIdCacheSize);
+      testAddressSettings.setIDCacheSize(addressIdCacheSize);
 
-      config = createDefaultInVMConfig().setIdCacheSize(globalIdCacheSize);
+      config = createDefaultInVMConfig().setIDCacheSize(globalIdCacheSize);
       config.getAddressSettings().put(addressSettingsQueueName.toString(), testAddressSettings);
 
       server = createServer(config);
@@ -1343,7 +1343,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testDuplicateCachePersisted() throws Exception {
       server.stop();
 
-      config = createDefaultInVMConfig().setIdCacheSize(cacheSize);
+      config = createDefaultInVMConfig().setIDCacheSize(cacheSize);
 
       server = createServer(config);
 
@@ -1418,7 +1418,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
 
       final int theCacheSize = 5;
 
-      config = createDefaultInVMConfig().setIdCacheSize(theCacheSize);
+      config = createDefaultInVMConfig().setIDCacheSize(theCacheSize);
 
       server = createServer(config);
 
@@ -1483,7 +1483,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testNoPersist() throws Exception {
       server.stop();
 
-      config = createDefaultInVMConfig().setIdCacheSize(cacheSize).setPersistIDCache(false);
+      config = createDefaultInVMConfig().setIDCacheSize(cacheSize).setPersistIDCache(false);
 
       server = createServer(config);
 
@@ -1556,7 +1556,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testNoPersistTransactional() throws Exception {
       server.stop();
 
-      config = createDefaultInVMConfig().setIdCacheSize(cacheSize).setPersistIDCache(false);
+      config = createDefaultInVMConfig().setIDCacheSize(cacheSize).setPersistIDCache(false);
 
       server = createServer(config);
 
@@ -1721,7 +1721,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void testNoPersistXA1() throws Exception {
       server.stop();
 
-      config = createDefaultInVMConfig().setIdCacheSize(cacheSize).setPersistIDCache(false);
+      config = createDefaultInVMConfig().setIDCacheSize(cacheSize).setPersistIDCache(false);
 
       server = createServer(config);
 
@@ -1982,7 +1982,7 @@ public class DuplicateDetectionTest extends ActiveMQTestBase {
    public void setUp() throws Exception {
       super.setUp();
 
-      config = createDefaultInVMConfig().setIdCacheSize(cacheSize).setPersistIDCache(persistCache);
+      config = createDefaultInVMConfig().setIDCacheSize(cacheSize).setPersistIDCache(persistCache);
 
       server = createServer(true, config);
 

@@ -17,7 +17,9 @@
 package org.apache.activemq.artemis.core.settings.impl;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
@@ -26,8 +28,12 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.settings.Mergeable;
+import org.apache.activemq.artemis.json.JsonObject;
+import org.apache.activemq.artemis.json.JsonString;
+import org.apache.activemq.artemis.json.JsonValue;
 import org.apache.activemq.artemis.utils.BufferHelper;
 import org.apache.activemq.artemis.utils.DataConstants;
+import org.apache.activemq.artemis.utils.JsonLoader;
 import org.apache.activemq.artemis.utils.beans.JSONConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1427,11 +1433,11 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       return this;
    }
 
-   public Integer getIdCacheSize() {
+   public Integer getIDCacheSize() {
       return idCacheSize;
    }
 
-   public AddressSettings setIdCacheSize(Integer idCacheSize) {
+   public AddressSettings setIDCacheSize(int idCacheSize) {
       this.idCacheSize = idCacheSize;
       return this;
    }
@@ -2206,14 +2212,15 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
     * @return the {@code QueueConfiguration} created from the JSON-formatted input {@code String}
     */
    public static AddressSettings fromJSON(String jsonString) {
-      try {
-         AddressSettings settings = new AddressSettings();
-         JSONConverter.fromJSON(settings, jsonString);
-         return settings;
-      } catch (Exception e) {
-         logger.warn(e.getMessage(), e);
-         return null;
+      JsonObject json = JsonLoader.readObject(new StringReader(jsonString));
+
+      AddressSettings result = new AddressSettings();
+
+      for (Map.Entry<String, JsonValue> entry : json.entrySet()) {
+         result.set(entry.getKey(), entry.getValue().getValueType() == JsonValue.ValueType.STRING ? ((JsonString)entry.getValue()).getString() : entry.getValue().toString());
       }
+
+      return result;
    }
 
    /* (non-Javadoc)

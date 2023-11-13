@@ -1124,12 +1124,12 @@ public interface AuditLogger {
    @LogMessage(id = 601139, value = "User {} is getting connection ttl override on target resource: {}", level = LogMessage.Level.INFO)
    void getConnectionTTLOverride(String user, Object source);
 
-   static void getIdCacheSize(Object source) {
-      BASE_LOGGER.getIdCacheSize(getCaller(), source);
+   static void getIDCacheSize(Object source) {
+      BASE_LOGGER.getIDCacheSize(getCaller(), source);
    }
 
    @LogMessage(id = 601140, value = "User {} is getting ID cache size on target resource: {}", level = LogMessage.Level.INFO)
-   void getIdCacheSize(String user, Object source);
+   void getIDCacheSize(String user, Object source);
 
    static void getLargeMessagesDirectory(Object source) {
       BASE_LOGGER.getLargeMessagesDirectory(getCaller(), source);

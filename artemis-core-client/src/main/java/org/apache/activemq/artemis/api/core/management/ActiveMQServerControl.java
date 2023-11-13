@@ -352,7 +352,7 @@ public interface ActiveMQServerControl {
     * Returns the size of the cache for pre-creating message IDs.
     */
    @Attribute(desc = "Size of the cache for pre-creating message IDs")
-   int getIdCacheSize();
+   int getIDCacheSize();
 
    /**
     * Returns whether message ID cache is persisted.

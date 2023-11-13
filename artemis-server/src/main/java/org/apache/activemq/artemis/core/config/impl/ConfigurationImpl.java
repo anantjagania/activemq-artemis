@@ -1410,12 +1410,12 @@ public class ConfigurationImpl implements Configuration, Serializable {
    }
 
    @Override
-   public int getIdCacheSize() {
+   public int getIDCacheSize() {
       return idCacheSize;
    }
 
    @Override
-   public ConfigurationImpl setIdCacheSize(final int idCacheSize) {
+   public ConfigurationImpl setIDCacheSize(final int idCacheSize) {
       this.idCacheSize = idCacheSize;
       return this;
    }

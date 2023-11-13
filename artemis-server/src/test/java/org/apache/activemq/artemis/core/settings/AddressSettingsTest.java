@@ -97,7 +97,7 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       Assert.assertEquals(Long.valueOf(999), addressSettings.getExpiryDelay());
       Assert.assertEquals(Long.valueOf(888), addressSettings.getMinExpiryDelay());
       Assert.assertEquals(Long.valueOf(777), addressSettings.getMaxExpiryDelay());
-      Assert.assertEquals(Integer.valueOf(5), addressSettings.getIdCacheSize());
+      Assert.assertEquals(Integer.valueOf(5), addressSettings.getIDCacheSize());
    }
 
    @Test

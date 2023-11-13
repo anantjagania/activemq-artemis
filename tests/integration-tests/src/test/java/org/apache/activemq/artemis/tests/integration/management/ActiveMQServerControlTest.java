@@ -202,7 +202,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
       //Assert.assertEquals(conf.getBackupConnectorName(), serverControl.getBackupConnectorName());
       Assert.assertEquals(conf.getManagementAddress().toString(), serverControl.getManagementAddress());
       Assert.assertEquals(conf.getManagementNotificationAddress().toString(), serverControl.getManagementNotificationAddress());
-      Assert.assertEquals(conf.getIdCacheSize(), serverControl.getIdCacheSize());
+      Assert.assertEquals(conf.getIDCacheSize(), serverControl.getIDCacheSize());
       Assert.assertEquals(conf.isPersistIDCache(), serverControl.isPersistIDCache());
       Assert.assertEquals(conf.getBindingsDirectory(), serverControl.getBindingsDirectory());
       Assert.assertEquals(conf.getJournalDirectory(), serverControl.getJournalDirectory());

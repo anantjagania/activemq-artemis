@@ -522,7 +522,7 @@ public class ActiveMQServerControlUsingCoreTest extends ActiveMQServerControlTes
          }
 
          @Override
-         public int getIdCacheSize() {
+         public int getIDCacheSize() {
             return (Integer) proxy.retrieveAttributeValue("IDCacheSize", Integer.class);
          }
 

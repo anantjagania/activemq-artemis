@@ -602,12 +602,12 @@ public interface Configuration {
     * Returns the size of the cache for pre-creating message IDs. <br>
     * Default value is {@link org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration#DEFAULT_ID_CACHE_SIZE}.
     */
-   int getIdCacheSize();
+   int getIDCacheSize();
 
    /**
     * Sets the size of the cache for pre-creating message IDs.
     */
-   Configuration setIdCacheSize(int idCacheSize);
+   Configuration setIDCacheSize(int idCacheSize);
 
    /**
     * Returns whether message ID cache is persisted. <br>

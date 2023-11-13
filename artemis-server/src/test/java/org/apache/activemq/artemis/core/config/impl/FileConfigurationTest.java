@@ -143,7 +143,7 @@ public class FileConfigurationTest extends ConfigurationImplTest {
       Assert.assertEquals(56789, conf.getTransactionTimeoutScanPeriod());
       Assert.assertEquals(10111213, conf.getMessageExpiryScanPeriod());
       Assert.assertEquals(25000, conf.getAddressQueueScanPeriod());
-      Assert.assertEquals(127, conf.getIdCacheSize());
+      Assert.assertEquals(127, conf.getIDCacheSize());
       Assert.assertEquals(true, conf.isPersistIDCache());
       Assert.assertEquals(Integer.valueOf(777), conf.getJournalDeviceBlockSize());
       Assert.assertEquals(true, conf.isPersistDeliveryCountBeforeDelivery());
@@ -461,7 +461,7 @@ public class FileConfigurationTest extends ConfigurationImplTest {
       assertEquals(0, conf.getAddressSettings().get("a1").getRetroactiveMessageCount());
       assertTrue(conf.getAddressSettings().get("a1").isEnableMetrics());
       assertTrue(conf.getAddressSettings().get("a1").isEnableIngressTimestamp());
-      assertEquals(null, conf.getAddressSettings().get("a1").getIdCacheSize());
+      assertEquals(null, conf.getAddressSettings().get("a1").getIDCacheSize());
 
       assertEquals("a2.1", conf.getAddressSettings().get("a2").getDeadLetterAddress().toString());
       assertEquals(true, conf.getAddressSettings().get("a2").isAutoCreateDeadLetterResources());
@@ -501,7 +501,7 @@ public class FileConfigurationTest extends ConfigurationImplTest {
       assertEquals(10, conf.getAddressSettings().get("a2").getRetroactiveMessageCount());
       assertFalse(conf.getAddressSettings().get("a2").isEnableMetrics());
       assertFalse(conf.getAddressSettings().get("a2").isEnableIngressTimestamp());
-      assertEquals(Integer.valueOf(500), conf.getAddressSettings().get("a2").getIdCacheSize());
+      assertEquals(Integer.valueOf(500), conf.getAddressSettings().get("a2").getIDCacheSize());
 
       assertTrue(conf.getResourceLimitSettings().containsKey("myUser"));
       assertEquals(104, conf.getResourceLimitSettings().get("myUser").getMaxConnections());
