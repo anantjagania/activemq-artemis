@@ -59,7 +59,7 @@ import org.apache.activemq.artemis.spi.core.remoting.ClientProtocolManagerFactor
 import org.apache.activemq.artemis.uri.ConnectionFactoryParser;
 import org.apache.activemq.artemis.uri.ServerLocatorParser;
 import org.apache.activemq.artemis.utils.ClassloadingUtil;
-import org.apache.activemq.artemis.utils.uri.BeanSupport;
+import org.apache.activemq.artemis.utils.beans.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.URISupport;
 
 /**

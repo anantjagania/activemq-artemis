@@ -444,7 +444,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
 
       config.setAddressQueueScanPeriod(getLong(e, "address-queue-scan-period", config.getAddressQueueScanPeriod(), Validators.MINUS_ONE_OR_GT_ZERO));
 
-      config.setIDCacheSize(getInteger(e, "id-cache-size", config.getIDCacheSize(), Validators.GE_ZERO));
+      config.setIdCacheSize(getInteger(e, "id-cache-size", config.getIdCacheSize(), Validators.GE_ZERO));
 
       config.setPersistIDCache(getBoolean(e, "persist-id-cache", config.isPersistIDCache()));
 
@@ -1480,7 +1480,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          } else if (ID_CACHE_SIZE.equalsIgnoreCase(name)) {
             int idCacheSize = XMLUtil.parseInt(child);
             Validators.GE_ZERO.validate(ID_CACHE_SIZE, idCacheSize);
-            addressSettings.setIDCacheSize(XMLUtil.parseInt(child));
+            addressSettings.setIdCacheSize(XMLUtil.parseInt(child));
          }
       }
       return setting;

@@ -135,7 +135,7 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(ActiveMQDefaultConfiguration.isDefaultMessageCounterEnabled(), conf.isMessageCounterEnabled());
       Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultMessageCounterMaxDayHistory(), conf.getMessageCounterMaxDayHistory());
       Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultMessageCounterSamplePeriod(), conf.getMessageCounterSamplePeriod());
-      Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultIdCacheSize(), conf.getIDCacheSize());
+      Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultIdCacheSize(), conf.getIdCacheSize());
       Assert.assertEquals(ActiveMQDefaultConfiguration.isDefaultPersistIdCache(), conf.isPersistIDCache());
       Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultServerDumpInterval(), conf.getServerDumpInterval());
       Assert.assertEquals(ActiveMQDefaultConfiguration.getDefaultMemoryWarningThreshold(), conf.getMemoryWarningThreshold());
@@ -260,8 +260,8 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
          Assert.assertEquals(s, conf.getClusterUser());
 
          i = RandomUtil.randomInt();
-         conf.setIDCacheSize(i);
-         Assert.assertEquals(i, conf.getIDCacheSize());
+         conf.setIdCacheSize(i);
+         Assert.assertEquals(i, conf.getIdCacheSize());
 
          b = RandomUtil.randomBoolean();
          conf.setPersistIDCache(b);
@@ -462,8 +462,8 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertEquals(s, conf.getClusterUser());
 
       i = RandomUtil.randomInt();
-      conf.setIDCacheSize(i);
-      Assert.assertEquals(i, conf.getIDCacheSize());
+      conf.setIdCacheSize(i);
+      Assert.assertEquals(i, conf.getIdCacheSize());
 
       b = RandomUtil.randomBoolean();
       conf.setPersistIDCache(b);
@@ -1277,7 +1277,7 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       properties.put("persistIDCache", false);
       configuration.parsePrefixedProperties(properties, null);
 
-      Assert.assertEquals(50, configuration.getIDCacheSize());
+      Assert.assertEquals(50, configuration.getIdCacheSize());
       Assert.assertFalse(configuration.isPersistIDCache());
    }
 
@@ -1446,7 +1446,7 @@ public class ConfigurationImplTest extends ActiveMQTestBase {
       Assert.assertTrue(configuration.getAddressSettings().get("NeedToSet").isAutoDeleteCreatedQueues());
       Assert.assertTrue(configuration.getAddressSettings().get("NeedToSet").isDefaultExclusiveQueue());
       Assert.assertEquals(Integer.valueOf(10), configuration.getAddressSettings().get("NeedToSet").getDefaultMaxConsumers());
-      Assert.assertEquals(Integer.valueOf(10), configuration.getAddressSettings().get("NeedToSet").getIDCacheSize());
+      Assert.assertEquals(Integer.valueOf(10), configuration.getAddressSettings().get("NeedToSet").getIdCacheSize());
    }
 
    @Test

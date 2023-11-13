@@ -144,7 +144,7 @@ public class FileConfigurationParserTest extends ActiveMQTestBase {
 
       Configuration config = parser.parseMainConfig(input);
 
-      Assert.assertEquals(0, config.getIDCacheSize());
+      Assert.assertEquals(0, config.getIdCacheSize());
    }
 
    @Test

@@ -1398,7 +1398,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
          server0.getConfiguration().setConnectorConfigurations(connectors);
 
-         server0.getConfiguration().setIDCacheSize(20000).setJournalBufferTimeout_NIO(10).setJournalBufferTimeout_AIO(10);
+         server0.getConfiguration().setIdCacheSize(20000).setJournalBufferTimeout_NIO(10).setJournalBufferTimeout_AIO(10);
 
          ArrayList<String> staticConnectors = new ArrayList<>();
          staticConnectors.add(server1tc.getName());

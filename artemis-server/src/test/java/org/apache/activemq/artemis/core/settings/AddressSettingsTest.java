@@ -16,6 +16,8 @@
  */
 package org.apache.activemq.artemis.core.settings;
 
+import java.lang.invoke.MethodHandles;
+
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
@@ -24,8 +26,12 @@ import org.apache.activemq.artemis.core.settings.impl.DeletionPolicy;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AddressSettingsTest extends ActiveMQTestBase {
+
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    @Test
    public void testDefaults() {
@@ -74,7 +80,7 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       addressSettingsToMerge.setExpiryDelay(999L);
       addressSettingsToMerge.setMinExpiryDelay(888L);
       addressSettingsToMerge.setMaxExpiryDelay(777L);
-      addressSettingsToMerge.setIDCacheSize(5);
+      addressSettingsToMerge.setIdCacheSize(5);
 
       addressSettings.merge(addressSettingsToMerge);
       Assert.assertEquals(addressSettings.getDeadLetterAddress(), DLQ);
@@ -91,7 +97,7 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       Assert.assertEquals(Long.valueOf(999), addressSettings.getExpiryDelay());
       Assert.assertEquals(Long.valueOf(888), addressSettings.getMinExpiryDelay());
       Assert.assertEquals(Long.valueOf(777), addressSettings.getMaxExpiryDelay());
-      Assert.assertEquals(Integer.valueOf(5), addressSettings.getIDCacheSize());
+      Assert.assertEquals(Integer.valueOf(5), addressSettings.getIdCacheSize());
    }
 
    @Test
@@ -165,5 +171,27 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       Assert.assertEquals(addressSettings.getRedeliveryMultiplier(), 1.0, 0.000001);
       Assert.assertEquals(addressSettings.getMaxRedeliveryDelay(), 5000);
       Assert.assertEquals(AddressFullMessagePolicy.DROP, addressSettings.getAddressFullMessagePolicy());
+   }
+
+   @Test
+   public void testToJSON() {
+      AddressSettings addressSettings = new AddressSettings();
+      SimpleString DLQ = new SimpleString("testDLQ");
+      SimpleString exp = new SimpleString("testExpiryQueue");
+      addressSettings.setDeadLetterAddress(DLQ);
+      addressSettings.setExpiryAddress(exp);
+      addressSettings.setMaxSizeBytes(1001);
+      addressSettings.setRedeliveryDelay(1003);
+      addressSettings.setRedeliveryMultiplier(1.0);
+      addressSettings.setAddressFullMessagePolicy(AddressFullMessagePolicy.DROP);
+
+      String json = addressSettings.toJSON();
+      logger.info("Json:: {}", json);
+
+      AddressSettings jsonClone = AddressSettings.fromJSON(json);
+      Assert.assertEquals(1001, jsonClone.getMaxSizeBytes());
+
+      Assert.assertEquals(addressSettings, jsonClone);
+
    }
 }

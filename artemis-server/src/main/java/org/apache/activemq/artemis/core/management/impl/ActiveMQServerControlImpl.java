@@ -4360,11 +4360,11 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
    }
 
    @Override
-   public int getIDCacheSize() {
+   public int getIdCacheSize() {
       if (AuditLogger.isBaseLoggingEnabled()) {
-         AuditLogger.getIDCacheSize(this.server);
+         AuditLogger.getIdCacheSize(this.server);
       }
-      return configuration.getIDCacheSize();
+      return configuration.getIdCacheSize();
    }
 
    @Override

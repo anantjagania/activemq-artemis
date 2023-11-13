@@ -22,7 +22,7 @@ import java.util.Map;
 
 import org.apache.activemq.artemis.core.client.ActiveMQClientLogger;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
-import org.apache.activemq.artemis.utils.uri.BeanSupport;
+import org.apache.activemq.artemis.utils.beans.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.URISchema;
 
 public abstract class AbstractCFSchema extends URISchema<ActiveMQConnectionFactory, String> {

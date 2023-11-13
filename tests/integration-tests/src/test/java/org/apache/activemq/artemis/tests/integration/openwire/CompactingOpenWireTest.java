@@ -71,7 +71,7 @@ public class CompactingOpenWireTest extends BasicOpenWireTest {
    @Override
    protected void extraServerConfig(Configuration serverConfig) {
       super.extraServerConfig(serverConfig);
-      serverConfig.setIDCacheSize(500);
+      serverConfig.setIdCacheSize(500);
       serverConfig.setPersistIDCache(true);
       serverConfig.setJournalSyncTransactional(false);
       serverConfig.setJournalSyncNonTransactional(false);

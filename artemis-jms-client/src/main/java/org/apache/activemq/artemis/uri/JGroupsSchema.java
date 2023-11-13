@@ -27,7 +27,7 @@ import org.apache.activemq.artemis.api.core.JGroupsFileBroadcastEndpointFactory;
 import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.uri.schema.serverLocator.JGroupsServerLocatorSchema;
-import org.apache.activemq.artemis.utils.uri.BeanSupport;
+import org.apache.activemq.artemis.utils.beans.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.SchemaConstants;
 
 public class JGroupsSchema extends AbstractCFSchema {
