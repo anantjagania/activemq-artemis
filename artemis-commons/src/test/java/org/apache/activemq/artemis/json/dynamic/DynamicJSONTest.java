@@ -15,22 +15,31 @@
  * limitations under the License.
  */
 
-package org.apache.activemq.artemis.utils.beans;
+package org.apache.activemq.artemis.json.dynamic;
 
 import java.lang.invoke.MethodHandles;
 
+import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.utils.RandomUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JSONConverterTest {
+public class DynamicJSONTest {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    @Test
    public void testToJson() throws Exception {
+
+      DynamicJSON<MYClass> dynamicJSON = new DynamicJSON<>();
+      dynamicJSON.addMetadata(String.class, "a", (obj, value) -> obj.setA(String.valueOf(value)),  obj -> obj.getA());
+      dynamicJSON.addMetadata(Integer.class, "b", (obj, value) -> obj.setB((Integer) value),  obj -> obj.getB());
+      dynamicJSON.addMetadata(Integer.class, "c", (obj, value) -> obj.setC((Integer) value),  obj -> obj.getC());
+      dynamicJSON.addMetadata(String.class, "d", (obj, value) -> obj.setD((String) value),  obj -> obj.getD());
+      dynamicJSON.addMetadata(Integer.class, "IdCacheSize", (obj, value) -> obj.setIdCacheSize((Integer) value),  obj -> obj.getIdCacheSize());
+
       MYClass myObject = new MYClass();
       myObject.setA(RandomUtil.randomString());
       myObject.setB(RandomUtil.randomInt());
@@ -38,11 +47,11 @@ public class JSONConverterTest {
       myObject.setD(null);
       myObject.setIdCacheSize(333);
 
-      String json = JSONConverter.toJSON(myObject);
-      logger.info("Json::{}", json);
+      JsonObject jsonObject = dynamicJSON.toJSON(myObject);
+      logger.debug("Result::" + jsonObject.toString());
+
       MYClass result = new MYClass();
 
-      JSONConverter.fromJSON(result, json);
       Assert.assertEquals(null, result.getD());
       Assert.assertNotNull(result.getIdCacheSize());
       Assert.assertEquals(333, result.getIdCacheSize().intValue());

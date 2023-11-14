@@ -26,7 +26,7 @@ import java.util.Set;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.SchemaConstants;
 
 public class TCPTransportConfigurationSchema extends AbstractTransportConfigurationSchema {

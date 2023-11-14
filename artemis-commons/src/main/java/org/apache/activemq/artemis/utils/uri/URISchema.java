@@ -20,8 +20,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
-
 public abstract class URISchema<T, P> {
 
    public abstract String getSchemaName();

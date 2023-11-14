@@ -29,7 +29,7 @@ import org.apache.activemq.artemis.protocol.amqp.connect.AMQPBrokerConnectionMan
 import org.apache.activemq.artemis.spi.core.protocol.AbstractProtocolManagerFactory;
 import org.apache.activemq.artemis.spi.core.protocol.ProtocolManager;
 import org.apache.activemq.artemis.spi.core.protocol.ProtocolManagerFactory;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.osgi.service.component.annotations.Component;
 
 @Component(service = ProtocolManagerFactory.class)

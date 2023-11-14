@@ -115,7 +115,7 @@ import org.apache.activemq.artemis.utils.ObjectInputStreamWithClassLoader;
 import org.apache.activemq.artemis.utils.PasswordMaskingUtil;
 import org.apache.activemq.artemis.utils.XMLUtil;
 import org.apache.activemq.artemis.utils.critical.CriticalAnalyzerPolicy;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.beanutils.Converter;

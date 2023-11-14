@@ -28,7 +28,7 @@ import org.apache.activemq.artemis.core.persistence.Persister;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.spi.core.protocol.AbstractProtocolManagerFactory;
 import org.apache.activemq.artemis.spi.core.protocol.ProtocolManager;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 
 public class CoreProtocolManagerFactory extends AbstractProtocolManagerFactory<Interceptor> {
 

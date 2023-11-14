@@ -20,7 +20,7 @@ import java.net.URI;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.URISchema;
 
 public abstract class AbstractServerLocatorSchema extends URISchema<ServerLocator, String> {

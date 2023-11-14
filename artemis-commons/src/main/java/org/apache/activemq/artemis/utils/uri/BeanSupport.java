@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.activemq.artemis.utils.beans;
+package org.apache.activemq.artemis.utils.uri;
 
 import java.beans.PropertyDescriptor;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -28,18 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
-import org.apache.activemq.artemis.utils.uri.FluentPropertyBeanIntrospectorWithIgnores;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.beanutils.Converter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BeanSupport {
-
-   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    private static final BeanUtilsBean beanUtils = new BeanUtilsBean();
    private static final Map<Converter, Class> customConverters = new HashMap<>();
@@ -128,31 +121,18 @@ public class BeanSupport {
 
    public static <P> Properties getProperties(P bean, Properties properties)
       throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-      exploreProperties(bean, (a, b) -> {
-         if (b != null) {
-            properties.put(a, String.valueOf(b));
-         }
-      });
-      return properties;
-   }
-
-
-   public static <P> void exploreProperties(P bean, BiConsumer<String, Object> consumer)
-      throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
       synchronized (beanUtils) {
          PropertyDescriptor[] descriptors = beanUtils.getPropertyUtils().getPropertyDescriptors(bean);
          for (PropertyDescriptor descriptor : descriptors) {
             if (descriptor.getReadMethod() != null && isWriteable(descriptor, null)) {
-               try {
-                  Object value = descriptor.getReadMethod().invoke(bean);
-                  logger.info("Reading {} = value={}", descriptor.getName(), value);
-                  consumer.accept(descriptor.getName(), value);
-               } catch (Throwable e) {
-                  logger.warn(e.getMessage(), e);
+               String value = beanUtils.getProperty(bean, descriptor.getName());
+               if (value != null) {
+                  properties.put(descriptor.getName(), value);
                }
             }
          }
       }
+      return properties;
    }
 
    public static void setData(URI uri,
@@ -211,21 +191,6 @@ public class BeanSupport {
          return false;
       }
       Class<?> type = descriptor.getPropertyType();
-      if (type.isAssignableFrom(Enum.class)) {
-         return true;
-      } else {
-         return isNative(type);
-      }
-   }
-
-   public static boolean isNative(Class<?> type) {
-      return isNumber(type) ||
-         (type == String.class) ||
-         (type == Boolean.class) ||
-         (type == boolean.class);
-   }
-
-   public static boolean isNumber(Class<?> type) {
       return (type == Double.class) ||
          (type == double.class) ||
          (type == Long.class) ||
@@ -233,7 +198,10 @@ public class BeanSupport {
          (type == Integer.class) ||
          (type == int.class) ||
          (type == Float.class) ||
-         (type == float.class);
+         (type == float.class) ||
+         (type == Boolean.class) ||
+         (type == boolean.class) ||
+         (type == String.class);
    }
 
    public static String decodeURI(String value) {

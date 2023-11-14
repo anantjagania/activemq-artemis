@@ -28,7 +28,7 @@ import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.uri.schema.connector.TCPTransportConfigurationSchema;
 import org.apache.activemq.artemis.uri.schema.serverLocator.TCPServerLocatorSchema;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.SchemaConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -20,7 +20,7 @@ import java.net.URI;
 import java.util.Map;
 
 import org.apache.activemq.artemis.core.config.ClusterConnectionConfiguration;
-import org.apache.activemq.artemis.utils.beans.BeanSupport;
+import org.apache.activemq.artemis.utils.uri.BeanSupport;
 import org.apache.activemq.artemis.utils.uri.URISchema;
 import org.apache.activemq.artemis.utils.uri.URISupport;
 

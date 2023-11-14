@@ -18,7 +18,6 @@ package org.apache.activemq.artemis.core.settings.impl;
 
 import java.io.Serializable;
 import java.io.StringReader;
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
@@ -29,21 +28,17 @@ import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.settings.Mergeable;
 import org.apache.activemq.artemis.json.JsonObject;
+import org.apache.activemq.artemis.json.JsonObjectBuilder;
 import org.apache.activemq.artemis.json.JsonString;
 import org.apache.activemq.artemis.json.JsonValue;
 import org.apache.activemq.artemis.utils.BufferHelper;
 import org.apache.activemq.artemis.utils.DataConstants;
 import org.apache.activemq.artemis.utils.JsonLoader;
-import org.apache.activemq.artemis.utils.beans.JSONConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Configuration settings that are applied on the address level
  */
 public class AddressSettings implements Mergeable<AddressSettings>, Serializable, EncodingSupport {
-
-   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    private static final long serialVersionUID = 1607502280582336366L;
 
@@ -669,12 +664,111 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
     * @return a JSON-formatted {@code String} representation of this {@code AddressSettings}
     */
    public String toJSON() {
-      try {
-         return JSONConverter.toJSON(this);
-      } catch (Exception e) {
-         logger.warn(e.getMessage(), e);
-         return null;
+      JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
+
+      if (getAddressFullMessagePolicy() != null) {
+         builder.add(ADDRESS_FULL_MESSAGE_POLICY, getAddressFullMessagePolicy().toString());
       }
+
+      builder.add(MAX_SIZE_BYTES, getMaxSizeBytes());
+      builder.add(MAX_SIZE_MESSAGES, getMaxSizeMessages());
+      builder.add(MAX_READ_PAGE_MESSAGES, getMaxReadPageBytes());
+      builder.add(MAX_READ_PAGE_BYTES, getMaxReadPageBytes());
+      builder.add(PAGE_SIZE_BYTES, getPageSizeBytes());
+      builder.add(PAGE_MAX_CACHE_SIZE, getPageCacheMaxSize());
+      if (getDropMessagesWhenFull() != null) {
+         builder.add(DROP_MESSAGES_WHEN_FULL, getDropMessagesWhenFull());
+      }
+      builder.add(MAX_DELIVERY_ATTEMPTS, getMaxDeliveryAttempts());
+      builder.add(MESSAGE_COUNTER_HISTORY_DAY_LIMIT, getMessageCounterHistoryDayLimit());
+      builder.add(REDELIVERY_DELAY, getRedeliveryDelay());
+      builder.add(REDELIVERY_DELAY_MULTIPLIER, getRedeliveryMultiplier());
+      builder.add(REDELIVERY_COLLISION_AVOIDANCE_FACTOR, getRedeliveryCollisionAvoidanceFactor());
+      builder.add(MAX_REDELIVERY_DELAY, getMaxRedeliveryDelay());
+      if (getDeadLetterAddress() != null) {
+         builder.add(DEAD_LETTER_ADDRESS, getDeadLetterAddress().toString());
+      }
+      builder.add(AUTO_CREATE_DEAD_LETTER_RESOURCES, isAutoCreateDeadLetterResources());
+      if (getDeadLetterQueuePrefix() != null) {
+         builder.add(DEAD_LETTER_QUEUE_PREFIX, getDeadLetterQueuePrefix().toString());
+      }
+      if (getDeadLetterQueueSuffix() != null) {
+         builder.add(DEAD_LETTER_QUEUE_SUFFIX, getDeadLetterQueueSuffix().toString());
+      }
+      if (getExpiryAddress() != null) {
+         builder.add(EXPIRY_ADDRESS, getExpiryAddress().toString());
+      }
+      builder.add(AUTO_CREATE_EXPIRY_RESOURCES, isAutoCreateExpiryResources());
+      if (getExpiryQueuePrefix() != null) {
+         builder.add(EXPIRY_QUEUE_PREFIX, getExpiryQueuePrefix().toString());
+      }
+      if (getExpiryQueueSuffix() != null) {
+         builder.add(EXPIRY_QUEUE_SUFFIX, getExpiryQueueSuffix().toString());
+      }
+      builder.add(EXPIRY_DELAY, getExpiryDelay());
+      builder.add(MIN_EXPIRY_DELAY, getMinExpiryDelay());
+      builder.add(MAX_EXPIRY_DELAY, getMaxExpiryDelay());
+      builder.add(DEFAULT_LAST_VALUE_QUEUE_PROP, isDefaultLastValueQueue());
+      if (getDefaultLastValueKey() != null ) {
+         builder.add(DEFAULT_LAST_VALUE_KEY, getDefaultLastValueKey().toString());
+      }
+      builder.add(DEFAULT_NON_DESTRUCTIVE, isDefaultNonDestructive());
+      builder.add(DEFAULT_EXCLUSIVE_QUEUE, isDefaultExclusiveQueue());
+      builder.add(REDISTRIBUTION_DELAY, getRedistributionDelay());
+      builder.add(SEND_TO_DLA_ON_NO_ROUTE, isSendToDLAOnNoRoute());
+      builder.add(SLOW_CONSUMER_THRESHOLD, getSlowConsumerThreshold());
+      builder.add(SLOW_CONSUMER_CHECK_PERIOD, getSlowConsumerCheckPeriod());
+      if (getSlowConsumerPolicy() != null ) {
+         builder.add(SLOW_CONSUMER_POLICY, getSlowConsumerPolicy().toString());
+      }
+      builder.add(AUTO_CREATE_QUEUES, isAutoCreateQueues());
+      builder.add(AUTO_DELETE_QUEUES, isAutoDeleteQueues());
+      builder.add(AUTO_DELETE_CREATED_QUEUES, isAutoDeleteCreatedQueues());
+      builder.add(AUTO_DELETE_QUEUES_DELAY, getAutoDeleteQueuesDelay());
+      builder.add(AUTO_DELETE_QUEUE_MESSAGE_COUNT, getAutoDeleteQueuesMessageCount());
+      if (getConfigDeleteQueues() != null) {
+         builder.add(CONFIG_DELETE_QUEUES, getConfigDeleteQueues().toString());
+      }
+      builder.add(AUTO_CREATE_ADDRESSES, isAutoCreateAddresses());
+      builder.add(AUTO_DELETE_ADDRESSES, isAutoDeleteAddresses());
+      builder.add(AUTO_DELETE_ADDRESS_DELAY, getAutoDeleteAddressesDelay());
+      if (getConfigDeleteAddresses() != null) {
+         builder.add(CONFIG_DELETE_ADDRESSES, getConfigDeleteAddresses().toString());
+      }
+      if (getConfigDeleteDiverts() != null) {
+         builder.add(CONFIG_DELETE_DIVERTS, getConfigDeleteDiverts().toString());
+      }
+      builder.add(MANAGEMENT_BROWSE_PAGE_SIZE_PROP, getManagementBrowsePageSize());
+      builder.add(QUEUE_PREFETCH, getQueuePrefetch());
+      builder.add(MAX_SIZE_BYTES_REJECT_THRESHOLD, getMaxSizeBytesRejectThreshold());
+      builder.add(DEFAULT_MAX_CONSUMERS, getDefaultMaxConsumers());
+      if (defaultPurgeOnNoConsumers != null) {
+         builder.add(DEFAULT_PURGE_ON_NO_CONSUMERS, defaultPurgeOnNoConsumers);
+      }
+      builder.add(DEFAULT_CONSUMERS_BEFORE_DISPATCH, getDefaultConsumersBeforeDispatch());
+      builder.add(DEFAULT_DELAY_BEFORE_DISPATCH, getDefaultDelayBeforeDispatch());
+      if (getDefaultQueueRoutingType() != null ) {
+         builder.add(DEFAULT_QUEUE_ROUTING_TYPE, getDefaultQueueRoutingType().toString());
+      }
+      if (getDefaultAddressRoutingType() != null ) {
+         builder.add(DEFAULT_ADDRESS_ROUTING_TYPE, getDefaultAddressRoutingType().toString());
+      }
+      builder.add(DEFAULT_CONSUMER_WINDOW_SIZE_PROP, getDefaultConsumerWindowSize());
+      builder.add(DEFAULT_GROUP_REBALANCE, isDefaultGroupRebalance());
+      builder.add(DEFAULT_GROUP_REBALANCE_PAUSE_DISPATCH, isDefaultGroupRebalancePauseDispatch());
+      builder.add(DEFAULT_GROUP_BUCKETS, getDefaultGroupBuckets());
+      if (getDefaultGroupFirstKey() != null ) {
+         builder.add(DEFAULT_GROUP_FIRST_KEY, getDefaultGroupFirstKey().toString());
+      }
+      builder.add(DEFAULT_RING_SIZE, getDefaultRingSize());
+      builder.add(RETROACTIVE_MESSAGE_COUNT, getRetroactiveMessageCount());
+      builder.add(ENABLE_METRICS, isEnableMetrics());
+      builder.add(MANAGEMENT_MESSAGE_ATTRIBUTE_SIZE_LIMIT_PROP, getManagementMessageAttributeSizeLimit());
+      if (getSlowConsumerThresholdMeasurementUnit() != null ) {
+         builder.add(SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT, getSlowConsumerThresholdMeasurementUnit().toString());
+      }
+      builder.add(ENABLE_INGRESS_TIMESTAMP, isEnableIngressTimestamp());
+      return builder.build().toString();
    }
 
    public Boolean getDropMessagesWhenFull() {
@@ -730,10 +824,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       return this;
    }
 
-   public Boolean getAutoCreateQueues() {
-      return isAutoCreateQueues();
-   }
-
    public Boolean isAutoCreateQueues() {
       return autoCreateQueues != null ? autoCreateQueues : AddressSettings.DEFAULT_AUTO_CREATE_QUEUES;
    }
@@ -741,10 +831,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    public AddressSettings setAutoCreateQueues(Boolean autoCreateQueues) {
       this.autoCreateQueues = autoCreateQueues;
       return this;
-   }
-
-   public Boolean getAutoDeleteQueues() {
-      return isAutoDeleteQueues();
    }
 
    public Boolean isAutoDeleteQueues() {
@@ -759,11 +845,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    public AddressSettings setAutoDeleteCreatedQueues(Boolean autoDeleteCreatedQueues) {
       this.autoDeleteCreatedQueues = autoDeleteCreatedQueues;
       return this;
-   }
-
-   // for BeanSupport compatibility with Boolean
-   public Boolean getAutoDeleteCreatedQueues() {
-      return isAutoDeleteCreatedQueues();
    }
 
    public Boolean isAutoDeleteCreatedQueues() {
@@ -811,18 +892,9 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       return autoCreateAddresses != null ? autoCreateAddresses : AddressSettings.DEFAULT_AUTO_CREATE_ADDRESSES;
    }
 
-   public Boolean getAutoCreateAddresses() {
-      return isAutoCreateAddresses();
-   }
-
-
    public AddressSettings setAutoCreateAddresses(Boolean autoCreateAddresses) {
       this.autoCreateAddresses = autoCreateAddresses;
       return this;
-   }
-
-   public Boolean getAutoDeleteAddresses() {
-      return isAutoDeleteAddresses();
    }
 
    public Boolean isAutoDeleteAddresses() {
@@ -897,10 +969,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       return this;
    }
 
-   public Boolean getDefaultPurgeOnNoConsumers() {
-      return isDefaultPurgeOnNoConsumers();
-   }
-
    public Boolean isDefaultPurgeOnNoConsumers() {
       return defaultPurgeOnNoConsumers != null ? defaultPurgeOnNoConsumers : ActiveMQDefaultConfiguration.getDefaultPurgeOnNoConsumers();
    }
@@ -953,10 +1021,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    public AddressSettings setDefaultNonDestructive(final boolean defaultNonDestructive) {
       this.defaultNonDestructive = defaultNonDestructive;
       return this;
-   }
-
-   public Boolean getDefaultExclusiveQueue() {
-      return isDefaultExclusiveQueue();
    }
 
    public Boolean isDefaultExclusiveQueue() {
@@ -2222,7 +2286,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
 
       return result;
    }
-
    /* (non-Javadoc)
        * @see java.lang.Object#hashCode()
        */

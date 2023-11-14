@@ -80,7 +80,7 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       addressSettingsToMerge.setExpiryDelay(999L);
       addressSettingsToMerge.setMinExpiryDelay(888L);
       addressSettingsToMerge.setMaxExpiryDelay(777L);
-      addressSettingsToMerge.setIdCacheSize(5);
+      addressSettingsToMerge.setIDCacheSize(5);
 
       addressSettings.merge(addressSettingsToMerge);
       Assert.assertEquals(addressSettings.getDeadLetterAddress(), DLQ);
@@ -190,6 +190,9 @@ public class AddressSettingsTest extends ActiveMQTestBase {
 
       AddressSettings jsonClone = AddressSettings.fromJSON(json);
       Assert.assertEquals(1001, jsonClone.getMaxSizeBytes());
+      System.err.println("AddressSettings::" + addressSettings);
+      System.err.println("clonedSettings ::" + jsonClone);
+      Assert.assertEquals(addressSettings.getAddressFullMessagePolicy(), jsonClone.getAddressFullMessagePolicy());
 
       Assert.assertEquals(addressSettings, jsonClone);
 
