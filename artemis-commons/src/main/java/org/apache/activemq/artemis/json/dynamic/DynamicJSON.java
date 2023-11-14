@@ -19,6 +19,7 @@ package org.apache.activemq.artemis.json.dynamic;
 
 import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -26,9 +27,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.json.JsonObjectBuilder;
+import org.apache.activemq.artemis.json.JsonString;
+import org.apache.activemq.artemis.json.JsonValue;
 import org.apache.activemq.artemis.utils.JsonLoader;
+import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +72,25 @@ public class DynamicJSON <T> {
 
    CopyOnWriteArrayList<MetaData> metaData = new CopyOnWriteArrayList<>();
 
+   /**
+    * Accepted types:
+    * String.class
+    * SimpleString.class
+    * Integer.class
+    * Long.class
+    * Double.class
+    * Float.class
+    */
    public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate) {
+      if (type != String.class &&
+          type != SimpleString.class &&
+          type != Integer.class &&
+          type != Long.class &&
+          ) {
+
+      }
+
+
       metaData.add(new MetaData(type, name, setter, getter, getGate));
       return this;
    }
@@ -106,7 +129,7 @@ public class DynamicJSON <T> {
             if (value == null) {
                logger.trace("Setting {} as null", m.name);
                builder.addNull(m.name);
-            } else if (m.type == String.class) {
+            } else if (m.type == String.class || m.type == SimpleString.class) {
                logger.trace("Setting {} as String {}", m.name, value);
                builder.add(m.name, String.valueOf(value));
             } else if (Number.class.isAssignableFrom(m.type) && value instanceof Number) {
@@ -125,5 +148,26 @@ public class DynamicJSON <T> {
          }
       });
    }
+
+
+   public void fromJSON(T resulttObject, String jsonString) throws Exception {
+
+      logger.debug("Parsing JSON {}", jsonString);
+
+      JsonObject json = JsonLoader.readObject(new StringReader(jsonString));
+
+
+
+      for (Map.Entry<String, JsonValue> entry : json.entrySet()) {
+         logger.info("{}={}, type={}", entry.getKey(), entry.getValue(), entry.getValue().getValueType());
+         if (entry.getValue().getValueType() == JsonValue.ValueType.NULL) {
+            BeanUtils.setProperty(resultObject, entry.getKey(), null);
+         } else {
+            String value = entry.getValue().getValueType() == JsonValue.ValueType.STRING ? ((JsonString) entry.getValue()).getString() : entry.getValue().toString();
+            BeanUtils.setProperty(resultObject, entry.getKey(), value);
+         }
+      }
+   }
+
 
 }
