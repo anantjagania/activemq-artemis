@@ -48,7 +48,122 @@ public class DynamicJSON <T> {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-   class MetaData {
+   CopyOnWriteArrayList<MetaData<T>> metaData = new CopyOnWriteArrayList<>();
+
+   /**
+    * Accepted types:
+    * String.class
+    * SimpleString.class
+    * Integer.class
+    * Long.class
+    * Double.class
+    * Float.class
+    */
+   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate) {
+      if (type != String.class &&
+          type != SimpleString.class &&
+          type != Integer.class &&
+          type != Long.class &&
+          type != Double.class &&
+          type != Float.class) {
+         throw new IllegalArgumentException("invalid type " + type);
+      }
+
+
+      metaData.add(new MetaData(type, name, setter, getter, getGate));
+      return this;
+   }
+
+   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter) {
+      metaData.add(new MetaData(type, name, setter, getter, null));
+      return this;
+   }
+
+   public JsonObject toJSON(T object) {
+      JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
+      parseToJSON(object, builder);
+      return builder.build();
+   }
+
+   public void parseToJSON(T object, JsonObjectBuilder builder) {
+      logger.debug("Parsing object {}", object);
+      this.forEach((type, name, setter, getter, gate) -> {
+         logger.debug("Parsing {} {} {} {} {}", type, name, setter, getter, gate);
+         if (gate == null || gate.test(object)) {
+            Object value = getter.apply(object);
+
+            if (logger.isTraceEnabled()) {
+
+               if (gate != null) {
+                  logger.trace("Gate passed for {}", name);
+               }
+
+               if (value == null) {
+                  logger.debug("Result for {} = IS NULL", name);
+               } else {
+                  logger.debug("Result for {} = {}, type={}", name, value, value.getClass());
+               }
+            }
+
+            if (value == null) {
+               logger.trace("Setting {} as null", name);
+               builder.addNull(name);
+            } else if (type == String.class || type == SimpleString.class) {
+               logger.trace("Setting {} as String {}", name, value);
+               builder.add(name, String.valueOf(value));
+            } else if (Number.class.isAssignableFrom(type) && value instanceof Number) {
+               if (value instanceof Double || value instanceof Float) {
+                  logger.trace("Setting {} as double {}", name, value);
+                  builder.add(name, ((Number) value).doubleValue());
+               } else {
+                  logger.trace("Setting {} as long {}", name, value);
+                  builder.add(name, ((Number) value).longValue());
+               }
+            } else {
+               builder.add(name, String.valueOf(value));
+            }
+         } else {
+            logger.debug("Gate ignored on {}", name);
+         }
+      });
+   }
+
+   public void forEach(MetadataListener listener) {
+      metaData.forEach(m -> {
+         listener.metaItem(m.type, m.name, m.setter, m.getter, m.getGate);
+      });
+   }
+
+   public void fromJSON(T resultObject, String jsonString) {
+
+      logger.debug("Parsing JSON {}", jsonString);
+
+      JsonObject json = JsonLoader.readObject(new StringReader(jsonString));
+
+      this.forEach((type, name, setter, getter, gate) -> {
+         if (json.containsKey(name)) {
+            if (json.isNull(name)) {
+               setter.accept(resultObject, null);
+            } else if (type == String.class) {
+               setter.accept(resultObject, json.getString(name));
+            } else if (type == SimpleString.class) {
+               setter.accept(resultObject, SimpleString.toSimpleString(json.getString(name)));
+            } else if (type == Integer.class) {
+               setter.accept(resultObject, json.getInt(name));
+            } else if (type == Long.class) {
+               setter.accept(resultObject, json.getJsonNumber(name).longValue());
+            } else if (type == Double.class) {
+               setter.accept(resultObject, json.getJsonNumber(name).doubleValue());
+            } else if (type == Float.class) {
+               setter.accept(resultObject, json.getJsonNumber(name).numberValue().floatValue());
+            }
+         }
+      });
+   }
+
+
+
+   static class MetaData<T> {
       Class type;
       String name;
       BiConsumer<T, Object> setter;
@@ -70,103 +185,8 @@ public class DynamicJSON <T> {
       }
    }
 
-   CopyOnWriteArrayList<MetaData> metaData = new CopyOnWriteArrayList<>();
-
-   /**
-    * Accepted types:
-    * String.class
-    * SimpleString.class
-    * Integer.class
-    * Long.class
-    * Double.class
-    * Float.class
-    */
-   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate) {
-      if (type != String.class &&
-          type != SimpleString.class &&
-          type != Integer.class &&
-          type != Long.class &&
-          ) {
-
-      }
-
-
-      metaData.add(new MetaData(type, name, setter, getter, getGate));
-      return this;
-   }
-
-   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter) {
-      metaData.add(new MetaData(type, name, setter, getter, null));
-      return this;
-   }
-
-   public JsonObject toJSON(T object) {
-      JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-      parseToJSON(object, builder);
-      return builder.build();
-   }
-
-   public void parseToJSON(T object, JsonObjectBuilder builder) {
-      logger.debug("Parsing object {}", object);
-      metaData.forEach(m -> {
-         logger.debug("Parsing {}", m);
-         if (m.getGate == null || m.getGate.test(object)) {
-            Object value = m.getter.apply(object);
-
-            if (logger.isTraceEnabled()) {
-
-               if (m.getGate != null) {
-                  logger.trace("Gate passed for {}", m.name);
-               }
-
-               if (value == null) {
-                  logger.debug("Result for {} = IS NULL", m.name);
-               } else {
-                  logger.debug("Result for {} = {}, type={}", m.name, value, value.getClass());
-               }
-            }
-
-            if (value == null) {
-               logger.trace("Setting {} as null", m.name);
-               builder.addNull(m.name);
-            } else if (m.type == String.class || m.type == SimpleString.class) {
-               logger.trace("Setting {} as String {}", m.name, value);
-               builder.add(m.name, String.valueOf(value));
-            } else if (Number.class.isAssignableFrom(m.type) && value instanceof Number) {
-               if (value instanceof Double || value instanceof Float) {
-                  logger.trace("Setting {} as double {}", m.name, value);
-                  builder.add(m.name, ((Number) value).doubleValue());
-               } else {
-                  logger.trace("Setting {} as long {}", m.name, value);
-                  builder.add(m.name, ((Number) value).longValue());
-               }
-            } else {
-               builder.add(m.name, String.valueOf(value));
-            }
-         } else {
-            logger.debug("Gate ignored on {}", m);
-         }
-      });
-   }
-
-
-   public void fromJSON(T resulttObject, String jsonString) throws Exception {
-
-      logger.debug("Parsing JSON {}", jsonString);
-
-      JsonObject json = JsonLoader.readObject(new StringReader(jsonString));
-
-
-
-      for (Map.Entry<String, JsonValue> entry : json.entrySet()) {
-         logger.info("{}={}, type={}", entry.getKey(), entry.getValue(), entry.getValue().getValueType());
-         if (entry.getValue().getValueType() == JsonValue.ValueType.NULL) {
-            BeanUtils.setProperty(resultObject, entry.getKey(), null);
-         } else {
-            String value = entry.getValue().getValueType() == JsonValue.ValueType.STRING ? ((JsonString) entry.getValue()).getString() : entry.getValue().toString();
-            BeanUtils.setProperty(resultObject, entry.getKey(), value);
-         }
-      }
+   public interface MetadataListener<T> {
+      void metaItem(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate);
    }
 
 
