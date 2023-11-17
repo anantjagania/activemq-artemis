@@ -1360,7 +1360,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
       serverControl = createManagementControl();
 
       String jsonString = serverControl.getAddressSettingsAsJSON(exactAddress);
-      AddressSettingsInfo info = AddressSettingsInfo.from(jsonString);
+      AddressSettingsInfo info = AddressSettingsInfo.fromJSON(jsonString);
 
       assertEquals(DLA, info.getDeadLetterAddress());
       assertEquals(expiryAddress, info.getExpiryAddress());
@@ -1421,7 +1421,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
       serverControl.addAddressSettings(addressMatch, addressSettings.toJSON());
 
       jsonString = serverControl.getAddressSettingsAsJSON(exactAddress);
-      info = AddressSettingsInfo.from(jsonString);
+      info = AddressSettingsInfo.fromJSON(jsonString);
 
       assertEquals(DLA, info.getDeadLetterAddress());
       assertEquals(expiryAddress, info.getExpiryAddress());
@@ -1611,7 +1611,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
 
       serverControl.addAddressSettings(root, addressSettings.toJSON());
 
-      AddressSettingsInfo rootInfo = AddressSettingsInfo.from(serverControl.getAddressSettingsAsJSON(root));
+      AddressSettingsInfo rootInfo = AddressSettingsInfo.fromJSON(serverControl.getAddressSettingsAsJSON(root));
 
       // Give settings for addr different values to the root
       final long addrMinExpiryDelay = rootInfo.getMinExpiryDelay() + 1;
@@ -1619,14 +1619,14 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
 
       addressSettings.setMinExpiryDelay(addrMinExpiryDelay).setMaxExpiryDelay(addrMaxExpiryDelay);
       serverControl.addAddressSettings(addr, addressSettings.toJSON());
-      AddressSettingsInfo addrInfo = AddressSettingsInfo.from(serverControl.getAddressSettingsAsJSON(addr));
+      AddressSettingsInfo addrInfo = AddressSettingsInfo.fromJSON(serverControl.getAddressSettingsAsJSON(addr));
 
       assertEquals("settings for addr should carry update", addrMinExpiryDelay, addrInfo.getMinExpiryDelay());
       assertEquals("settings for addr should carry update", addrMaxExpiryDelay, addrInfo.getMaxExpiryDelay());
 
       serverControl.removeAddressSettings(addr);
 
-      AddressSettingsInfo rereadAddrInfo = AddressSettingsInfo.from(serverControl.getAddressSettingsAsJSON(addr));
+      AddressSettingsInfo rereadAddrInfo = AddressSettingsInfo.fromJSON(serverControl.getAddressSettingsAsJSON(addr));
 
       assertEquals("settings for addr should have reverted to original value after removal", rootInfo.getMinExpiryDelay(), rereadAddrInfo.getMinExpiryDelay());
       assertEquals("settings for addr should have reverted to original value after removal", rootInfo.getMaxExpiryDelay(), rereadAddrInfo.getMaxExpiryDelay());

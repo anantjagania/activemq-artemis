@@ -47,7 +47,7 @@ public class DuplicateRecordIdTest extends ActiveMQTestBase {
          server.start();
          ActiveMQServerControl serverControl = server.getActiveMQServerControl();
          serverControl.removeAddressSettings("q");
-         AddressSettingsInfo defaultSettings = AddressSettingsInfo.from(serverControl.getAddressSettingsAsJSON("#"));
+         AddressSettingsInfo defaultSettings = AddressSettingsInfo.fromJSON(serverControl.getAddressSettingsAsJSON("#"));
          AddressSettings settings = new AddressSettings();
          settings.setExpiryAddress(SimpleString.toSimpleString(defaultSettings.getExpiryAddress())).setExpiryDelay(defaultSettings.getExpiryDelay()).setMaxDeliveryAttempts(1)
                  .setMaxSizeBytes(defaultSettings.getMaxSizeBytes()).setPageSizeBytes(defaultSettings.getPageSizeBytes())

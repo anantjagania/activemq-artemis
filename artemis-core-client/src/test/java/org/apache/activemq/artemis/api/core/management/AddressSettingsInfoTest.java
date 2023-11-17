@@ -89,7 +89,7 @@ public class AddressSettingsInfoTest {
          "\"maxExpiryDelay\":4004,\n" +
          "\"enableMetrics\":false\n" +
          "}";
-      AddressSettingsInfo addressSettingsInfo = AddressSettingsInfo.from(json);
+      AddressSettingsInfo addressSettingsInfo = AddressSettingsInfo.fromJSON(json);
       assertEquals("fullPolicy", addressSettingsInfo.getAddressFullMessagePolicy());
       assertEquals(500L, addressSettingsInfo.getMaxSizeBytes());
       assertEquals(200L, addressSettingsInfo.getPageSizeBytes());

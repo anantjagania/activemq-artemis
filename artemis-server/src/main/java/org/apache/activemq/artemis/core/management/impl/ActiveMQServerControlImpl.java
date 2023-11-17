@@ -88,6 +88,7 @@ import org.apache.activemq.artemis.core.messagecounter.MessageCounterManager;
 import org.apache.activemq.artemis.core.messagecounter.impl.MessageCounterManagerImpl;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
 import org.apache.activemq.artemis.core.persistence.config.PersistedAddressSetting;
+import org.apache.activemq.artemis.core.persistence.config.PersistedAddressSettingJSON;
 import org.apache.activemq.artemis.core.persistence.config.PersistedConnector;
 import org.apache.activemq.artemis.core.persistence.config.PersistedSecuritySetting;
 import org.apache.activemq.artemis.core.postoffice.Binding;
@@ -3544,7 +3545,8 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
 
       try {
          // when the QueueConfiguration is passed through createQueue all of its defaults get set which we return to the caller
-         AddressSettings addressSettingsConfiguration = null; // AddressSettings.fromJSON(addressSettingsConfigurationAsJson);
+         AddressSettings addressSettingsConfiguration = AddressSettings.fromJSON(addressSettingsConfigurationAsJson);
+
          if (addressSettingsConfiguration == null) {
             throw ActiveMQMessageBundle.BUNDLE.failedToParseJson(addressSettingsConfigurationAsJson);
          }
@@ -3558,7 +3560,7 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
          }
          server.getAddressSettingsRepository().addMatch(address, addressSettingsConfiguration);
 
-         storageManager.storeAddressSetting(new PersistedAddressSetting(new SimpleString(address), addressSettingsConfiguration));
+         storageManager.storeAddressSetting(new PersistedAddressSettingJSON(new SimpleString(address), addressSettingsConfiguration, SimpleString.toSimpleString(addressSettingsConfigurationAsJson)));
          return addressSettingsConfiguration.toJSON();
       } catch (ActiveMQException e) {
          throw new IllegalStateException(e.getMessage());

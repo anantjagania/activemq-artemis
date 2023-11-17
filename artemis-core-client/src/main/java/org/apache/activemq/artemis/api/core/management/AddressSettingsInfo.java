@@ -19,186 +19,309 @@ package org.apache.activemq.artemis.api.core.management;
 import org.apache.activemq.artemis.json.JsonObject;
 
 import org.apache.activemq.artemis.api.core.JsonUtil;
+import org.apache.activemq.artemis.json.dynamic.MetaJSON;
 
 // XXX no javadocs
 public final class AddressSettingsInfo {
 
-   private final String addressFullMessagePolicy;
+   static final MetaJSON<AddressSettingsInfo> metaJson = new MetaJSON<>();
 
-   private final long maxSizeBytes;
 
-   private final int pageSizeBytes;
+   {
+      metaJson.add(String.class, "addressFullMessagePolicy", (o, p) -> o.addressFullMessagePolicy = p, o -> o.addressFullMessagePolicy);
+   }
+   private String addressFullMessagePolicy;
 
+   {
+      metaJson.add(Long.class, "maxSizeBytes", (o, p) -> o.maxSizeBytes = p, o -> o.maxSizeBytes);
+   }
+   private long maxSizeBytes;
+
+   {
+      metaJson.add(Integer.class, "pageSizeBytes", (o, p) -> o.pageSizeBytes = p, o -> o.pageSizeBytes);
+   }
+   private int pageSizeBytes;
+
+   {
+      metaJson.add(Integer.class, "pageCacheMaxSize", (o, p) -> o.pageCacheMaxSize = p, o -> o.pageCacheMaxSize);
+   }
    private int pageCacheMaxSize;
 
-   private final int maxDeliveryAttempts;
+   {
+      metaJson.add(Integer.class, "maxDeliveryAttempts", (o, p) -> o.maxDeliveryAttempts = p, o -> o.maxDeliveryAttempts);
+   }
+   private int maxDeliveryAttempts;
 
-   private final double redeliveryMultiplier;
+   {
+      metaJson.add(Double.class, "redeliveryMultiplier", (o, p) -> o.redeliveryMultiplier = p, o -> o.redeliveryMultiplier);
+   }
+   private double redeliveryMultiplier;
 
-   private final long maxRedeliveryDelay;
+   {
+      metaJson.add(Long.class, "maxRedeliveryDelay", (o, p) -> o.maxRedeliveryDelay = p, o -> o.maxRedeliveryDelay);
+   }
+   private long maxRedeliveryDelay;
 
-   private final long redeliveryDelay;
+   {
+      metaJson.add(Long.class, "redeliveryDelay", (o, p) -> o.redeliveryDelay = p, o -> o.redeliveryDelay);
+   }
+   private long redeliveryDelay;
 
-   private final String deadLetterAddress;
+   {
+      metaJson.add(String.class, "deadLetterAddress", (o, p) -> o.deadLetterAddress = p, o -> o.deadLetterAddress);
+   }
+   private String deadLetterAddress;
 
-   private final String expiryAddress;
+   {
+      metaJson.add(String.class, "expiryAddress", (o, p) -> o.expiryAddress = p, o -> o.expiryAddress);
+   }
+   private String expiryAddress;
 
-   private final boolean lastValueQueue;
+   {
+      metaJson.add(Boolean.class, "lastValueQueue", (o, p) -> o.lastValueQueue = p, o -> o.lastValueQueue);
+   }
+   private boolean lastValueQueue;
 
-   private final long redistributionDelay;
+   {
+      metaJson.add(Long.class, "redistributionDelay", (o, p) -> o.redistributionDelay = p, o -> o.redistributionDelay);
+   }
+   private long redistributionDelay;
 
-   private final boolean sendToDLAOnNoRoute;
+   {
+      metaJson.add(Boolean.class, "sendToDLAOnNoRoute", (o, p) -> o.sendToDLAOnNoRoute = p, o -> o.sendToDLAOnNoRoute);
+   }
+   private boolean sendToDLAOnNoRoute;
 
-   private final long slowConsumerThreshold;
+   {
+      metaJson.add(Long.class, "slowConsumerThreshold", (o, p) -> o.slowConsumerThreshold = p, o -> o.slowConsumerThreshold);
+   }
+   private long slowConsumerThreshold;
 
-   private final long slowConsumerCheckPeriod;
+   {
+      metaJson.add(Long.class, "slowConsumerCheckPeriod", (o, p) -> o.slowConsumerCheckPeriod = p, o -> o.slowConsumerCheckPeriod);
+   }
+   private long slowConsumerCheckPeriod;
 
-   private final String slowConsumerPolicy;
+   {
+      metaJson.add(String.class, "slowConsumerPolicy", (o, p) -> o.slowConsumerPolicy = p, o -> o.slowConsumerPolicy);
+   }
+   private String slowConsumerPolicy;
 
-   private final boolean autoCreateJmsQueues;
+   {
+      metaJson.add(Boolean.class, "autoCreateJmsQueues", (o, p) -> o.autoCreateJmsQueues = p, o -> o.autoCreateJmsQueues);
+   }
+   private boolean autoCreateJmsQueues;
 
-   private final boolean autoDeleteJmsQueues;
+   {
+      metaJson.add(Boolean.class, "autoDeleteJmsQueues", (o, p) -> o.autoDeleteJmsQueues = p, o -> o.autoDeleteJmsQueues);
+   }
+   private boolean autoDeleteJmsQueues;
 
-   private final boolean autoCreateJmsTopics;
+   {
+      metaJson.add(Boolean.class, "autoCreateJmsTopics", (o, p) -> o.autoCreateJmsTopics = p, o -> o.autoCreateJmsTopics);
+   }
+   private boolean autoCreateJmsTopics;
 
-   private final boolean autoDeleteJmsTopics;
+   {
+      metaJson.add(Boolean.class, "autoDeleteJmsTopics", (o, p) -> o.autoDeleteJmsTopics = p, o -> o.autoDeleteJmsTopics);
+   }
+   private boolean autoDeleteJmsTopics;
 
-   private final boolean autoCreateQueues;
+   {
+      metaJson.add(Boolean.class, "autoCreateQueues", (o, p) -> o.autoCreateQueues = p, o -> o.autoCreateQueues);
+   }
+   private boolean autoCreateQueues;
 
-   private final boolean autoDeleteQueues;
+   {
+      metaJson.add(Boolean.class, "autoDeleteQueues", (o, p) -> o.autoDeleteQueues = p, o -> o.autoDeleteQueues);
+   }
+   private boolean autoDeleteQueues;
 
-   private final boolean autoCreateAddresses;
+   {
+      metaJson.add(Boolean.class, "autoCreateAddresses", (o, p) -> o.autoCreateAddresses = p, o -> o.autoCreateAddresses);
+   }
+   private boolean autoCreateAddresses;
 
-   private final boolean autoDeleteAddresses;
+   {
+      metaJson.add(Boolean.class, "autoDeleteAddresses", (o, p) -> o.autoDeleteAddresses = p, o -> o.autoDeleteAddresses);
+   }
+   private boolean autoDeleteAddresses;
 
-   private final String configDeleteQueues;
+   {
+      metaJson.add(String.class, "configDeleteQueues", (o, p) -> o.configDeleteQueues = p, o -> o.configDeleteQueues);
+   }
+   private String configDeleteQueues;
 
-   private final String configDeleteAddresses;
+   {
+      metaJson.add(String.class, "configDeleteAddresses", (o, p) -> o.configDeleteAddresses = p, o -> o.configDeleteAddresses);
+   }
+   private String configDeleteAddresses;
 
-   private final long maxSizeBytesRejectThreshold;
+   {
+      metaJson.add(Long.class, "maxSizeBytesRejectThreshold", (o, p) -> o.maxSizeBytesRejectThreshold = p, o -> o.maxSizeBytesRejectThreshold);
+   }
+   private long maxSizeBytesRejectThreshold;
 
-   private final String defaultLastValueKey;
+   {
+      metaJson.add(String.class, "defaultLastValueKey", (o, p) -> o.defaultLastValueKey = p, o -> o.defaultLastValueKey);
+   }
+   private String defaultLastValueKey;
 
-   private final boolean defaultNonDestructive;
+   {
+      metaJson.add(Boolean.class, "defaultNonDestructive", (o, p) -> o.defaultNonDestructive = p, o -> o.defaultNonDestructive);
+   }
+   private boolean defaultNonDestructive;
 
-   private final boolean defaultExclusiveQueue;
+   {
+      metaJson.add(Boolean.class, "defaultExclusiveQueue", (o, p) -> o.defaultExclusiveQueue = p, o -> o.defaultExclusiveQueue);
+   }
+   private boolean defaultExclusiveQueue;
 
-   private final boolean defaultGroupRebalance;
+   {
+      metaJson.add(Boolean.class, "defaultGroupRebalance", (o, p) -> o.defaultGroupRebalance = p, o -> o.defaultGroupRebalance);
+   }
+   private boolean defaultGroupRebalance;
 
-   private final int defaultGroupBuckets;
+   {
+      metaJson.add(Integer.class, "defaultGroupBuckets", (o, p) -> o.defaultGroupBuckets = p, o -> o.defaultGroupBuckets);
+   }
+   private int defaultGroupBuckets;
 
-   private final String defaultGroupFirstKey;
+   {
+      metaJson.add(String.class, "defaultGroupFirstKey", (o, p) -> o.defaultGroupFirstKey = p, o -> o.defaultGroupFirstKey);
+   }
+   private String defaultGroupFirstKey;
 
-   private final int defaultMaxConsumers;
+   {
+      metaJson.add(Integer.class, "defaultMaxConsumers", (o, p) -> o.defaultMaxConsumers = p, o -> o.defaultMaxConsumers);
+   }
+   private int defaultMaxConsumers;
 
-   private final boolean defaultPurgeOnNoConsumers;
+   {
+      metaJson.add(Boolean.class, "defaultPurgeOnNoConsumers", (o, p) -> o.defaultPurgeOnNoConsumers = p, o -> o.defaultPurgeOnNoConsumers);
+   }
+   private boolean defaultPurgeOnNoConsumers;
 
-   private final int defaultConsumersBeforeDispatch;
+   {
+      metaJson.add(Integer.class, "defaultConsumersBeforeDispatch", (o, p) -> o.defaultConsumersBeforeDispatch = p, o -> o.defaultConsumersBeforeDispatch);
+   }
+   private int defaultConsumersBeforeDispatch;
 
-   private final long defaultDelayBeforeDispatch;
+   {
+      metaJson.add(Long.class, "defaultDelayBeforeDispatch", (o, p) -> o.defaultDelayBeforeDispatch = p, o -> o.defaultDelayBeforeDispatch);
+   }
+   private long defaultDelayBeforeDispatch;
 
-   private final String defaultQueueRoutingType;
+   {
+      metaJson.add(String.class, "defaultQueueRoutingType", (o, p) -> o.defaultQueueRoutingType = p, o -> o.defaultQueueRoutingType);
+   }
+   private String defaultQueueRoutingType;
 
-   private final String defaultAddressRoutingType;
+   {
+      metaJson.add(String.class, "defaultAddressRoutingType", (o, p) -> o.defaultAddressRoutingType = p, o -> o.defaultAddressRoutingType);
+   }
+   private String defaultAddressRoutingType;
 
-   private final int defaultConsumerWindowSize;
+   {
+      metaJson.add(Integer.class, "defaultConsumerWindowSize", (o, p) -> o.defaultConsumerWindowSize = p, o -> o.defaultConsumerWindowSize);
+   }
+   private int defaultConsumerWindowSize;
 
-   private final long defaultRingSize;
+   {
+      metaJson.add(Long.class, "defaultRingSize", (o, p) -> o.defaultRingSize = p, o -> o.defaultRingSize);
+   }
+   private long defaultRingSize;
 
-   private final boolean autoDeleteCreatedQueues;
+   {
+      metaJson.add(Boolean.class, "autoDeleteCreatedQueues", (o, p) -> o.autoDeleteCreatedQueues = p, o -> o.autoDeleteCreatedQueues);
+   }
+   private boolean autoDeleteCreatedQueues;
 
-   private final long autoDeleteQueuesDelay;
+   {
+      metaJson.add(Long.class, "autoDeleteQueuesDelay", (o, p) -> o.autoDeleteQueuesDelay = p, o -> o.autoDeleteQueuesDelay);
+   }
+   private long autoDeleteQueuesDelay;
 
-   private final long autoDeleteQueuesMessageCount;
+   {
+      metaJson.add(Long.class, "autoDeleteQueuesMessageCount", (o, p) -> o.autoDeleteQueuesMessageCount = p, o -> o.autoDeleteQueuesMessageCount);
+   }
+   private long autoDeleteQueuesMessageCount;
 
-   private final long autoDeleteAddressesDelay;
+   {
+      metaJson.add(Long.class, "autoDeleteAddressesDelay", (o, p) -> o.autoDeleteAddressesDelay = p, o -> o.autoDeleteAddressesDelay);
+   }
+   private long autoDeleteAddressesDelay;
 
-   private final double redeliveryCollisionAvoidanceFactor;
+   {
+      metaJson.add(Double.class, "redeliveryCollisionAvoidanceFactor", (o, p) -> o.redeliveryCollisionAvoidanceFactor = p, o -> o.redeliveryCollisionAvoidanceFactor);
+   }
+   private double redeliveryCollisionAvoidanceFactor;
 
-   private final long retroactiveMessageCount;
+   {
+      metaJson.add(Long.class, "retroactiveMessageCount", (o, p) -> o.retroactiveMessageCount = p, o -> o.retroactiveMessageCount);
+   }
+   private long retroactiveMessageCount;
 
-   private final boolean autoCreateDeadLetterResources;
+   {
+      metaJson.add(Boolean.class, "autoCreateDeadLetterResources", (o, p) -> o.autoCreateDeadLetterResources = p, o -> o.autoCreateDeadLetterResources);
+   }
+   private boolean autoCreateDeadLetterResources;
 
-   private final String deadLetterQueuePrefix;
+   {
+      metaJson.add(String.class, "deadLetterQueuePrefix", (o, p) -> o.deadLetterQueuePrefix = p, o -> o.deadLetterQueuePrefix);
+   }
+   private String deadLetterQueuePrefix;
 
-   private final String deadLetterQueueSuffix;
+   {
+      metaJson.add(String.class, "deadLetterQueueSuffix", (o, p) -> o.deadLetterQueueSuffix = p, o -> o.deadLetterQueueSuffix);
+   }
+   private String deadLetterQueueSuffix;
 
-   private final boolean autoCreateExpiryResources;
-
-   private final String expiryQueuePrefix;
-
-   private final String expiryQueueSuffix;
-
-   private final long expiryDelay;
-
-   private final long minExpiryDelay;
-
-   private final long maxExpiryDelay;
-
-   private final boolean enableMetrics;
+   {
+      metaJson.add(Boolean.class, "autoCreateExpiryResources", (o, p) -> o.autoCreateExpiryResources = p, o -> o.autoCreateExpiryResources);
+   }
+   private boolean autoCreateExpiryResources;
 
 
-   public static AddressSettingsInfo from(final String jsonString) {
-      JsonObject object = JsonUtil.readJsonObject(jsonString);
-      return new AddressSettingsInfo(object.getString("addressFullMessagePolicy"),
-                                     object.getJsonNumber("maxSizeBytes").longValue(),
-                                     object.getInt("pageSizeBytes"),
-                                     object.getInt("pageCacheMaxSize"),
-                                     object.getInt("maxDeliveryAttempts"),
-                                     object.getJsonNumber("redeliveryDelay").longValue(),
-                                     object.getJsonNumber("redeliveryMultiplier").doubleValue(),
-                                     object.getJsonNumber("maxRedeliveryDelay").longValue(),
-                                     object.getString("DLA"),
-                                     object.getString("expiryAddress"),
-                                     object.getBoolean("lastValueQueue"),
-                                     object.getJsonNumber("redistributionDelay").longValue(),
-                                     object.getBoolean("sendToDLAOnNoRoute"),
-                                     object.getJsonNumber("slowConsumerThreshold").longValue(),
-                                     object.getJsonNumber("slowConsumerCheckPeriod").longValue(),
-                                     object.getString("slowConsumerPolicy"),
-                                     object.getBoolean("autoCreateJmsQueues"),
-                                     object.getBoolean("autoCreateJmsTopics"),
-                                     object.getBoolean("autoDeleteJmsQueues"),
-                                     object.getBoolean("autoDeleteJmsTopics"),
-                                     object.getBoolean("autoCreateQueues"),
-                                     object.getBoolean("autoDeleteQueues"),
-                                     object.getBoolean("autoCreateAddresses"),
-                                     object.getBoolean("autoDeleteAddresses"),
-                                     object.getString("configDeleteQueues"),
-                                     object.getString("configDeleteAddresses"),
-                                     object.getJsonNumber("maxSizeBytesRejectThreshold").longValue(),
-                                     object.getString("defaultLastValueKey"),
-                                     object.getBoolean("defaultNonDestructive"),
-                                     object.getBoolean("defaultExclusiveQueue"),
-                                     object.getBoolean("defaultGroupRebalance"),
-                                     object.getInt("defaultGroupBuckets"),
-                                     object.getString("defaultGroupFirstKey"),
-                                     object.getInt("defaultMaxConsumers"),
-                                     object.getBoolean("defaultPurgeOnNoConsumers"),
-                                     object.getInt("defaultConsumersBeforeDispatch"),
-                                     object.getJsonNumber("defaultDelayBeforeDispatch").longValue(),
-                                     object.getString("defaultQueueRoutingType"),
-                                     object.getString("defaultAddressRoutingType"),
-                                     object.getInt("defaultConsumerWindowSize"),
-                                     object.getJsonNumber("defaultRingSize").longValue(),
-                                     object.getBoolean("autoDeleteCreatedQueues"),
-                                     object.getJsonNumber("autoDeleteQueuesDelay").longValue(),
-                                     object.getJsonNumber("autoDeleteQueuesMessageCount").longValue(),
-                                     object.getJsonNumber("autoDeleteAddressesDelay").longValue(),
-                                     object.getJsonNumber("redeliveryCollisionAvoidanceFactor").doubleValue(),
-                                     object.getJsonNumber("retroactiveMessageCount").longValue(),
-                                     object.getBoolean("autoCreateDeadLetterResources"),
-                                     object.getString("deadLetterQueuePrefix"),
-                                     object.getString("deadLetterQueueSuffix"),
-                                     object.getBoolean("autoCreateExpiryResources"),
-                                     object.getString("expiryQueuePrefix"),
-                                     object.getString("expiryQueueSuffix"),
-                                     object.getJsonNumber("expiryDelay").longValue(),
-                                     object.getJsonNumber("minExpiryDelay").longValue(),
-                                     object.getJsonNumber("maxExpiryDelay").longValue(),
-                                     object.getBoolean("enableMetrics"));
+   {
+      metaJson.add(String.class, "expiryQueuePrefix", (o, p) -> o.expiryQueuePrefix = p, o -> o.expiryQueuePrefix);
+   }
+   private String expiryQueuePrefix;
+
+   {
+      metaJson.add(String.class, "expiryQueueSuffix", (o, p) -> o.expiryQueueSuffix = p, o -> o.expiryQueueSuffix);
+   }
+   private String expiryQueueSuffix;
+
+   {
+      metaJson.add(Long.class, "expiryDelay", (o, p) -> o.expiryDelay = p, o -> o.expiryDelay);
+   }
+   private long expiryDelay;
+
+   {
+      metaJson.add(Long.class, "minExpiryDelay", (o, p) -> o.minExpiryDelay = p, o -> o.minExpiryDelay);
+   }
+   private long minExpiryDelay;
+
+   {
+      metaJson.add(Long.class, "maxExpiryDelay", (o, p) -> o.maxExpiryDelay = p, o -> o.maxExpiryDelay);
+   }
+   private long maxExpiryDelay;
+
+   {
+      metaJson.add(Boolean.class, "enableMetrics", (o, p) -> o.enableMetrics = p, o -> o.enableMetrics);
+   }
+   private boolean enableMetrics;
+
+
+   public static AddressSettingsInfo fromJSON(final String jsonString) {
+      AddressSettingsInfo newInfo = new AddressSettingsInfo();
+      metaJson.fromJSON(newInfo, jsonString);
+      return newInfo;
    }
 
+   public AddressSettingsInfo() {
+   }
 
    public AddressSettingsInfo(String addressFullMessagePolicy,
                               long maxSizeBytes,
