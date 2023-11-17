@@ -16,12 +16,8 @@
  */
 package org.apache.activemq.artemis.api.core.management;
 
-import org.apache.activemq.artemis.json.JsonObject;
-
-import org.apache.activemq.artemis.api.core.JsonUtil;
 import org.apache.activemq.artemis.json.dynamic.MetaJSON;
 
-// XXX no javadocs
 public final class AddressSettingsInfo {
 
    static final MetaJSON<AddressSettingsInfo> metaJson = new MetaJSON<>();
