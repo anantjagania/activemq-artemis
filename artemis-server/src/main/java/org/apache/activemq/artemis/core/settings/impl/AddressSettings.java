@@ -26,7 +26,7 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.settings.Mergeable;
-import org.apache.activemq.artemis.json.dynamic.DynamicJSON;
+import org.apache.activemq.artemis.json.dynamic.MetaJSON;
 import org.apache.activemq.artemis.utils.BufferHelper;
 import org.apache.activemq.artemis.utils.DataConstants;
 
@@ -35,7 +35,7 @@ import org.apache.activemq.artemis.utils.DataConstants;
  */
 public class AddressSettings implements Mergeable<AddressSettings>, Serializable, EncodingSupport {
 
-   static DynamicJSON<AddressSettings> jsonParser = new DynamicJSON<>();
+   static MetaJSON<AddressSettings> metaJSON = new MetaJSON<>();
 
    private static final long serialVersionUID = 1607502280582336366L;
 
@@ -148,386 +148,386 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    public static final boolean DEFAULT_ENABLE_INGRESS_TIMESTAMP = false;
 
    {
-      jsonParser.addMetadata(AddressFullMessagePolicy.class, "addressFullMessagePolicy", (t, p) -> t.addressFullMessagePolicy = p, t -> t.addressFullMessagePolicy);
+      metaJSON.add(AddressFullMessagePolicy.class, "addressFullMessagePolicy", (t, p) -> t.addressFullMessagePolicy = p, t -> t.addressFullMessagePolicy);
    }
    private AddressFullMessagePolicy addressFullMessagePolicy = null;
 
    {
-      jsonParser.addMetadata(Long.class, "maxSizeBytes", (t, p) -> t.maxSizeBytes = p, t -> t.maxSizeBytes);
+      metaJSON.add(Long.class, "maxSizeBytes", (t, p) -> t.maxSizeBytes = p, t -> t.maxSizeBytes);
    }
    private Long maxSizeBytes = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "maxReadPageBytes", (t, p) -> t.maxReadPageBytes = p, t -> t.maxReadPageBytes);
+      metaJSON.add(Integer.class, "maxReadPageBytes", (t, p) -> t.maxReadPageBytes = p, t -> t.maxReadPageBytes);
    }
    private Integer maxReadPageBytes = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "maxReadPageMessages", (t, p) -> t.maxReadPageMessages = p, t -> t.maxReadPageMessages);
+      metaJSON.add(Integer.class, "maxReadPageMessages", (t, p) -> t.maxReadPageMessages = p, t -> t.maxReadPageMessages);
    }
    private Integer maxReadPageMessages = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "prefetchPageBytes", (t, p) -> t.prefetchPageBytes = p, t -> t.prefetchPageBytes);
+      metaJSON.add(Integer.class, "prefetchPageBytes", (t, p) -> t.prefetchPageBytes = p, t -> t.prefetchPageBytes);
    }
    private Integer prefetchPageBytes = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "prefetchPageMessages", (t, p) -> t.prefetchPageMessages = p, t -> t.prefetchPageMessages);
+      metaJSON.add(Integer.class, "prefetchPageMessages", (t, p) -> t.prefetchPageMessages = p, t -> t.prefetchPageMessages);
    }
    private Integer prefetchPageMessages = null;
 
    {
-      jsonParser.addMetadata(Long.class, "pageLimitBytes", (t, p) -> t.pageLimitBytes = p, t -> t.pageLimitBytes);
+      metaJSON.add(Long.class, "pageLimitBytes", (t, p) -> t.pageLimitBytes = p, t -> t.pageLimitBytes);
    }
    private Long pageLimitBytes = null;
 
    {
-      jsonParser.addMetadata(Long.class, "pageLimitMessages", (t, p) -> t.pageLimitMessages = p, t -> t.pageLimitMessages);
+      metaJSON.add(Long.class, "pageLimitMessages", (t, p) -> t.pageLimitMessages = p, t -> t.pageLimitMessages);
    }
    private Long pageLimitMessages = null;
 
    {
-      jsonParser.addMetadata(PageFullMessagePolicy.class, "pageFullMessagePolicy", (t, p) -> t.pageFullMessagePolicy = p, t -> t.pageFullMessagePolicy);
+      metaJSON.add(PageFullMessagePolicy.class, "pageFullMessagePolicy", (t, p) -> t.pageFullMessagePolicy = p, t -> t.pageFullMessagePolicy);
    }
    private PageFullMessagePolicy pageFullMessagePolicy = null;
 
    {
-      jsonParser.addMetadata(Long.class, "maxSizeMessages", (t, p) -> t.maxSizeMessages = p, t -> t.maxSizeMessages);
+      metaJSON.add(Long.class, "maxSizeMessages", (t, p) -> t.maxSizeMessages = p, t -> t.maxSizeMessages);
    }
    private Long maxSizeMessages = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "pageSizeBytes", (t, p) -> t.pageSizeBytes = p, t -> t.pageSizeBytes);
+      metaJSON.add(Integer.class, "pageSizeBytes", (t, p) -> t.pageSizeBytes = p, t -> t.pageSizeBytes);
    }
    private Integer pageSizeBytes = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "pageMaxCache", (t, p) -> t.pageMaxCache = p, t -> t.pageMaxCache);
+      metaJSON.add(Integer.class, "pageMaxCache", (t, p) -> t.pageMaxCache = p, t -> t.pageMaxCache);
    }
    private Integer pageMaxCache = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "dropMessagesWhenFull", (t, p) -> t.dropMessagesWhenFull = p, t -> t.dropMessagesWhenFull);
+      metaJSON.add(Boolean.class, "dropMessagesWhenFull", (t, p) -> t.dropMessagesWhenFull = p, t -> t.dropMessagesWhenFull);
    }
    private Boolean dropMessagesWhenFull = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "maxDeliveryAttempts", (t, p) -> t.maxDeliveryAttempts = p, t -> t.maxDeliveryAttempts);
+      metaJSON.add(Integer.class, "maxDeliveryAttempts", (t, p) -> t.maxDeliveryAttempts = p, t -> t.maxDeliveryAttempts);
    }
    private Integer maxDeliveryAttempts = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "messageCounterHistoryDayLimit", (t, p) -> t.messageCounterHistoryDayLimit = p, t -> t.messageCounterHistoryDayLimit);
+      metaJSON.add(Integer.class, "messageCounterHistoryDayLimit", (t, p) -> t.messageCounterHistoryDayLimit = p, t -> t.messageCounterHistoryDayLimit);
    }
    private Integer messageCounterHistoryDayLimit = null;
 
    {
-      jsonParser.addMetadata(Long.class, "redeliveryDelay", (t, p) -> t.redeliveryDelay = p, t -> t.redeliveryDelay);
+      metaJSON.add(Long.class, "redeliveryDelay", (t, p) -> t.redeliveryDelay = p, t -> t.redeliveryDelay);
    }
    private Long redeliveryDelay = null;
 
    {
-      jsonParser.addMetadata(Double.class, "redeliveryMultiplier", (t, p) -> t.redeliveryMultiplier = p, t -> t.redeliveryMultiplier);
+      metaJSON.add(Double.class, "redeliveryMultiplier", (t, p) -> t.redeliveryMultiplier = p, t -> t.redeliveryMultiplier);
    }
    private Double redeliveryMultiplier = null;
 
    {
-      jsonParser.addMetadata(Double.class, "redeliveryCollisionAvoidanceFactor", (t, p) -> t.redeliveryCollisionAvoidanceFactor = p, t -> t.redeliveryCollisionAvoidanceFactor);
+      metaJSON.add(Double.class, "redeliveryCollisionAvoidanceFactor", (t, p) -> t.redeliveryCollisionAvoidanceFactor = p, t -> t.redeliveryCollisionAvoidanceFactor);
    }
    private Double redeliveryCollisionAvoidanceFactor = null;
 
    {
-      jsonParser.addMetadata(Long.class, "maxRedeliveryDelay", (t, p) -> t.maxRedeliveryDelay = p, t -> t.maxRedeliveryDelay);
+      metaJSON.add(Long.class, "maxRedeliveryDelay", (t, p) -> t.maxRedeliveryDelay = p, t -> t.maxRedeliveryDelay);
    }
    private Long maxRedeliveryDelay = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "deadLetterAddress", (t, p) -> t.deadLetterAddress = p, t -> t.deadLetterAddress);
+      metaJSON.add(SimpleString.class, "deadLetterAddress", (t, p) -> t.deadLetterAddress = p, t -> t.deadLetterAddress);
    }
    private SimpleString deadLetterAddress = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "expiryAddress", (t, p) -> t.expiryAddress = p, t -> t.expiryAddress);
+      metaJSON.add(SimpleString.class, "expiryAddress", (t, p) -> t.expiryAddress = p, t -> t.expiryAddress);
    }
    private SimpleString expiryAddress = null;
 
    {
-      jsonParser.addMetadata(Long.class, "expiryDelay", (t, p) -> t.expiryDelay = p, t -> t.expiryDelay);
+      metaJSON.add(Long.class, "expiryDelay", (t, p) -> t.expiryDelay = p, t -> t.expiryDelay);
    }
    private Long expiryDelay = null;
 
    {
-      jsonParser.addMetadata(Long.class, "minExpiryDelay", (t, p) -> t.minExpiryDelay = p, t -> t.minExpiryDelay);
+      metaJSON.add(Long.class, "minExpiryDelay", (t, p) -> t.minExpiryDelay = p, t -> t.minExpiryDelay);
    }
    private Long minExpiryDelay = null;
 
    {
-      jsonParser.addMetadata(Long.class, "maxExpiryDelay", (t, p) -> t.maxExpiryDelay = p, t -> t.maxExpiryDelay);
+      metaJSON.add(Long.class, "maxExpiryDelay", (t, p) -> t.maxExpiryDelay = p, t -> t.maxExpiryDelay);
    }
    private Long maxExpiryDelay = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultLastValueQueue", (t, p) -> t.defaultLastValueQueue = p, t -> t.defaultLastValueQueue);
+      metaJSON.add(Boolean.class, "defaultLastValueQueue", (t, p) -> t.defaultLastValueQueue = p, t -> t.defaultLastValueQueue);
    }
    private Boolean defaultLastValueQueue = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "defaultLastValueKey", (t, p) -> t.defaultLastValueKey = p, t -> t.defaultLastValueKey);
+      metaJSON.add(SimpleString.class, "defaultLastValueKey", (t, p) -> t.defaultLastValueKey = p, t -> t.defaultLastValueKey);
    }
    private SimpleString defaultLastValueKey = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultNonDestructive", (t, p) -> t.defaultNonDestructive = p, t -> t.defaultNonDestructive);
+      metaJSON.add(Boolean.class, "defaultNonDestructive", (t, p) -> t.defaultNonDestructive = p, t -> t.defaultNonDestructive);
    }
    private Boolean defaultNonDestructive = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultExclusiveQueue", (t, p) -> t.defaultExclusiveQueue = p, t -> t.defaultExclusiveQueue);
+      metaJSON.add(Boolean.class, "defaultExclusiveQueue", (t, p) -> t.defaultExclusiveQueue = p, t -> t.defaultExclusiveQueue);
    }
    private Boolean defaultExclusiveQueue = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultGroupRebalance", (t, p) -> t.defaultGroupRebalance = p, t -> t.defaultGroupRebalance);
+      metaJSON.add(Boolean.class, "defaultGroupRebalance", (t, p) -> t.defaultGroupRebalance = p, t -> t.defaultGroupRebalance);
    }
    private Boolean defaultGroupRebalance = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultGroupRebalancePauseDispatch", (t, p) -> t.defaultGroupRebalancePauseDispatch = p, t -> t.defaultGroupRebalancePauseDispatch);
+      metaJSON.add(Boolean.class, "defaultGroupRebalancePauseDispatch", (t, p) -> t.defaultGroupRebalancePauseDispatch = p, t -> t.defaultGroupRebalancePauseDispatch);
    }
    private Boolean defaultGroupRebalancePauseDispatch = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "defaultGroupBuckets", (t, p) -> t.defaultGroupBuckets = p, t -> t.defaultGroupBuckets);
+      metaJSON.add(Integer.class, "defaultGroupBuckets", (t, p) -> t.defaultGroupBuckets = p, t -> t.defaultGroupBuckets);
    }
    private Integer defaultGroupBuckets = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "defaultGroupFirstKey", (t, p) -> t.defaultGroupFirstKey = p, t -> t.defaultGroupFirstKey);
+      metaJSON.add(SimpleString.class, "defaultGroupFirstKey", (t, p) -> t.defaultGroupFirstKey = p, t -> t.defaultGroupFirstKey);
    }
    private SimpleString defaultGroupFirstKey = null;
 
    {
-      jsonParser.addMetadata(Long.class, "redistributionDelay", (t, p) -> t.redistributionDelay = p, t -> t.redistributionDelay);
+      metaJSON.add(Long.class, "redistributionDelay", (t, p) -> t.redistributionDelay = p, t -> t.redistributionDelay);
    }
    private Long redistributionDelay = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "sendToDLAOnNoRoute", (t, p) -> t.sendToDLAOnNoRoute = p, t -> t.sendToDLAOnNoRoute);
+      metaJSON.add(Boolean.class, "sendToDLAOnNoRoute", (t, p) -> t.sendToDLAOnNoRoute = p, t -> t.sendToDLAOnNoRoute);
    }
    private Boolean sendToDLAOnNoRoute = null;
 
    {
-      jsonParser.addMetadata(Long.class, "slowConsumerThreshold", (t, p) -> t.slowConsumerThreshold = p, t -> t.slowConsumerThreshold);
+      metaJSON.add(Long.class, "slowConsumerThreshold", (t, p) -> t.slowConsumerThreshold = p, t -> t.slowConsumerThreshold);
    }
    private Long slowConsumerThreshold = null;
 
    {
-      jsonParser.addMetadata(SlowConsumerThresholdMeasurementUnit.class, "slowConsumerThresholdMeasurementUnit", (t, p) -> t.slowConsumerThresholdMeasurementUnit = p, t -> t.slowConsumerThresholdMeasurementUnit);
+      metaJSON.add(SlowConsumerThresholdMeasurementUnit.class, "slowConsumerThresholdMeasurementUnit", (t, p) -> t.slowConsumerThresholdMeasurementUnit = p, t -> t.slowConsumerThresholdMeasurementUnit);
    }
    private SlowConsumerThresholdMeasurementUnit slowConsumerThresholdMeasurementUnit = DEFAULT_SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT;
 
    {
-      jsonParser.addMetadata(Long.class, "slowConsumerCheckPeriod", (t, p) -> t.slowConsumerCheckPeriod = p, t -> t.slowConsumerCheckPeriod);
+      metaJSON.add(Long.class, "slowConsumerCheckPeriod", (t, p) -> t.slowConsumerCheckPeriod = p, t -> t.slowConsumerCheckPeriod);
    }
    private Long slowConsumerCheckPeriod = null;
 
    {
-      jsonParser.addMetadata(SlowConsumerPolicy.class, "slowConsumerPolicy", (t, p) -> t.slowConsumerPolicy = p, t -> t.slowConsumerPolicy);
+      metaJSON.add(SlowConsumerPolicy.class, "slowConsumerPolicy", (t, p) -> t.slowConsumerPolicy = p, t -> t.slowConsumerPolicy);
    }
    private SlowConsumerPolicy slowConsumerPolicy = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateJmsQueues", (t, p) -> t.autoCreateJmsQueues = (Boolean) p, t -> t.autoCreateJmsQueues, t -> t.autoCreateJmsQueues != null);
+      metaJSON.add(Boolean.class, "autoCreateJmsQueues", (t, p) -> t.autoCreateJmsQueues = (Boolean) p, t -> t.autoCreateJmsQueues, t -> t.autoCreateJmsQueues != null);
    }
    @Deprecated
    private Boolean autoCreateJmsQueues = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteJmsQueues", (t, p) -> t.autoDeleteJmsQueues = (Boolean) p, t -> t.autoDeleteJmsQueues, t -> t.autoDeleteJmsQueues != null);
+      metaJSON.add(Boolean.class, "autoDeleteJmsQueues", (t, p) -> t.autoDeleteJmsQueues = (Boolean) p, t -> t.autoDeleteJmsQueues, t -> t.autoDeleteJmsQueues != null);
    }
    @Deprecated
    private Boolean autoDeleteJmsQueues = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateJmsTopics", (t, p) -> t.autoCreateJmsTopics = (Boolean) p, t -> t.autoCreateJmsTopics, t -> t.autoCreateJmsTopics != null);
+      metaJSON.add(Boolean.class, "autoCreateJmsTopics", (t, p) -> t.autoCreateJmsTopics = (Boolean) p, t -> t.autoCreateJmsTopics, t -> t.autoCreateJmsTopics != null);
    }
    @Deprecated
    private Boolean autoCreateJmsTopics = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteJmsTopics", (t, p) -> t.autoDeleteJmsTopics = (Boolean) p, t -> t.autoDeleteJmsTopics, t -> t.autoDeleteJmsTopics != null);
+      metaJSON.add(Boolean.class, "autoDeleteJmsTopics", (t, p) -> t.autoDeleteJmsTopics = (Boolean) p, t -> t.autoDeleteJmsTopics, t -> t.autoDeleteJmsTopics != null);
    }
    @Deprecated
    private Boolean autoDeleteJmsTopics = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateQueues", (t, p) -> t.autoCreateQueues = p, t -> t.autoCreateQueues);
+      metaJSON.add(Boolean.class, "autoCreateQueues", (t, p) -> t.autoCreateQueues = p, t -> t.autoCreateQueues);
    }
    private Boolean autoCreateQueues = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteQueues", (t, p) -> t.autoDeleteQueues = p, t -> t.autoDeleteQueues);
+      metaJSON.add(Boolean.class, "autoDeleteQueues", (t, p) -> t.autoDeleteQueues = p, t -> t.autoDeleteQueues);
    }
    private Boolean autoDeleteQueues = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteCreatedQueues", (t, p) -> t.autoDeleteCreatedQueues = p, t -> t.autoDeleteCreatedQueues);
+      metaJSON.add(Boolean.class, "autoDeleteCreatedQueues", (t, p) -> t.autoDeleteCreatedQueues = p, t -> t.autoDeleteCreatedQueues);
    }
    private Boolean autoDeleteCreatedQueues = null;
 
    {
-      jsonParser.addMetadata(Long.class, "autoDeleteQueuesDelay", (t, p) -> t.autoDeleteQueuesDelay = p, t -> t.autoDeleteQueuesDelay);
+      metaJSON.add(Long.class, "autoDeleteQueuesDelay", (t, p) -> t.autoDeleteQueuesDelay = p, t -> t.autoDeleteQueuesDelay);
    }
    private Long autoDeleteQueuesDelay = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteQueuesSkipUsageCheck", (t, p) -> t.autoDeleteQueuesSkipUsageCheck = p, t -> t.autoDeleteQueuesSkipUsageCheck);
+      metaJSON.add(Boolean.class, "autoDeleteQueuesSkipUsageCheck", (t, p) -> t.autoDeleteQueuesSkipUsageCheck = p, t -> t.autoDeleteQueuesSkipUsageCheck);
    }
    private Boolean autoDeleteQueuesSkipUsageCheck = null;
 
    {
-      jsonParser.addMetadata(Long.class, "autoDeleteQueuesMessageCount", (t, p) -> t.autoDeleteQueuesMessageCount = p, t -> t.autoDeleteQueuesMessageCount);
+      metaJSON.add(Long.class, "autoDeleteQueuesMessageCount", (t, p) -> t.autoDeleteQueuesMessageCount = p, t -> t.autoDeleteQueuesMessageCount);
    }
    private Long autoDeleteQueuesMessageCount = null;
 
    {
-      jsonParser.addMetadata(Long.class, "defaultRingSize", (t, p) -> t.defaultRingSize = p, t -> t.defaultRingSize);
+      metaJSON.add(Long.class, "defaultRingSize", (t, p) -> t.defaultRingSize = p, t -> t.defaultRingSize);
    }
    private Long defaultRingSize = null;
 
    {
-      jsonParser.addMetadata(Long.class, "retroactiveMessageCount", (t, p) -> t.retroactiveMessageCount = p, t -> t.retroactiveMessageCount);
+      metaJSON.add(Long.class, "retroactiveMessageCount", (t, p) -> t.retroactiveMessageCount = p, t -> t.retroactiveMessageCount);
    }
    private Long retroactiveMessageCount = null;
 
    {
-      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteQueues", (t, p) -> t.configDeleteQueues = p, t -> t.configDeleteQueues);
+      metaJSON.add(DeletionPolicy.class, "configDeleteQueues", (t, p) -> t.configDeleteQueues = p, t -> t.configDeleteQueues);
    }
    private DeletionPolicy configDeleteQueues = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateAddresses", (t, p) -> t.autoCreateAddresses = p, t -> t.autoCreateAddresses);
+      metaJSON.add(Boolean.class, "autoCreateAddresses", (t, p) -> t.autoCreateAddresses = p, t -> t.autoCreateAddresses);
    }
    private Boolean autoCreateAddresses = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteAddresses", (t, p) -> t.autoDeleteAddresses = p, t -> t.autoDeleteAddresses);
+      metaJSON.add(Boolean.class, "autoDeleteAddresses", (t, p) -> t.autoDeleteAddresses = p, t -> t.autoDeleteAddresses);
    }
    private Boolean autoDeleteAddresses = null;
 
    {
-      jsonParser.addMetadata(Long.class, "autoDeleteAddressesDelay", (t, p) -> t.autoDeleteAddressesDelay = p, t -> t.autoDeleteAddressesDelay);
+      metaJSON.add(Long.class, "autoDeleteAddressesDelay", (t, p) -> t.autoDeleteAddressesDelay = p, t -> t.autoDeleteAddressesDelay);
    }
    private Long autoDeleteAddressesDelay = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoDeleteAddressesSkipUsageCheck", (t, p) -> t.autoDeleteAddressesSkipUsageCheck = p, t -> t.autoDeleteAddressesSkipUsageCheck);
+      metaJSON.add(Boolean.class, "autoDeleteAddressesSkipUsageCheck", (t, p) -> t.autoDeleteAddressesSkipUsageCheck = p, t -> t.autoDeleteAddressesSkipUsageCheck);
    }
    private Boolean autoDeleteAddressesSkipUsageCheck = null;
 
    {
-      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteAddresses", (t, p) -> t.configDeleteAddresses = p, t -> t.configDeleteAddresses);
+      metaJSON.add(DeletionPolicy.class, "configDeleteAddresses", (t, p) -> t.configDeleteAddresses = p, t -> t.configDeleteAddresses);
    }
    private DeletionPolicy configDeleteAddresses = null;
 
    {
-      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteDiverts", (t, p) -> t.configDeleteDiverts = p, t -> t.configDeleteDiverts);
+      metaJSON.add(DeletionPolicy.class, "configDeleteDiverts", (t, p) -> t.configDeleteDiverts = p, t -> t.configDeleteDiverts);
    }
    private DeletionPolicy configDeleteDiverts = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "managementBrowsePageSize", (t, p) -> t.managementBrowsePageSize = p, t -> t.managementBrowsePageSize);
+      metaJSON.add(Integer.class, "managementBrowsePageSize", (t, p) -> t.managementBrowsePageSize = p, t -> t.managementBrowsePageSize);
    }
    private Integer managementBrowsePageSize = AddressSettings.MANAGEMENT_BROWSE_PAGE_SIZE;
 
    {
-      jsonParser.addMetadata(Long.class, "maxSizeBytesRejectThreshold", (t, p) -> t.maxSizeBytesRejectThreshold = p, t -> t.maxSizeBytesRejectThreshold);
+      metaJSON.add(Long.class, "maxSizeBytesRejectThreshold", (t, p) -> t.maxSizeBytesRejectThreshold = p, t -> t.maxSizeBytesRejectThreshold);
    }
    private Long maxSizeBytesRejectThreshold = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "defaultMaxConsumers", (t, p) -> t.defaultMaxConsumers = p, t -> t.defaultMaxConsumers);
+      metaJSON.add(Integer.class, "defaultMaxConsumers", (t, p) -> t.defaultMaxConsumers = p, t -> t.defaultMaxConsumers);
    }
    private Integer defaultMaxConsumers = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "defaultPurgeOnNoConsumers", (t, p) -> t.defaultPurgeOnNoConsumers = p, t -> t.defaultPurgeOnNoConsumers);
+      metaJSON.add(Boolean.class, "defaultPurgeOnNoConsumers", (t, p) -> t.defaultPurgeOnNoConsumers = p, t -> t.defaultPurgeOnNoConsumers);
    }
    private Boolean defaultPurgeOnNoConsumers = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "defaultConsumersBeforeDispatch", (t, p) -> t.defaultConsumersBeforeDispatch = p, t -> t.defaultConsumersBeforeDispatch);
+      metaJSON.add(Integer.class, "defaultConsumersBeforeDispatch", (t, p) -> t.defaultConsumersBeforeDispatch = p, t -> t.defaultConsumersBeforeDispatch);
    }
    private Integer defaultConsumersBeforeDispatch = null;
 
    {
-      jsonParser.addMetadata(Long.class, "defaultDelayBeforeDispatch", (t, p) -> t.defaultDelayBeforeDispatch = p, t -> t.defaultDelayBeforeDispatch);
+      metaJSON.add(Long.class, "defaultDelayBeforeDispatch", (t, p) -> t.defaultDelayBeforeDispatch = p, t -> t.defaultDelayBeforeDispatch);
    }
    private Long defaultDelayBeforeDispatch = null;
 
    {
-      jsonParser.addMetadata(RoutingType.class, "defaultQueueRoutingType", (t, p) -> t.defaultQueueRoutingType = p, t -> t.defaultQueueRoutingType);
+      metaJSON.add(RoutingType.class, "defaultQueueRoutingType", (t, p) -> t.defaultQueueRoutingType = p, t -> t.defaultQueueRoutingType);
    }
    private RoutingType defaultQueueRoutingType = null;
 
    {
-      jsonParser.addMetadata(RoutingType.class, "defaultAddressRoutingType", (t, p) -> t.defaultAddressRoutingType = p, t -> t.defaultAddressRoutingType);
+      metaJSON.add(RoutingType.class, "defaultAddressRoutingType", (t, p) -> t.defaultAddressRoutingType = p, t -> t.defaultAddressRoutingType);
    }
    private RoutingType defaultAddressRoutingType = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "defaultConsumerWindowSize", (t, p) -> t.defaultConsumerWindowSize = p, t -> t.defaultConsumerWindowSize);
+      metaJSON.add(Integer.class, "defaultConsumerWindowSize", (t, p) -> t.defaultConsumerWindowSize = p, t -> t.defaultConsumerWindowSize);
    }
    private Integer defaultConsumerWindowSize = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateDeadLetterResources", (t, p) -> t.autoCreateDeadLetterResources = p, t -> t.autoCreateDeadLetterResources);
+      metaJSON.add(Boolean.class, "autoCreateDeadLetterResources", (t, p) -> t.autoCreateDeadLetterResources = p, t -> t.autoCreateDeadLetterResources);
    }
    private Boolean autoCreateDeadLetterResources = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "deadLetterQueuePrefix", (t, p) -> t.deadLetterQueuePrefix = p, t -> t.deadLetterQueuePrefix);
+      metaJSON.add(SimpleString.class, "deadLetterQueuePrefix", (t, p) -> t.deadLetterQueuePrefix = p, t -> t.deadLetterQueuePrefix);
    }
    private SimpleString deadLetterQueuePrefix = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "deadLetterQueueSuffix", (t, p) -> t.deadLetterQueueSuffix = p, t -> t.deadLetterQueueSuffix);
+      metaJSON.add(SimpleString.class, "deadLetterQueueSuffix", (t, p) -> t.deadLetterQueueSuffix = p, t -> t.deadLetterQueueSuffix);
    }
    private SimpleString deadLetterQueueSuffix = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "autoCreateExpiryResources", (t, p) -> t.autoCreateExpiryResources = p, t -> t.autoCreateExpiryResources);
+      metaJSON.add(Boolean.class, "autoCreateExpiryResources", (t, p) -> t.autoCreateExpiryResources = p, t -> t.autoCreateExpiryResources);
    }
    private Boolean autoCreateExpiryResources = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "expiryQueuePrefix", (t, p) -> t.expiryQueuePrefix = p, t -> t.expiryQueuePrefix);
+      metaJSON.add(SimpleString.class, "expiryQueuePrefix", (t, p) -> t.expiryQueuePrefix = p, t -> t.expiryQueuePrefix);
    }
    private SimpleString expiryQueuePrefix = null;
 
    {
-      jsonParser.addMetadata(SimpleString.class, "expiryQueueSuffix", (t, p) -> t.expiryQueueSuffix = p, t -> t.expiryQueueSuffix);
+      metaJSON.add(SimpleString.class, "expiryQueueSuffix", (t, p) -> t.expiryQueueSuffix = p, t -> t.expiryQueueSuffix);
    }
    private SimpleString expiryQueueSuffix = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "enableMetrics", (t, p) -> t.enableMetrics = p, t -> t.enableMetrics);
+      metaJSON.add(Boolean.class, "enableMetrics", (t, p) -> t.enableMetrics = p, t -> t.enableMetrics);
    }
    private Boolean enableMetrics = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "managementMessageAttributeSizeLimit", (t, p) -> t.managementMessageAttributeSizeLimit = p, t -> t.managementMessageAttributeSizeLimit);
+      metaJSON.add(Integer.class, "managementMessageAttributeSizeLimit", (t, p) -> t.managementMessageAttributeSizeLimit = p, t -> t.managementMessageAttributeSizeLimit);
    }
    private Integer managementMessageAttributeSizeLimit = null;
 
    {
-      jsonParser.addMetadata(Boolean.class, "enableIngressTimestamp", (t, p) -> t.enableIngressTimestamp = p, t -> t.enableIngressTimestamp);
+      metaJSON.add(Boolean.class, "enableIngressTimestamp", (t, p) -> t.enableIngressTimestamp = p, t -> t.enableIngressTimestamp);
    }
    private Boolean enableIngressTimestamp = null;
 
    {
-      jsonParser.addMetadata(Integer.class, "idCacheSize", (t, p) -> t.idCacheSize = p, t -> t.idCacheSize);
+      metaJSON.add(Integer.class, "idCacheSize", (t, p) -> t.idCacheSize = p, t -> t.idCacheSize);
    }
    private Integer idCacheSize = null;
 
@@ -536,79 +536,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    private transient Integer queuePrefetch = null;
 
    public AddressSettings(AddressSettings other) {
-      this.addressFullMessagePolicy = other.addressFullMessagePolicy;
-      this.maxSizeBytes = other.maxSizeBytes;
-      this.maxSizeMessages = other.maxSizeMessages;
-      this.maxReadPageMessages = other.maxReadPageMessages;
-      this.maxReadPageBytes = other.maxReadPageBytes;
-      this.pageLimitBytes = other.pageLimitBytes;
-      this.pageLimitMessages = other.pageLimitMessages;
-      this.pageFullMessagePolicy = other.pageFullMessagePolicy;
-      this.pageSizeBytes = other.pageSizeBytes;
-      this.pageMaxCache = other.pageMaxCache;
-      this.dropMessagesWhenFull = other.dropMessagesWhenFull;
-      this.maxDeliveryAttempts = other.maxDeliveryAttempts;
-      this.messageCounterHistoryDayLimit = other.messageCounterHistoryDayLimit;
-      this.redeliveryDelay = other.redeliveryDelay;
-      this.redeliveryMultiplier = other.redeliveryMultiplier;
-      this.redeliveryCollisionAvoidanceFactor = other.redeliveryCollisionAvoidanceFactor;
-      this.maxRedeliveryDelay = other.maxRedeliveryDelay;
-      this.deadLetterAddress = other.deadLetterAddress;
-      this.autoCreateDeadLetterResources = other.autoCreateDeadLetterResources;
-      this.deadLetterQueuePrefix = other.deadLetterQueuePrefix;
-      this.deadLetterQueueSuffix = other.deadLetterQueueSuffix;
-      this.expiryAddress = other.expiryAddress;
-      this.autoCreateExpiryResources = other.autoCreateExpiryResources;
-      this.expiryQueuePrefix = other.expiryQueuePrefix;
-      this.expiryQueueSuffix = other.expiryQueueSuffix;
-      this.expiryDelay = other.expiryDelay;
-      this.minExpiryDelay = other.minExpiryDelay;
-      this.maxExpiryDelay = other.maxExpiryDelay;
-      this.defaultLastValueQueue = other.defaultLastValueQueue;
-      this.defaultLastValueKey = other.defaultLastValueKey;
-      this.defaultNonDestructive = other.defaultNonDestructive;
-      this.defaultExclusiveQueue = other.defaultExclusiveQueue;
-      this.redistributionDelay = other.redistributionDelay;
-      this.sendToDLAOnNoRoute = other.sendToDLAOnNoRoute;
-      this.slowConsumerThreshold = other.slowConsumerThreshold;
-      this.slowConsumerCheckPeriod = other.slowConsumerCheckPeriod;
-      this.slowConsumerPolicy = other.slowConsumerPolicy;
-      this.autoCreateJmsQueues = other.autoCreateJmsQueues;
-      this.autoDeleteJmsQueues = other.autoDeleteJmsQueues;
-      this.autoCreateJmsTopics = other.autoCreateJmsTopics;
-      this.autoDeleteJmsTopics = other.autoDeleteJmsTopics;
-      this.autoCreateQueues = other.autoCreateQueues;
-      this.autoDeleteQueues = other.autoDeleteQueues;
-      this.autoDeleteCreatedQueues = other.autoDeleteCreatedQueues;
-      this.autoDeleteQueuesDelay = other.autoDeleteQueuesDelay;
-      this.autoDeleteQueuesSkipUsageCheck = other.autoDeleteQueuesSkipUsageCheck;
-      this.configDeleteQueues = other.configDeleteQueues;
-      this.autoCreateAddresses = other.autoCreateAddresses;
-      this.autoDeleteAddresses = other.autoDeleteAddresses;
-      this.autoDeleteAddressesDelay = other.autoDeleteAddressesDelay;
-      this.autoDeleteAddressesSkipUsageCheck = other.autoDeleteAddressesSkipUsageCheck;
-      this.configDeleteAddresses = other.configDeleteAddresses;
-      this.configDeleteDiverts = other.configDeleteDiverts;
-      this.managementBrowsePageSize = other.managementBrowsePageSize;
-      this.queuePrefetch = other.queuePrefetch;
-      this.maxSizeBytesRejectThreshold = other.maxSizeBytesRejectThreshold;
-      this.defaultMaxConsumers = other.defaultMaxConsumers;
-      this.defaultPurgeOnNoConsumers = other.defaultPurgeOnNoConsumers;
-      this.defaultConsumersBeforeDispatch = other.defaultConsumersBeforeDispatch;
-      this.defaultDelayBeforeDispatch = other.defaultDelayBeforeDispatch;
-      this.defaultQueueRoutingType = other.defaultQueueRoutingType;
-      this.defaultAddressRoutingType = other.defaultAddressRoutingType;
-      this.defaultConsumerWindowSize = other.defaultConsumerWindowSize;
-      this.defaultGroupRebalance = other.defaultGroupRebalance;
-      this.defaultGroupRebalancePauseDispatch = other.defaultGroupRebalancePauseDispatch;
-      this.defaultGroupBuckets = other.defaultGroupBuckets;
-      this.defaultGroupFirstKey = other.defaultGroupFirstKey;
-      this.defaultRingSize = other.defaultRingSize;
-      this.enableMetrics = other.enableMetrics;
-      this.managementMessageAttributeSizeLimit = other.managementMessageAttributeSizeLimit;
-      this.slowConsumerThresholdMeasurementUnit = other.slowConsumerThresholdMeasurementUnit;
-      this.enableIngressTimestamp = other.enableIngressTimestamp;
-      this.idCacheSize = other.idCacheSize;
+      metaJSON.copy(other, this);
    }
 
    public AddressSettings() {
@@ -620,12 +548,12 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    }
 
    public String toJSON() {
-      return jsonParser.toJSON(this, true).toString();
+      return metaJSON.toJSON(this, true).toString();
    }
 
    public static AddressSettings fromJSON(String jsonString) {
       AddressSettings newSettings = new AddressSettings();
-      jsonParser.fromJSON(newSettings, jsonString);
+      metaJSON.fromJSON(newSettings, jsonString);
       return newSettings;
    }
 

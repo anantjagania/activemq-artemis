@@ -19,7 +19,7 @@ package org.apache.activemq.artemis.core.settings.impl;
 
 import java.lang.invoke.MethodHandles;
 
-import org.apache.activemq.artemis.json.dynamic.DynamicJSON;
+import org.apache.activemq.artemis.json.dynamic.MetaJSON;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -32,16 +32,20 @@ public class AddressSettingsRandomTest {
    @Test
    public void testRandomGeneration() {
 
-      DynamicJSON json = AddressSettings.jsonParser;
+      MetaJSON json = AddressSettings.metaJSON;
 
       AddressSettings randomSettings = new AddressSettings();
 
-      json.generateRandom(randomSettings);
+      json.setRandom(randomSettings);
 
       String jsonOutput = randomSettings.toJSON();
       logger.debug(jsonOutput);
 
       AddressSettings outputSettings = AddressSettings.fromJSON(jsonOutput);
       Assert.assertEquals(randomSettings, outputSettings);
+
+      AddressSettings copy = new AddressSettings(randomSettings);
+      Assert.assertEquals(randomSettings, copy);
+
    }
 }

@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicJSONTest {
+public class MetaJSONTest {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -48,13 +48,13 @@ public class DynamicJSONTest {
       sourceObject.setMyEnum(MyEnum.TWO);
 
 
-      JsonObject jsonObject = MYClass.dynamicJSON.toJSON(sourceObject, false);
+      JsonObject jsonObject = MYClass.metaJSON.toJSON(sourceObject, false);
       Assert.assertFalse(jsonObject.containsKey("gated"));
 
       logger.debug("Result::" + jsonObject.toString());
 
       MYClass result = new MYClass();
-      MYClass.dynamicJSON.fromJSON(result, jsonObject.toString());
+      MYClass.metaJSON.fromJSON(result, jsonObject.toString());
       Assert.assertEquals(sourceObject, result);
 
 
@@ -67,9 +67,22 @@ public class DynamicJSONTest {
       Assert.assertTrue(result.getBoolValue());
 
       sourceObject.setGated(SimpleString.toSimpleString("gated-now-has-value"));
-      jsonObject = MYClass.dynamicJSON.toJSON(sourceObject, false);
+      jsonObject = MYClass.metaJSON.toJSON(sourceObject, false);
       Assert.assertTrue(jsonObject.containsKey("gated"));
       Assert.assertEquals("gated-now-has-value", jsonObject.getString("gated"));
+   }
+
+   @Test
+   public void testRandom() throws Exception {
+      MYClass randomObject = new MYClass();
+      MYClass.metaJSON.setRandom(randomObject);
+      String json = MYClass.metaJSON.toJSON(randomObject, false).toString();
+      MYClass target = new MYClass();
+      MYClass.metaJSON.fromJSON(target, json);
+      Assert.assertEquals(randomObject, target);
+      MYClass copy = new MYClass();
+      MYClass.metaJSON.copy(randomObject, copy);
+      Assert.assertEquals(randomObject, copy);
    }
 
    public enum MyEnum {
@@ -78,64 +91,64 @@ public class DynamicJSONTest {
 
    public static class MYClass {
 
-      public static DynamicJSON<MYClass> dynamicJSON = new DynamicJSON<>();
+      public static MetaJSON<MYClass> metaJSON = new MetaJSON<>();
 
       {
-         dynamicJSON.addMetadata(String.class, "a", (theInstance, parameter) -> theInstance.a = parameter, theInstance -> theInstance.a);
+         metaJSON.add(String.class, "a", (theInstance, parameter) -> theInstance.a = parameter, theInstance -> theInstance.a);
       }
       String a;
 
       {
-         dynamicJSON.addMetadata(Integer.class, "b", (theInstance, parameter) -> theInstance.b = parameter, theInstance -> theInstance.b);
+         metaJSON.add(Integer.class, "b", (theInstance, parameter) -> theInstance.b = parameter, theInstance -> theInstance.b);
       }
       int b;
 
       {
-         dynamicJSON.addMetadata(Integer.class, "c", (theInstance, parameter) -> theInstance.c = parameter, theInstance -> theInstance.c);
+         metaJSON.add(Integer.class, "c", (theInstance, parameter) -> theInstance.c = parameter, theInstance -> theInstance.c);
       }
       Integer c;
 
       {
-         dynamicJSON.addMetadata(String.class, "d", (theInstance, parameter) -> theInstance.d = parameter, theInstance -> theInstance.d);
+         metaJSON.add(String.class, "d", (theInstance, parameter) -> theInstance.d = parameter, theInstance -> theInstance.d);
       }
       String d = "defaultString";
 
       {
-         dynamicJSON.addMetadata(Integer.class, "IdCacheSize", (obj, value) -> obj.setIdCacheSize(value),  obj -> obj.getIdCacheSize());
+         metaJSON.add(Integer.class, "IdCacheSize", (obj, value) -> obj.setIdCacheSize(value), obj -> obj.getIdCacheSize());
       }
       Integer idCacheSize;
 
       {
-         dynamicJSON.addMetadata(SimpleString.class, "simpleString", (obj, value) -> obj.setSimpleString(value), obj -> obj.getSimpleString());
+         metaJSON.add(SimpleString.class, "simpleString", (obj, value) -> obj.setSimpleString(value), obj -> obj.getSimpleString());
       }
       SimpleString simpleString;
 
       {
-         dynamicJSON.addMetadata(SimpleString.class, "gated", (obj, value) -> obj.setGated((SimpleString) value),  obj -> obj.getGated(), obj -> obj.gated != null);
+         metaJSON.add(SimpleString.class, "gated", (obj, value) -> obj.setGated((SimpleString) value), obj -> obj.getGated(), obj -> obj.gated != null);
       }
       SimpleString gated;
 
       {
-         dynamicJSON.addMetadata(Long.class, "longValue", (obj, value) -> obj.setLongValue(value), obj -> obj.getLongValue());
+         metaJSON.add(Long.class, "longValue", (obj, value) -> obj.setLongValue(value), obj -> obj.getLongValue());
       }
       Long longValue;
       {
-         dynamicJSON.addMetadata(Double.class, "doubleValue", (obj, value) -> obj.setDoubleValue(value), obj -> obj.getDoubleValue());
+         metaJSON.add(Double.class, "doubleValue", (obj, value) -> obj.setDoubleValue(value), obj -> obj.getDoubleValue());
       }
       Double doubleValue;
 
       {
-         dynamicJSON.addMetadata(Float.class, "floatValue", (obj, value) -> obj.setFloatValue(value), obj -> obj.getFloatValue());
+         metaJSON.add(Float.class, "floatValue", (obj, value) -> obj.setFloatValue(value), obj -> obj.getFloatValue());
       }
       Float floatValue;
 
       {
-         dynamicJSON.addMetadata(Boolean.class, "boolValue", (obj, value) -> obj.boolValue = value, obj -> obj.boolValue);
+         metaJSON.add(Boolean.class, "boolValue", (obj, value) -> obj.boolValue = value, obj -> obj.boolValue);
       }
       boolean boolValue;
 
       {
-         dynamicJSON.addMetadata(MyEnum.class, "myEnum", (o, v) -> o.myEnum = v, o -> o.myEnum);
+         metaJSON.add(MyEnum.class, "myEnum", (o, v) -> o.myEnum = v, o -> o.myEnum);
       }
       MyEnum myEnum;
 

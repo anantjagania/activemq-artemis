@@ -21,81 +21,46 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 
-public class PersistedAddressSettingJSON implements EncodingSupport {
+public class PersistedAddressSettingJSON extends AbstractPersistedAddressSetting implements EncodingSupport {
 
-
-   private long storeId;
-
-   private SimpleString addressMatch;
-
-   private SimpleString setting;
-
+   SimpleString jsonSetting;
 
    public PersistedAddressSettingJSON() {
       super();
    }
 
-   /* (non-Javadoc)
-    * @see java.lang.Object#toString()
-    */
    @Override
-   public String toString() {
-      return "PersistedAddressSetting [storeId=" + storeId +
-         ", addressMatch=" +
-         addressMatch +
-         ", setting=" +
-         setting +
-         "]";
+   public AddressSettings getSetting() {
+      if (setting == null) {
+         setting = AddressSettings.fromJSON(jsonSetting.toString());
+      }
+      return super.getSetting();
    }
 
    /**
     * @param addressMatch
     * @param setting
     */
-   public PersistedAddressSettingJSON(SimpleString addressMatch, SimpleString setting) {
-      super();
-      this.addressMatch = addressMatch;
-      this.setting = setting;
-   }
-
-
-   public void setStoreId(long id) {
-      this.storeId = id;
-   }
-
-   public long getStoreId() {
-      return storeId;
-   }
-
-   /**
-    * @return the addressMatch
-    */
-   public SimpleString getAddressMatch() {
-      return addressMatch;
-   }
-
-   /**
-    * @return the setting
-    */
-   public SimpleString getSetting() {
-      return setting;
+   public PersistedAddressSettingJSON(SimpleString addressMatch, AddressSettings setting, SimpleString jsonSetting) {
+      super(addressMatch, setting);
+      this.jsonSetting = jsonSetting;
    }
 
    @Override
    public void decode(ActiveMQBuffer buffer) {
       addressMatch = buffer.readSimpleString();
-      setting = buffer.readSimpleString();
+      jsonSetting = buffer.readSimpleString();
    }
 
    @Override
    public void encode(ActiveMQBuffer buffer) {
       buffer.writeSimpleString(addressMatch);
-      buffer.writeSimpleString(setting);
+      buffer.writeSimpleString(jsonSetting);
    }
 
    @Override
    public int getEncodeSize() {
-      return addressMatch.sizeof() + setting.sizeof();
+      return addressMatch.sizeof() + jsonSetting.sizeof();
    }
 
 }

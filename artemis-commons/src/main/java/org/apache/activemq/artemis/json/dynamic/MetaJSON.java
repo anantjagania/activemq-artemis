@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * for that reason I decided for a meta-data approach where extra semantic could be applied for each individual attributes
  * rather than a generic BeanUtils parser.
  */
-public class DynamicJSON<T> {
+public class MetaJSON<T> {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -56,11 +56,11 @@ public class DynamicJSON<T> {
     * Double.class
     * Float.class
     */
-   public DynamicJSON addMetadata(Class type,
-                                  String name,
-                                  BiConsumer<T, ? extends Object> setter,
-                                  Function<T, ? extends Object> getter,
-                                  Predicate<T> gate) {
+   public MetaJSON add(Class type,
+                       String name,
+                       BiConsumer<T, ? extends Object> setter,
+                       Function<T, ? extends Object> getter,
+                       Predicate<T> gate) {
       if (type != String.class && type != SimpleString.class && type != Integer.class && type != Long.class && type != Double.class && type != Float.class && type != Boolean.class && !Enum.class.isAssignableFrom(type)) {
          throw new IllegalArgumentException("invalid type " + type);
       }
@@ -69,22 +69,11 @@ public class DynamicJSON<T> {
       return this;
    }
 
-   public <Z extends Object> DynamicJSON addMetadata(Class<Z> type,
-                                                     String name,
-                                                     BiConsumer<T, Z> setter,
-                                                     Function<T, Z> getter) {
-      return addMetadata(type, name, setter, getter, null);
-   }
-
-   /**
-    * It is not always possible to infer the target datatype (like when using an intermediate string to treat an Enumeration.
-    * For cases like this I have this method
-    */
-   public DynamicJSON addMetadataObj(Class<?> type,
-                                     String name,
-                                     BiConsumer<T, ? extends Object> setter,
-                                     Function<T, ? extends Object> getter) {
-      return addMetadata(type, name, setter, getter, null);
+   public <Z extends Object> MetaJSON add(Class<Z> type,
+                                          String name,
+                                          BiConsumer<T, Z> setter,
+                                          Function<T, Z> getter) {
+      return add(type, name, setter, getter, null);
    }
 
    public JsonObject toJSON(T object, boolean ignoreNullAttributes) {
@@ -147,7 +136,7 @@ public class DynamicJSON<T> {
    }
 
    /** Generates a random Object using the setters for testing purposes. */
-   public void generateRandom(T randomObject) {
+   public void setRandom(T randomObject) {
       forEach((type, name, setter, getter, gate) -> {
          if (Enum.class.isAssignableFrom(type)) {
             Object[] enumValues = type.getEnumConstants();
@@ -168,6 +157,13 @@ public class DynamicJSON<T> {
          } else if (type == Boolean.class) {
             setter.accept(randomObject, RandomUtil.randomBoolean());
          }
+      });
+   }
+
+   public void copy(T source, T target) {
+      forEach((type, name, setter, getter, gate) -> {
+         Object sourceAttribute = getter.apply(source);
+         setter.accept(target, sourceAttribute);
       });
    }
 
