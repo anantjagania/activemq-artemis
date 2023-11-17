@@ -78,9 +78,9 @@ public final class AddressSettingsInfo {
    private String expiryAddress;
 
    {
-      metaJson.add(Boolean.class, "lastValueQueue", (o, p) -> o.lastValueQueue = p, o -> o.lastValueQueue);
+      metaJson.add(Boolean.class, "defaultLastValueQueue", (o, p) -> o.defaultLastValueQueue = p, o -> o.defaultLastValueQueue);
    }
-   private boolean lastValueQueue;
+   private boolean defaultLastValueQueue;
 
    {
       metaJson.add(Long.class, "redistributionDelay", (o, p) -> o.redistributionDelay = p, o -> o.redistributionDelay);
@@ -323,122 +323,6 @@ public final class AddressSettingsInfo {
    public AddressSettingsInfo() {
    }
 
-   public AddressSettingsInfo(String addressFullMessagePolicy,
-                              long maxSizeBytes,
-                              int pageSizeBytes,
-                              int pageCacheMaxSize,
-                              int maxDeliveryAttempts,
-                              long redeliveryDelay,
-                              double redeliveryMultiplier,
-                              long maxRedeliveryDelay,
-                              String deadLetterAddress,
-                              String expiryAddress,
-                              boolean lastValueQueue,
-                              long redistributionDelay,
-                              boolean sendToDLAOnNoRoute,
-                              long slowConsumerThreshold,
-                              long slowConsumerCheckPeriod,
-                              String slowConsumerPolicy,
-                              boolean autoCreateJmsQueues,
-                              boolean autoCreateJmsTopics,
-                              boolean autoDeleteJmsQueues,
-                              boolean autoDeleteJmsTopics,
-                              boolean autoCreateQueues,
-                              boolean autoDeleteQueues,
-                              boolean autoCreateAddresses,
-                              boolean autoDeleteAddresses,
-                              String configDeleteQueues,
-                              String configDeleteAddresses,
-                              long maxSizeBytesRejectThreshold,
-                              String defaultLastValueKey,
-                              boolean defaultNonDestructive,
-                              boolean defaultExclusiveQueue,
-                              boolean defaultGroupRebalance,
-                              int defaultGroupBuckets,
-                              String defaultGroupFirstKey,
-                              int defaultMaxConsumers,
-                              boolean defaultPurgeOnNoConsumers,
-                              int defaultConsumersBeforeDispatch,
-                              long defaultDelayBeforeDispatch,
-                              String defaultQueueRoutingType,
-                              String defaultAddressRoutingType,
-                              int defaultConsumerWindowSize,
-                              long defaultRingSize,
-                              boolean autoDeleteCreatedQueues,
-                              long autoDeleteQueuesDelay,
-                              long autoDeleteQueuesMessageCount,
-                              long autoDeleteAddressesDelay,
-                              double redeliveryCollisionAvoidanceFactor,
-                              long retroactiveMessageCount,
-                              boolean autoCreateDeadLetterResources,
-                              String deadLetterQueuePrefix,
-                              String deadLetterQueueSuffix,
-                              boolean autoCreateExpiryResources,
-                              String expiryQueuePrefix,
-                              String expiryQueueSuffix,
-                              long expiryDelay,
-                              long minExpiryDelay,
-                              long maxExpiryDelay,
-                              boolean enableMetrics) {
-      this.addressFullMessagePolicy = addressFullMessagePolicy;
-      this.maxSizeBytes = maxSizeBytes;
-      this.pageSizeBytes = pageSizeBytes;
-      this.pageCacheMaxSize = pageCacheMaxSize;
-      this.maxDeliveryAttempts = maxDeliveryAttempts;
-      this.redeliveryDelay = redeliveryDelay;
-      this.redeliveryMultiplier = redeliveryMultiplier;
-      this.maxRedeliveryDelay = maxRedeliveryDelay;
-      this.deadLetterAddress = deadLetterAddress;
-      this.expiryAddress = expiryAddress;
-      this.lastValueQueue = lastValueQueue;
-      this.redistributionDelay = redistributionDelay;
-      this.sendToDLAOnNoRoute = sendToDLAOnNoRoute;
-      this.slowConsumerThreshold = slowConsumerThreshold;
-      this.slowConsumerCheckPeriod = slowConsumerCheckPeriod;
-      this.slowConsumerPolicy = slowConsumerPolicy;
-      this.autoCreateJmsQueues = autoCreateJmsQueues;
-      this.autoDeleteJmsQueues = autoDeleteJmsQueues;
-      this.autoCreateJmsTopics = autoCreateJmsTopics;
-      this.autoDeleteJmsTopics = autoDeleteJmsTopics;
-      this.autoCreateQueues = autoCreateQueues;
-      this.autoDeleteQueues = autoDeleteQueues;
-      this.autoCreateAddresses = autoCreateAddresses;
-      this.autoDeleteAddresses = autoDeleteAddresses;
-      this.configDeleteQueues = configDeleteQueues;
-      this.configDeleteAddresses = configDeleteAddresses;
-      this.maxSizeBytesRejectThreshold = maxSizeBytesRejectThreshold;
-      this.defaultLastValueKey = defaultLastValueKey;
-      this.defaultNonDestructive = defaultNonDestructive;
-      this.defaultExclusiveQueue = defaultExclusiveQueue;
-      this.defaultGroupRebalance = defaultGroupRebalance;
-      this.defaultGroupBuckets = defaultGroupBuckets;
-      this.defaultGroupFirstKey = defaultGroupFirstKey;
-      this.defaultMaxConsumers = defaultMaxConsumers;
-      this.defaultPurgeOnNoConsumers = defaultPurgeOnNoConsumers;
-      this.defaultConsumersBeforeDispatch = defaultConsumersBeforeDispatch;
-      this.defaultDelayBeforeDispatch = defaultDelayBeforeDispatch;
-      this.defaultQueueRoutingType = defaultQueueRoutingType;
-      this.defaultAddressRoutingType = defaultAddressRoutingType;
-      this.defaultConsumerWindowSize = defaultConsumerWindowSize;
-      this.defaultRingSize = defaultRingSize;
-      this.autoDeleteCreatedQueues = autoDeleteCreatedQueues;
-      this.autoDeleteQueuesDelay = autoDeleteQueuesDelay;
-      this.autoDeleteQueuesMessageCount = autoDeleteQueuesMessageCount;
-      this.autoDeleteAddressesDelay = autoDeleteAddressesDelay;
-      this.redeliveryCollisionAvoidanceFactor = redeliveryCollisionAvoidanceFactor;
-      this.retroactiveMessageCount = retroactiveMessageCount;
-      this.autoCreateDeadLetterResources = autoCreateDeadLetterResources;
-      this.deadLetterQueuePrefix = deadLetterQueuePrefix;
-      this.deadLetterQueueSuffix = deadLetterQueueSuffix;
-      this.autoCreateExpiryResources = autoCreateExpiryResources;
-      this.expiryQueuePrefix = expiryQueuePrefix;
-      this.expiryQueueSuffix = expiryQueueSuffix;
-      this.expiryDelay = expiryDelay;
-      this.minExpiryDelay = minExpiryDelay;
-      this.maxExpiryDelay = maxExpiryDelay;
-      this.enableMetrics = enableMetrics;
-   }
-
    public int getPageCacheMaxSize() {
       return pageCacheMaxSize;
    }
@@ -475,8 +359,8 @@ public final class AddressSettingsInfo {
       return expiryAddress;
    }
 
-   public boolean isLastValueQueue() {
-      return lastValueQueue;
+   public boolean isDefaultLastValueQueue() {
+      return defaultLastValueQueue;
    }
 
    public long getRedistributionDelay() {

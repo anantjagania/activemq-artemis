@@ -203,9 +203,9 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    private Integer pageSizeBytes = null;
 
    {
-      metaJSON.add(Integer.class, "pageMaxCache", (t, p) -> t.pageMaxCache = p, t -> t.pageMaxCache);
+      metaJSON.add(Integer.class, "pageCacheMaxSize", (t, p) -> t.pageCacheMaxSize = p, t -> t.pageCacheMaxSize);
    }
-   private Integer pageMaxCache = null;
+   private Integer pageCacheMaxSize = null;
 
    {
       metaJSON.add(Boolean.class, "dropMessagesWhenFull", (t, p) -> t.dropMessagesWhenFull = p, t -> t.dropMessagesWhenFull);
@@ -823,11 +823,11 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    }
 
    public int getPageCacheMaxSize() {
-      return pageMaxCache != null ? pageMaxCache : AddressSettings.DEFAULT_PAGE_MAX_CACHE;
+      return pageCacheMaxSize != null ? pageCacheMaxSize : AddressSettings.DEFAULT_PAGE_MAX_CACHE;
    }
 
-   public AddressSettings setPageCacheMaxSize(final int pageMaxCache) {
-      this.pageMaxCache = pageMaxCache;
+   public AddressSettings setPageCacheMaxSize(final int pageCacheMaxSize) {
+      this.pageCacheMaxSize = pageCacheMaxSize;
       return this;
    }
 
@@ -1303,8 +1303,8 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       if (maxReadPageMessages == null) {
          maxReadPageMessages = merged.maxReadPageMessages;
       }
-      if (pageMaxCache == null) {
-         pageMaxCache = merged.pageMaxCache;
+      if (pageCacheMaxSize == null) {
+         pageCacheMaxSize = merged.pageCacheMaxSize;
       }
       if (pageSizeBytes == null) {
          pageSizeBytes = merged.pageSizeBytes;
@@ -1544,7 +1544,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       Long pageSizeLong = BufferHelper.readNullableLong(buffer);
       pageSizeBytes = pageSizeLong == null ? null : pageSizeLong.intValue();
 
-      pageMaxCache = BufferHelper.readNullableInteger(buffer);
+      pageCacheMaxSize = BufferHelper.readNullableInteger(buffer);
 
       dropMessagesWhenFull = BufferHelper.readNullableBoolean(buffer);
 
@@ -1811,7 +1811,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       return BufferHelper.sizeOfNullableSimpleString(addressFullMessagePolicy != null ? addressFullMessagePolicy.toString() : null) +
          BufferHelper.sizeOfNullableLong(maxSizeBytes) +
          BufferHelper.sizeOfNullableLong(pageSizeBytes == null ? null : Long.valueOf(pageSizeBytes)) +
-         BufferHelper.sizeOfNullableInteger(pageMaxCache) +
+         BufferHelper.sizeOfNullableInteger(pageCacheMaxSize) +
          BufferHelper.sizeOfNullableBoolean(dropMessagesWhenFull) +
          BufferHelper.sizeOfNullableInteger(maxDeliveryAttempts) +
          BufferHelper.sizeOfNullableInteger(messageCounterHistoryDayLimit) +
@@ -1892,7 +1892,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
 
       BufferHelper.writeNullableLong(buffer, pageSizeBytes == null ? null : Long.valueOf(pageSizeBytes));
 
-      BufferHelper.writeNullableInteger(buffer, pageMaxCache);
+      BufferHelper.writeNullableInteger(buffer, pageCacheMaxSize);
 
       BufferHelper.writeNullableBoolean(buffer, dropMessagesWhenFull);
 
@@ -2070,7 +2070,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
          return false;
       if (!Objects.equals(pageSizeBytes, that.pageSizeBytes))
          return false;
-      if (!Objects.equals(pageMaxCache, that.pageMaxCache))
+      if (!Objects.equals(pageCacheMaxSize, that.pageCacheMaxSize))
          return false;
       if (!Objects.equals(dropMessagesWhenFull, that.dropMessagesWhenFull))
          return false;
@@ -2216,7 +2216,7 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       result = 31 * result + (pageFullMessagePolicy != null ? pageFullMessagePolicy.hashCode() : 0);
       result = 31 * result + (maxSizeMessages != null ? maxSizeMessages.hashCode() : 0);
       result = 31 * result + (pageSizeBytes != null ? pageSizeBytes.hashCode() : 0);
-      result = 31 * result + (pageMaxCache != null ? pageMaxCache.hashCode() : 0);
+      result = 31 * result + (pageCacheMaxSize != null ? pageCacheMaxSize.hashCode() : 0);
       result = 31 * result + (dropMessagesWhenFull != null ? dropMessagesWhenFull.hashCode() : 0);
       result = 31 * result + (maxDeliveryAttempts != null ? maxDeliveryAttempts.hashCode() : 0);
       result = 31 * result + (messageCounterHistoryDayLimit != null ? messageCounterHistoryDayLimit.hashCode() : 0);
@@ -2287,6 +2287,6 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
 
    @Override
    public String toString() {
-      return "AddressSettings{" + "addressFullMessagePolicy=" + addressFullMessagePolicy + ", maxSizeBytes=" + maxSizeBytes + ", maxReadPageBytes=" + maxReadPageBytes + ", maxReadPageMessages=" + maxReadPageMessages + ", prefetchPageBytes=" + prefetchPageBytes + ", prefetchPageMessages=" + prefetchPageMessages + ", pageLimitBytes=" + pageLimitBytes + ", pageLimitMessages=" + pageLimitMessages + ", pageFullMessagePolicy=" + pageFullMessagePolicy + ", maxSizeMessages=" + maxSizeMessages + ", pageSizeBytes=" + pageSizeBytes + ", pageMaxCache=" + pageMaxCache + ", dropMessagesWhenFull=" + dropMessagesWhenFull + ", maxDeliveryAttempts=" + maxDeliveryAttempts + ", messageCounterHistoryDayLimit=" + messageCounterHistoryDayLimit + ", redeliveryDelay=" + redeliveryDelay + ", redeliveryMultiplier=" + redeliveryMultiplier + ", redeliveryCollisionAvoidanceFactor=" + redeliveryCollisionAvoidanceFactor + ", maxRedeliveryDelay=" + maxRedeliveryDelay + ", deadLetterAddress=" + deadLetterAddress + ", expiryAddress=" + expiryAddress + ", expiryDelay=" + expiryDelay + ", minExpiryDelay=" + minExpiryDelay + ", maxExpiryDelay=" + maxExpiryDelay + ", defaultLastValueQueue=" + defaultLastValueQueue + ", defaultLastValueKey=" + defaultLastValueKey + ", defaultNonDestructive=" + defaultNonDestructive + ", defaultExclusiveQueue=" + defaultExclusiveQueue + ", defaultGroupRebalance=" + defaultGroupRebalance + ", defaultGroupRebalancePauseDispatch=" + defaultGroupRebalancePauseDispatch + ", defaultGroupBuckets=" + defaultGroupBuckets + ", defaultGroupFirstKey=" + defaultGroupFirstKey + ", redistributionDelay=" + redistributionDelay + ", sendToDLAOnNoRoute=" + sendToDLAOnNoRoute + ", slowConsumerThreshold=" + slowConsumerThreshold + ", slowConsumerThresholdMeasurementUnit=" + slowConsumerThresholdMeasurementUnit + ", slowConsumerCheckPeriod=" + slowConsumerCheckPeriod + ", slowConsumerPolicy=" + slowConsumerPolicy + ", autoCreateJmsQueues=" + autoCreateJmsQueues + ", autoDeleteJmsQueues=" + autoDeleteJmsQueues + ", autoCreateJmsTopics=" + autoCreateJmsTopics + ", autoDeleteJmsTopics=" + autoDeleteJmsTopics + ", autoCreateQueues=" + autoCreateQueues + ", autoDeleteQueues=" + autoDeleteQueues + ", autoDeleteCreatedQueues=" + autoDeleteCreatedQueues + ", autoDeleteQueuesDelay=" + autoDeleteQueuesDelay + ", autoDeleteQueuesSkipUsageCheck=" + autoDeleteQueuesSkipUsageCheck + ", autoDeleteQueuesMessageCount=" + autoDeleteQueuesMessageCount + ", defaultRingSize=" + defaultRingSize + ", retroactiveMessageCount=" + retroactiveMessageCount + ", configDeleteQueues=" + configDeleteQueues + ", autoCreateAddresses=" + autoCreateAddresses + ", autoDeleteAddresses=" + autoDeleteAddresses + ", autoDeleteAddressesDelay=" + autoDeleteAddressesDelay + ", autoDeleteAddressesSkipUsageCheck=" + autoDeleteAddressesSkipUsageCheck + ", configDeleteAddresses=" + configDeleteAddresses + ", configDeleteDiverts=" + configDeleteDiverts + ", managementBrowsePageSize=" + managementBrowsePageSize + ", maxSizeBytesRejectThreshold=" + maxSizeBytesRejectThreshold + ", defaultMaxConsumers=" + defaultMaxConsumers + ", defaultPurgeOnNoConsumers=" + defaultPurgeOnNoConsumers + ", defaultConsumersBeforeDispatch=" + defaultConsumersBeforeDispatch + ", defaultDelayBeforeDispatch=" + defaultDelayBeforeDispatch + ", defaultQueueRoutingType=" + defaultQueueRoutingType + ", defaultAddressRoutingType=" + defaultAddressRoutingType + ", defaultConsumerWindowSize=" + defaultConsumerWindowSize + ", autoCreateDeadLetterResources=" + autoCreateDeadLetterResources + ", deadLetterQueuePrefix=" + deadLetterQueuePrefix + ", deadLetterQueueSuffix=" + deadLetterQueueSuffix + ", autoCreateExpiryResources=" + autoCreateExpiryResources + ", expiryQueuePrefix=" + expiryQueuePrefix + ", expiryQueueSuffix=" + expiryQueueSuffix + ", enableMetrics=" + enableMetrics + ", managementMessageAttributeSizeLimit=" + managementMessageAttributeSizeLimit + ", enableIngressTimestamp=" + enableIngressTimestamp + ", idCacheSize=" + idCacheSize + ", queuePrefetch=" + queuePrefetch + '}';
+      return "AddressSettings{" + "addressFullMessagePolicy=" + addressFullMessagePolicy + ", maxSizeBytes=" + maxSizeBytes + ", maxReadPageBytes=" + maxReadPageBytes + ", maxReadPageMessages=" + maxReadPageMessages + ", prefetchPageBytes=" + prefetchPageBytes + ", prefetchPageMessages=" + prefetchPageMessages + ", pageLimitBytes=" + pageLimitBytes + ", pageLimitMessages=" + pageLimitMessages + ", pageFullMessagePolicy=" + pageFullMessagePolicy + ", maxSizeMessages=" + maxSizeMessages + ", pageSizeBytes=" + pageSizeBytes + ", pageMaxCache=" + pageCacheMaxSize + ", dropMessagesWhenFull=" + dropMessagesWhenFull + ", maxDeliveryAttempts=" + maxDeliveryAttempts + ", messageCounterHistoryDayLimit=" + messageCounterHistoryDayLimit + ", redeliveryDelay=" + redeliveryDelay + ", redeliveryMultiplier=" + redeliveryMultiplier + ", redeliveryCollisionAvoidanceFactor=" + redeliveryCollisionAvoidanceFactor + ", maxRedeliveryDelay=" + maxRedeliveryDelay + ", deadLetterAddress=" + deadLetterAddress + ", expiryAddress=" + expiryAddress + ", expiryDelay=" + expiryDelay + ", minExpiryDelay=" + minExpiryDelay + ", maxExpiryDelay=" + maxExpiryDelay + ", defaultLastValueQueue=" + defaultLastValueQueue + ", defaultLastValueKey=" + defaultLastValueKey + ", defaultNonDestructive=" + defaultNonDestructive + ", defaultExclusiveQueue=" + defaultExclusiveQueue + ", defaultGroupRebalance=" + defaultGroupRebalance + ", defaultGroupRebalancePauseDispatch=" + defaultGroupRebalancePauseDispatch + ", defaultGroupBuckets=" + defaultGroupBuckets + ", defaultGroupFirstKey=" + defaultGroupFirstKey + ", redistributionDelay=" + redistributionDelay + ", sendToDLAOnNoRoute=" + sendToDLAOnNoRoute + ", slowConsumerThreshold=" + slowConsumerThreshold + ", slowConsumerThresholdMeasurementUnit=" + slowConsumerThresholdMeasurementUnit + ", slowConsumerCheckPeriod=" + slowConsumerCheckPeriod + ", slowConsumerPolicy=" + slowConsumerPolicy + ", autoCreateJmsQueues=" + autoCreateJmsQueues + ", autoDeleteJmsQueues=" + autoDeleteJmsQueues + ", autoCreateJmsTopics=" + autoCreateJmsTopics + ", autoDeleteJmsTopics=" + autoDeleteJmsTopics + ", autoCreateQueues=" + autoCreateQueues + ", autoDeleteQueues=" + autoDeleteQueues + ", autoDeleteCreatedQueues=" + autoDeleteCreatedQueues + ", autoDeleteQueuesDelay=" + autoDeleteQueuesDelay + ", autoDeleteQueuesSkipUsageCheck=" + autoDeleteQueuesSkipUsageCheck + ", autoDeleteQueuesMessageCount=" + autoDeleteQueuesMessageCount + ", defaultRingSize=" + defaultRingSize + ", retroactiveMessageCount=" + retroactiveMessageCount + ", configDeleteQueues=" + configDeleteQueues + ", autoCreateAddresses=" + autoCreateAddresses + ", autoDeleteAddresses=" + autoDeleteAddresses + ", autoDeleteAddressesDelay=" + autoDeleteAddressesDelay + ", autoDeleteAddressesSkipUsageCheck=" + autoDeleteAddressesSkipUsageCheck + ", configDeleteAddresses=" + configDeleteAddresses + ", configDeleteDiverts=" + configDeleteDiverts + ", managementBrowsePageSize=" + managementBrowsePageSize + ", maxSizeBytesRejectThreshold=" + maxSizeBytesRejectThreshold + ", defaultMaxConsumers=" + defaultMaxConsumers + ", defaultPurgeOnNoConsumers=" + defaultPurgeOnNoConsumers + ", defaultConsumersBeforeDispatch=" + defaultConsumersBeforeDispatch + ", defaultDelayBeforeDispatch=" + defaultDelayBeforeDispatch + ", defaultQueueRoutingType=" + defaultQueueRoutingType + ", defaultAddressRoutingType=" + defaultAddressRoutingType + ", defaultConsumerWindowSize=" + defaultConsumerWindowSize + ", autoCreateDeadLetterResources=" + autoCreateDeadLetterResources + ", deadLetterQueuePrefix=" + deadLetterQueuePrefix + ", deadLetterQueueSuffix=" + deadLetterQueueSuffix + ", autoCreateExpiryResources=" + autoCreateExpiryResources + ", expiryQueuePrefix=" + expiryQueuePrefix + ", expiryQueueSuffix=" + expiryQueueSuffix + ", enableMetrics=" + enableMetrics + ", managementMessageAttributeSizeLimit=" + managementMessageAttributeSizeLimit + ", enableIngressTimestamp=" + enableIngressTimestamp + ", idCacheSize=" + idCacheSize + ", queuePrefetch=" + queuePrefetch + '}';
    }
 }

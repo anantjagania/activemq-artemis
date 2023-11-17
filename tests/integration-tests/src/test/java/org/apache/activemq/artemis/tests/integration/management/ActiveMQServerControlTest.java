@@ -1367,7 +1367,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
       assertEquals(expiryDelay, info.getExpiryDelay());
       assertEquals(minExpiryDelay, info.getMinExpiryDelay());
       assertEquals(maxExpiryDelay, info.getMaxExpiryDelay());
-      assertEquals(lastValueQueue, info.isLastValueQueue());
+      assertEquals(lastValueQueue, info.isDefaultLastValueQueue());
       assertEquals(deliveryAttempts, info.getMaxDeliveryAttempts());
       assertEquals(maxSizeBytes, info.getMaxSizeBytes());
       assertEquals(pageMaxCacheSize, info.getPageCacheMaxSize());
@@ -1428,7 +1428,7 @@ public class ActiveMQServerControlTest extends ManagementTestBase {
       assertEquals(expiryDelay, info.getExpiryDelay());
       assertEquals(minExpiryDelay, info.getMinExpiryDelay());
       assertEquals(maxExpiryDelay, info.getMaxExpiryDelay());
-      assertEquals(lastValueQueue, info.isLastValueQueue());
+      assertEquals(lastValueQueue, info.isDefaultLastValueQueue());
       assertEquals(deliveryAttempts, info.getMaxDeliveryAttempts());
       assertEquals(-1, info.getMaxSizeBytes());
       assertEquals(pageMaxCacheSize, info.getPageCacheMaxSize());

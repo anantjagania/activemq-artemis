@@ -100,7 +100,7 @@ public class AddressSettingsInfoTest {
       assertEquals(100000, addressSettingsInfo.getMaxRedeliveryDelay());
       assertEquals("deadLettersGoHere", addressSettingsInfo.getDeadLetterAddress());
       assertEquals("", addressSettingsInfo.getExpiryAddress());
-      assertTrue(addressSettingsInfo.isLastValueQueue());
+      assertTrue(addressSettingsInfo.isDefaultLastValueQueue());
       assertEquals(10004L, addressSettingsInfo.getRedistributionDelay());
       assertTrue(addressSettingsInfo.isSendToDLAOnNoRoute());
       assertEquals(200L, addressSettingsInfo.getSlowConsumerThreshold());
