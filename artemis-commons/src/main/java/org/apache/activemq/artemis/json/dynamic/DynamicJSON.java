@@ -28,6 +28,7 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.json.JsonObjectBuilder;
 import org.apache.activemq.artemis.utils.JsonLoader;
+import org.apache.activemq.artemis.utils.RandomUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class DynamicJSON<T> {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-   CopyOnWriteArrayList<MetaData<T>> metaData = new CopyOnWriteArrayList<>();
+   private CopyOnWriteArrayList<MetaData<T>> metaData = new CopyOnWriteArrayList<>();
 
    /**
     * Accepted types:
@@ -145,6 +146,31 @@ public class DynamicJSON<T> {
       });
    }
 
+   /** Generates a random Object using the setters for testing purposes. */
+   public void generateRandom(T randomObject) {
+      forEach((type, name, setter, getter, gate) -> {
+         if (Enum.class.isAssignableFrom(type)) {
+            Object[] enumValues = type.getEnumConstants();
+            int randomInt = RandomUtil.randomInterval(0, enumValues.length - 1);
+            setter.accept(randomObject, enumValues[randomInt]);
+         } else if (type == String.class) {
+            setter.accept(randomObject, RandomUtil.randomString());
+         } else if (type == SimpleString.class) {
+            setter.accept(randomObject, RandomUtil.randomSimpleString());
+         } else if (type == Integer.class) {
+            setter.accept(randomObject, RandomUtil.randomPositiveInt());
+         } else if (type == Long.class) {
+            setter.accept(randomObject, RandomUtil.randomPositiveLong());
+         } else if (type == Double.class) {
+            setter.accept(randomObject, RandomUtil.randomDouble());
+         } else if (type == Float.class) {
+            setter.accept(randomObject, RandomUtil.randomFloat());
+         } else if (type == Boolean.class) {
+            setter.accept(randomObject, RandomUtil.randomBoolean());
+         }
+      });
+   }
+
    public void forEach(MetadataListener listener) {
       metaData.forEach(m -> {
          try {
@@ -197,7 +223,7 @@ public class DynamicJSON<T> {
       Function<T, ?> getter;
       Predicate<?> gate;
 
-      public <Z> MetaData(Class<Z> type,
+      <Z> MetaData(Class<Z> type,
                           String name,
                           BiConsumer<T, Object> setter,
                           Function<T, Object> getter,
