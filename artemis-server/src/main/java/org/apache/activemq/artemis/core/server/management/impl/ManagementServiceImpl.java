@@ -288,17 +288,14 @@ public class ManagementServiceImpl implements ManagementService {
                                           final AddressInfo addressInfo,
                                           final StorageManager storageManager) throws Exception {
 
-      if (addressInfo.isInternal() || queue.isInternalQueue()) {
-         logger.debug("won't register internal queue: {}", queue);
-         return;
-      }
-
       QueueControlImpl queueControl = new QueueControlImpl(queue, addressInfo.getName().toString(), messagingServer, storageManager, securityStore, addressSettingsRepository);
+
       if (messageCounterManager != null) {
          MessageCounter counter = new MessageCounter(queue.getName().toString(), null, queue, false, queue.isDurable(), messageCounterManager.getMaxDayCount());
          queueControl.setMessageCounter(counter);
          messageCounterManager.registerMessageCounter(queue.getName().toString(), counter);
       }
+
       ObjectName objectName = objectNameBuilder.getQueueObjectName(addressInfo.getName(), queue.getName(), queue.getRoutingType());
       registerInJMX(objectName, queueControl);
       registerInRegistry(ResourceNames.QUEUE + queue.getName(), queueControl);
