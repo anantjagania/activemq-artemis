@@ -181,6 +181,7 @@ public class AddressSettingsTest extends ActiveMQTestBase {
       addressSettings.setDeadLetterAddress(DLQ);
       addressSettings.setExpiryAddress(exp);
       addressSettings.setMaxSizeBytes(1001);
+      addressSettings.setPrefetchPageMessages(1000);
       addressSettings.setRedeliveryDelay(1003);
       addressSettings.setRedeliveryMultiplier(1.0);
       addressSettings.setAddressFullMessagePolicy(AddressFullMessagePolicy.DROP);
