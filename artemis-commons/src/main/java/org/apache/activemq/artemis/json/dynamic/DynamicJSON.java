@@ -19,32 +19,28 @@ package org.apache.activemq.artemis.json.dynamic;
 
 import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.json.JsonObjectBuilder;
-import org.apache.activemq.artemis.json.JsonString;
-import org.apache.activemq.artemis.json.JsonValue;
 import org.apache.activemq.artemis.utils.JsonLoader;
-import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Receives a metadata about a class with methods to read, write and certain gates.
- *  And provides a generic logic to convert to and from JSON.
- *
- *  As a historical context the first try to make a few objects more dynamic (e.g AddressSettings) was
- *  around BeanUtils however there was some implicit logic on when certain settins were Null or default values.
- *  for that reason I decided for a meta-data approach where extra semantic could be applied for each individual attributes
- *  rather than a generic BeanUtils parser.*/
-public class DynamicJSON <T> {
+/**
+ * Receives a metadata about a class with methods to read, write and certain gates.
+ * And provides a generic logic to convert to and from JSON.
+ * <p>
+ * As a historical context the first try to make a few objects more dynamic (e.g AddressSettings) was
+ * around BeanUtils however there was some implicit logic on when certain settins were Null or default values.
+ * for that reason I decided for a meta-data approach where extra semantic could be applied for each individual attributes
+ * rather than a generic BeanUtils parser.
+ */
+public class DynamicJSON<T> {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -59,38 +55,53 @@ public class DynamicJSON <T> {
     * Double.class
     * Float.class
     */
-   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate) {
-      if (type != String.class &&
-          type != SimpleString.class &&
-          type != Integer.class &&
-          type != Long.class &&
-          type != Double.class &&
-          type != Float.class) {
+   public DynamicJSON addMetadata(Class type,
+                                  String name,
+                                  BiConsumer<T, ? extends Object> setter,
+                                  Function<T, ? extends Object> getter,
+                                  Predicate<T> gate) {
+      if (type != String.class && type != SimpleString.class && type != Integer.class && type != Long.class && type != Double.class && type != Float.class && type != Boolean.class && !Enum.class.isAssignableFrom(type)) {
          throw new IllegalArgumentException("invalid type " + type);
       }
 
-
-      metaData.add(new MetaData(type, name, setter, getter, getGate));
+      metaData.add(new MetaData(type, name, setter, getter, gate));
       return this;
    }
 
-   public DynamicJSON addMetadata(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter) {
-      metaData.add(new MetaData(type, name, setter, getter, null));
-      return this;
+   public <Z extends Object> DynamicJSON addMetadata(Class<Z> type,
+                                                     String name,
+                                                     BiConsumer<T, Z> setter,
+                                                     Function<T, Z> getter) {
+      return addMetadata(type, name, setter, getter, null);
    }
 
-   public JsonObject toJSON(T object) {
+   /**
+    * It is not always possible to infer the target datatype (like when using an intermediate string to treat an Enumeration.
+    * For cases like this I have this method
+    */
+   public DynamicJSON addMetadataObj(Class<?> type,
+                                     String name,
+                                     BiConsumer<T, ? extends Object> setter,
+                                     Function<T, ? extends Object> getter) {
+      return addMetadata(type, name, setter, getter, null);
+   }
+
+   public JsonObject toJSON(T object, boolean ignoreNullAttributes) {
       JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-      parseToJSON(object, builder);
+      parseToJSON(object, builder, ignoreNullAttributes);
       return builder.build();
    }
 
-   public void parseToJSON(T object, JsonObjectBuilder builder) {
+   public void parseToJSON(T object, JsonObjectBuilder builder, boolean ignoreNullAttributes) {
       logger.debug("Parsing object {}", object);
       this.forEach((type, name, setter, getter, gate) -> {
          logger.debug("Parsing {} {} {} {} {}", type, name, setter, getter, gate);
+         Object value = getter.apply(object);
+         if (ignoreNullAttributes && value == null) {
+            logger.debug("Ignoring null attribute {}", name);
+            return;
+         }
          if (gate == null || gate.test(object)) {
-            Object value = getter.apply(object);
 
             if (logger.isTraceEnabled()) {
 
@@ -119,6 +130,12 @@ public class DynamicJSON <T> {
                   logger.trace("Setting {} as long {}", name, value);
                   builder.add(name, ((Number) value).longValue());
                }
+            } else if (type == Boolean.class) {
+               builder.add(name, (Boolean) value);
+            } else if (Enum.class.isAssignableFrom(type)) {
+               // I know this is the same as the default else clause further down
+               // but i wanted to have a separate branch in case we have to deal with it later
+               builder.add(name, String.valueOf(value));
             } else {
                builder.add(name, String.valueOf(value));
             }
@@ -130,7 +147,12 @@ public class DynamicJSON <T> {
 
    public void forEach(MetadataListener listener) {
       metaData.forEach(m -> {
-         listener.metaItem(m.type, m.name, m.setter, m.getter, m.getGate);
+         try {
+            listener.metaItem(m.type, m.name, m.setter, m.getter, m.gate);
+         } catch (Throwable e) {
+            logger.warn("Error parsing {}", m, e);
+            throw new RuntimeException("Error while parsing " + m, e);
+         }
       });
    }
 
@@ -156,27 +178,35 @@ public class DynamicJSON <T> {
                setter.accept(resultObject, json.getJsonNumber(name).doubleValue());
             } else if (type == Float.class) {
                setter.accept(resultObject, json.getJsonNumber(name).numberValue().floatValue());
+            } else if (type == Boolean.class) {
+               setter.accept(resultObject, json.getBoolean(name));
+            } else if (Enum.class.isAssignableFrom(type)) {
+               String value = json.getString(name);
+               Object enumValue = Enum.valueOf(type, value);
+               setter.accept(resultObject, enumValue);
             }
          }
       });
    }
 
-
-
    static class MetaData<T> {
+
       Class type;
       String name;
-      BiConsumer<T, Object> setter;
-      Function<T, Object> getter;
-      Predicate<T>  getGate;
+      BiConsumer<T, ?> setter;
+      Function<T, ?> getter;
+      Predicate<?> gate;
 
-
-      public MetaData(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate) {
+      public <Z> MetaData(Class<Z> type,
+                          String name,
+                          BiConsumer<T, Object> setter,
+                          Function<T, Object> getter,
+                          Predicate<T> gate) {
          this.type = type;
          this.name = name;
          this.setter = setter;
          this.getter = getter;
-         this.getGate = getGate;
+         this.gate = gate;
       }
 
       @Override
@@ -186,8 +216,12 @@ public class DynamicJSON <T> {
    }
 
    public interface MetadataListener<T> {
-      void metaItem(Class type, String name, BiConsumer<T, Object> setter, Function<T, Object> getter, Predicate<T> getGate);
-   }
 
+      void metaItem(Class type,
+                    String name,
+                    BiConsumer<T, Object> setter,
+                    Function<T, Object> getter,
+                    Predicate<Object> gate);
+   }
 
 }

@@ -3612,7 +3612,7 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
 
       try {
          // when the QueueConfiguration is passed through createQueue all of its defaults get set which we return to the caller
-         AddressSettings addressSettingsConfiguration = AddressSettings.fromJSON(addressSettingsConfigurationAsJson);
+         AddressSettings addressSettingsConfiguration = null; // AddressSettings.fromJSON(addressSettingsConfigurationAsJson);
          if (addressSettingsConfiguration == null) {
             throw ActiveMQMessageBundle.BUNDLE.failedToParseJson(addressSettingsConfigurationAsJson);
          }
@@ -3627,7 +3627,7 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
          server.getAddressSettingsRepository().addMatch(address, addressSettingsConfiguration);
 
          storageManager.storeAddressSetting(new PersistedAddressSetting(new SimpleString(address), addressSettingsConfiguration));
-         return addressSettingsConfiguration.toJSON();
+         return addressSettingsConfiguration.toString(); // use toJSON
       } catch (ActiveMQException e) {
          throw new IllegalStateException(e.getMessage());
       } finally {

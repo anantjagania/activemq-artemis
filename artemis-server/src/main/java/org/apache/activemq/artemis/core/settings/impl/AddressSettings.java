@@ -17,8 +17,7 @@
 package org.apache.activemq.artemis.core.settings.impl;
 
 import java.io.Serializable;
-import java.io.StringReader;
-import java.util.Map;
+import java.util.Objects;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
@@ -27,151 +26,18 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.core.journal.EncodingSupport;
 import org.apache.activemq.artemis.core.settings.Mergeable;
-import org.apache.activemq.artemis.json.JsonObject;
-import org.apache.activemq.artemis.json.JsonObjectBuilder;
-import org.apache.activemq.artemis.json.JsonString;
-import org.apache.activemq.artemis.json.JsonValue;
+import org.apache.activemq.artemis.json.dynamic.DynamicJSON;
 import org.apache.activemq.artemis.utils.BufferHelper;
 import org.apache.activemq.artemis.utils.DataConstants;
-import org.apache.activemq.artemis.utils.JsonLoader;
 
 /**
  * Configuration settings that are applied on the address level
  */
 public class AddressSettings implements Mergeable<AddressSettings>, Serializable, EncodingSupport {
 
+   static DynamicJSON<AddressSettings> jsonParser = new DynamicJSON<>();
+
    private static final long serialVersionUID = 1607502280582336366L;
-
-   public static final String ADDRESS_FULL_MESSAGE_POLICY = "address-full-message-policy";
-
-   public static final String MAX_SIZE_BYTES = "max-size-bytes";
-
-   public static final String MAX_READ_PAGE_BYTES = "max-size-page-bytes";
-
-   public static final String MAX_READ_PAGE_MESSAGES = "max-read-page-messages";
-
-   public static final String MAX_SIZE_MESSAGES = "max-size-messages";
-
-   public static final String PAGE_SIZE_BYTES = "page-size-bytes";
-
-   public static final String PAGE_MAX_CACHE_SIZE = "page-max-cache-size";
-
-   public static final String DROP_MESSAGES_WHEN_FULL = "drop-messages-when-full";
-
-   public static final String MAX_DELIVERY_ATTEMPTS = "max-delivery-attempts";
-
-   public static final String MESSAGE_COUNTER_HISTORY_DAY_LIMIT = "message-counter-history-day-limit";
-
-   public static final String REDELIVERY_DELAY = "redelivery-delay";
-
-   public static final String REDELIVERY_DELAY_MULTIPLIER = "redelivery-delay-multiplier";
-
-   public static final String REDELIVERY_COLLISION_AVOIDANCE_FACTOR = "redelivery-collision-avoidance-factor";
-
-   public static final String MAX_REDELIVERY_DELAY = "max-redelivery-delay";
-
-   public static final String DEAD_LETTER_ADDRESS = "dead-letter-address";
-
-   public static final String EXPIRY_ADDRESS = "expiry-address";
-
-   public static final String EXPIRY_DELAY = "expiry-delay";
-
-   public static final String MIN_EXPIRY_DELAY = "min-expiry-delay";
-
-   public static final String MAX_EXPIRY_DELAY = "max-expiry-delay";
-
-   public static final String DEFAULT_LAST_VALUE_QUEUE_PROP = "default-last-value-queue";
-
-   public static final String DEFAULT_LAST_VALUE_KEY = "default-last-value-key";
-
-   public static final String DEFAULT_NON_DESTRUCTIVE = "default-non-destructive";
-
-   public static final String DEFAULT_EXCLUSIVE_QUEUE = "default-exclusive-queue";
-
-   public static final String DEFAULT_GROUP_REBALANCE = "default-group-rebalance";
-
-   public static final String DEFAULT_GROUP_REBALANCE_PAUSE_DISPATCH = "default-group-rebalance-pause-dispatch";
-
-   public static final String DEFAULT_GROUP_BUCKETS = "default-group-buckets";
-
-   public static final String DEFAULT_GROUP_FIRST_KEY = "default-group-first-key";
-
-   public static final String REDISTRIBUTION_DELAY = "redistribution-delay";
-
-   public static final String SEND_TO_DLA_ON_NO_ROUTE = "send-to-dla-on-no-route";
-
-   public static final String SLOW_CONSUMER_THRESHOLD = "slow-consumer-threshold";
-
-   public static final String SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT = "slow-consumer-threshold-measurement-unit";
-
-   public static final String SLOW_CONSUMER_CHECK_PERIOD = "slow-consumer-check-period";
-
-   public static final String SLOW_CONSUMER_POLICY = "slow-consumer-policy";
-
-   public static final String AUTO_CREATE_QUEUES = "auto-create-queues";
-
-   public static final String AUTO_DELETE_QUEUES = "auto-delete-queues";
-
-   public static final String AUTO_DELETE_CREATED_QUEUES = "auto-delete-created-queues";
-
-   public static final String AUTO_DELETE_QUEUES_DELAY = "auto-delete-queues-delay";
-
-   public static final String AUTO_DELETE_QUEUE_MESSAGE_COUNT = "auto-delete-queues-message-count";
-
-   public static final String DEFAULT_RING_SIZE = "default-ring-size";
-
-   public static final String RETROACTIVE_MESSAGE_COUNT = "retroactive-message-count";
-
-   public static final String CONFIG_DELETE_QUEUES = "config-delete-queues";
-
-   public static final String AUTO_CREATE_ADDRESSES = "auto-create-addresses";
-
-   public static final String AUTO_DELETE_ADDRESSES = "auto-delete-addresses";
-
-   public static final String AUTO_DELETE_ADDRESS_DELAY = "auto-delete-address-delay";
-
-   public static final String CONFIG_DELETE_ADDRESSES = "config-delete-addresses";
-
-   public static final String CONFIG_DELETE_DIVERTS = "config-delete-diverts";
-
-   public static final String MANAGEMENT_BROWSE_PAGE_SIZE_PROP = "management-browse-page-size";
-
-   public static final String MAX_SIZE_BYTES_REJECT_THRESHOLD = "max-size-bytes-reject-threshold";
-
-   public static final String DEFAULT_MAX_CONSUMERS = "default-max-consumers";
-
-   public static final String DEFAULT_PURGE_ON_NO_CONSUMERS = "default-purge-on-no-consumers";
-
-   public static final String DEFAULT_CONSUMERS_BEFORE_DISPATCH = "default-consumers-before-dispatch";
-
-   public static final String DEFAULT_DELAY_BEFORE_DISPATCH = "default-delay-before-dispatch";
-
-   public static final String DEFAULT_QUEUE_ROUTING_TYPE = "default-queue-routing-type";
-
-   public static final String DEFAULT_ADDRESS_ROUTING_TYPE = "default-address-routing-type";
-
-   public static final String DEFAULT_CONSUMER_WINDOW_SIZE_PROP = "default-consumer-window-size";
-
-   public static final String AUTO_CREATE_DEAD_LETTER_RESOURCES = "auto-create-dead-letter-resources";
-
-   public static final String DEAD_LETTER_QUEUE_PREFIX = "dead-letter-queue-prefix";
-
-   public static final String DEAD_LETTER_QUEUE_SUFFIX = "dead-letter-queue-suffix";
-
-   public static final String AUTO_CREATE_EXPIRY_RESOURCES = "auto-create-expiry-resources";
-
-   public static final String EXPIRY_QUEUE_PREFIX = "expiry-queue-prefix";
-
-   public static final String EXPIRY_QUEUE_SUFFIX = "expiry-address-suffix";
-
-   public static final String ENABLE_METRICS = "enable-metrics";
-
-   public static final String MANAGEMENT_MESSAGE_ATTRIBUTE_SIZE_LIMIT_PROP = "management-message-attribute-size-limit";
-
-   public static final String  ENABLE_INGRESS_TIMESTAMP = "enable-ingress-timestamp";
-
-   public static final String  QUEUE_PREFETCH = "queue-prefetch";
-
 
    /**
     * defaults used if null, this allows merging
@@ -281,160 +147,388 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
 
    public static final boolean DEFAULT_ENABLE_INGRESS_TIMESTAMP = false;
 
+   {
+      jsonParser.addMetadata(AddressFullMessagePolicy.class, "addressFullMessagePolicy", (t, p) -> t.addressFullMessagePolicy = p, t -> t.addressFullMessagePolicy);
+   }
    private AddressFullMessagePolicy addressFullMessagePolicy = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "maxSizeBytes", (t, p) -> t.maxSizeBytes = p, t -> t.maxSizeBytes);
+   }
    private Long maxSizeBytes = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "maxReadPageBytes", (t, p) -> t.maxReadPageBytes = p, t -> t.maxReadPageBytes);
+   }
    private Integer maxReadPageBytes = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "maxReadPageMessages", (t, p) -> t.maxReadPageMessages = p, t -> t.maxReadPageMessages);
+   }
    private Integer maxReadPageMessages = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "prefetchPageBytes", (t, p) -> t.prefetchPageBytes = p, t -> t.prefetchPageBytes);
+   }
    private Integer prefetchPageBytes = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "prefetchPageMessages", (t, p) -> t.prefetchPageMessages = p, t -> t.prefetchPageMessages);
+   }
    private Integer prefetchPageMessages = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "pageLimitBytes", (t, p) -> t.pageLimitBytes = p, t -> t.pageLimitBytes);
+   }
    private Long pageLimitBytes = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "pageLimitMessages", (t, p) -> t.pageLimitMessages = p, t -> t.pageLimitMessages);
+   }
    private Long pageLimitMessages = null;
 
+   {
+      jsonParser.addMetadata(PageFullMessagePolicy.class, "pageFullMessagePolicy", (t, p) -> t.pageFullMessagePolicy = p, t -> t.pageFullMessagePolicy);
+   }
    private PageFullMessagePolicy pageFullMessagePolicy = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "maxSizeMessages", (t, p) -> t.maxSizeMessages = p, t -> t.maxSizeMessages);
+   }
    private Long maxSizeMessages = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "pageSizeBytes", (t, p) -> t.pageSizeBytes = p, t -> t.pageSizeBytes);
+   }
    private Integer pageSizeBytes = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "pageMaxCache", (t, p) -> t.pageMaxCache = p, t -> t.pageMaxCache);
+   }
    private Integer pageMaxCache = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "dropMessagesWhenFull", (t, p) -> t.dropMessagesWhenFull = p, t -> t.dropMessagesWhenFull);
+   }
    private Boolean dropMessagesWhenFull = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "maxDeliveryAttempts", (t, p) -> t.maxDeliveryAttempts = p, t -> t.maxDeliveryAttempts);
+   }
    private Integer maxDeliveryAttempts = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "messageCounterHistoryDayLimit", (t, p) -> t.messageCounterHistoryDayLimit = p, t -> t.messageCounterHistoryDayLimit);
+   }
    private Integer messageCounterHistoryDayLimit = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "redeliveryDelay", (t, p) -> t.redeliveryDelay = p, t -> t.redeliveryDelay);
+   }
    private Long redeliveryDelay = null;
 
+   {
+      jsonParser.addMetadata(Double.class, "redeliveryMultiplier", (t, p) -> t.redeliveryMultiplier = p, t -> t.redeliveryMultiplier);
+   }
    private Double redeliveryMultiplier = null;
 
+   {
+      jsonParser.addMetadata(Double.class, "redeliveryCollisionAvoidanceFactor", (t, p) -> t.redeliveryCollisionAvoidanceFactor = p, t -> t.redeliveryCollisionAvoidanceFactor);
+   }
    private Double redeliveryCollisionAvoidanceFactor = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "maxRedeliveryDelay", (t, p) -> t.maxRedeliveryDelay = p, t -> t.maxRedeliveryDelay);
+   }
    private Long maxRedeliveryDelay = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "deadLetterAddress", (t, p) -> t.deadLetterAddress = p, t -> t.deadLetterAddress);
+   }
    private SimpleString deadLetterAddress = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "expiryAddress", (t, p) -> t.expiryAddress = p, t -> t.expiryAddress);
+   }
    private SimpleString expiryAddress = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "expiryDelay", (t, p) -> t.expiryDelay = p, t -> t.expiryDelay);
+   }
    private Long expiryDelay = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "minExpiryDelay", (t, p) -> t.minExpiryDelay = p, t -> t.minExpiryDelay);
+   }
    private Long minExpiryDelay = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "maxExpiryDelay", (t, p) -> t.maxExpiryDelay = p, t -> t.maxExpiryDelay);
+   }
    private Long maxExpiryDelay = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultLastValueQueue", (t, p) -> t.defaultLastValueQueue = p, t -> t.defaultLastValueQueue);
+   }
    private Boolean defaultLastValueQueue = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "defaultLastValueKey", (t, p) -> t.defaultLastValueKey = p, t -> t.defaultLastValueKey);
+   }
    private SimpleString defaultLastValueKey = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultNonDestructive", (t, p) -> t.defaultNonDestructive = p, t -> t.defaultNonDestructive);
+   }
    private Boolean defaultNonDestructive = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultExclusiveQueue", (t, p) -> t.defaultExclusiveQueue = p, t -> t.defaultExclusiveQueue);
+   }
    private Boolean defaultExclusiveQueue = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultGroupRebalance", (t, p) -> t.defaultGroupRebalance = p, t -> t.defaultGroupRebalance);
+   }
    private Boolean defaultGroupRebalance = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultGroupRebalancePauseDispatch", (t, p) -> t.defaultGroupRebalancePauseDispatch = p, t -> t.defaultGroupRebalancePauseDispatch);
+   }
    private Boolean defaultGroupRebalancePauseDispatch = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "defaultGroupBuckets", (t, p) -> t.defaultGroupBuckets = p, t -> t.defaultGroupBuckets);
+   }
    private Integer defaultGroupBuckets = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "defaultGroupFirstKey", (t, p) -> t.defaultGroupFirstKey = p, t -> t.defaultGroupFirstKey);
+   }
    private SimpleString defaultGroupFirstKey = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "redistributionDelay", (t, p) -> t.redistributionDelay = p, t -> t.redistributionDelay);
+   }
    private Long redistributionDelay = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "sendToDLAOnNoRoute", (t, p) -> t.sendToDLAOnNoRoute = p, t -> t.sendToDLAOnNoRoute);
+   }
    private Boolean sendToDLAOnNoRoute = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "slowConsumerThreshold", (t, p) -> t.slowConsumerThreshold = p, t -> t.slowConsumerThreshold);
+   }
    private Long slowConsumerThreshold = null;
 
+   {
+      jsonParser.addMetadata(SlowConsumerThresholdMeasurementUnit.class, "slowConsumerThresholdMeasurementUnit", (t, p) -> t.slowConsumerThresholdMeasurementUnit = p, t -> t.slowConsumerThresholdMeasurementUnit);
+   }
    private SlowConsumerThresholdMeasurementUnit slowConsumerThresholdMeasurementUnit = DEFAULT_SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT;
 
+   {
+      jsonParser.addMetadata(Long.class, "slowConsumerCheckPeriod", (t, p) -> t.slowConsumerCheckPeriod = p, t -> t.slowConsumerCheckPeriod);
+   }
    private Long slowConsumerCheckPeriod = null;
 
+   {
+      jsonParser.addMetadata(SlowConsumerPolicy.class, "slowConsumerPolicy", (t, p) -> t.slowConsumerPolicy = p, t -> t.slowConsumerPolicy);
+   }
    private SlowConsumerPolicy slowConsumerPolicy = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateJmsQueues", (t, p) -> t.autoCreateJmsQueues = (Boolean) p, t -> t.autoCreateJmsQueues, t -> t.autoCreateJmsQueues != null);
+   }
    @Deprecated
    private Boolean autoCreateJmsQueues = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteJmsQueues", (t, p) -> t.autoDeleteJmsQueues = (Boolean) p, t -> t.autoDeleteJmsQueues, t -> t.autoDeleteJmsQueues != null);
+   }
    @Deprecated
    private Boolean autoDeleteJmsQueues = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateJmsTopics", (t, p) -> t.autoCreateJmsTopics = (Boolean) p, t -> t.autoCreateJmsTopics, t -> t.autoCreateJmsTopics != null);
+   }
    @Deprecated
    private Boolean autoCreateJmsTopics = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteJmsTopics", (t, p) -> t.autoDeleteJmsTopics = (Boolean) p, t -> t.autoDeleteJmsTopics, t -> t.autoDeleteJmsTopics != null);
+   }
    @Deprecated
    private Boolean autoDeleteJmsTopics = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateQueues", (t, p) -> t.autoCreateQueues = p, t -> t.autoCreateQueues);
+   }
    private Boolean autoCreateQueues = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteQueues", (t, p) -> t.autoDeleteQueues = p, t -> t.autoDeleteQueues);
+   }
    private Boolean autoDeleteQueues = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteCreatedQueues", (t, p) -> t.autoDeleteCreatedQueues = p, t -> t.autoDeleteCreatedQueues);
+   }
    private Boolean autoDeleteCreatedQueues = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "autoDeleteQueuesDelay", (t, p) -> t.autoDeleteQueuesDelay = p, t -> t.autoDeleteQueuesDelay);
+   }
    private Long autoDeleteQueuesDelay = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteQueuesSkipUsageCheck", (t, p) -> t.autoDeleteQueuesSkipUsageCheck = p, t -> t.autoDeleteQueuesSkipUsageCheck);
+   }
    private Boolean autoDeleteQueuesSkipUsageCheck = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "autoDeleteQueuesMessageCount", (t, p) -> t.autoDeleteQueuesMessageCount = p, t -> t.autoDeleteQueuesMessageCount);
+   }
    private Long autoDeleteQueuesMessageCount = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "defaultRingSize", (t, p) -> t.defaultRingSize = p, t -> t.defaultRingSize);
+   }
    private Long defaultRingSize = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "retroactiveMessageCount", (t, p) -> t.retroactiveMessageCount = p, t -> t.retroactiveMessageCount);
+   }
    private Long retroactiveMessageCount = null;
 
+   {
+      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteQueues", (t, p) -> t.configDeleteQueues = p, t -> t.configDeleteQueues);
+   }
    private DeletionPolicy configDeleteQueues = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateAddresses", (t, p) -> t.autoCreateAddresses = p, t -> t.autoCreateAddresses);
+   }
    private Boolean autoCreateAddresses = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteAddresses", (t, p) -> t.autoDeleteAddresses = p, t -> t.autoDeleteAddresses);
+   }
    private Boolean autoDeleteAddresses = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "autoDeleteAddressesDelay", (t, p) -> t.autoDeleteAddressesDelay = p, t -> t.autoDeleteAddressesDelay);
+   }
    private Long autoDeleteAddressesDelay = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoDeleteAddressesSkipUsageCheck", (t, p) -> t.autoDeleteAddressesSkipUsageCheck = p, t -> t.autoDeleteAddressesSkipUsageCheck);
+   }
    private Boolean autoDeleteAddressesSkipUsageCheck = null;
 
+   {
+      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteAddresses", (t, p) -> t.configDeleteAddresses = p, t -> t.configDeleteAddresses);
+   }
    private DeletionPolicy configDeleteAddresses = null;
 
+   {
+      jsonParser.addMetadata(DeletionPolicy.class, "configDeleteDiverts", (t, p) -> t.configDeleteDiverts = p, t -> t.configDeleteDiverts);
+   }
    private DeletionPolicy configDeleteDiverts = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "managementBrowsePageSize", (t, p) -> t.managementBrowsePageSize = p, t -> t.managementBrowsePageSize);
+   }
    private Integer managementBrowsePageSize = AddressSettings.MANAGEMENT_BROWSE_PAGE_SIZE;
 
+   {
+      jsonParser.addMetadata(Long.class, "maxSizeBytesRejectThreshold", (t, p) -> t.maxSizeBytesRejectThreshold = p, t -> t.maxSizeBytesRejectThreshold);
+   }
    private Long maxSizeBytesRejectThreshold = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "defaultMaxConsumers", (t, p) -> t.defaultMaxConsumers = p, t -> t.defaultMaxConsumers);
+   }
    private Integer defaultMaxConsumers = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "defaultPurgeOnNoConsumers", (t, p) -> t.defaultPurgeOnNoConsumers = p, t -> t.defaultPurgeOnNoConsumers);
+   }
    private Boolean defaultPurgeOnNoConsumers = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "defaultConsumersBeforeDispatch", (t, p) -> t.defaultConsumersBeforeDispatch = p, t -> t.defaultConsumersBeforeDispatch);
+   }
    private Integer defaultConsumersBeforeDispatch = null;
 
+   {
+      jsonParser.addMetadata(Long.class, "defaultDelayBeforeDispatch", (t, p) -> t.defaultDelayBeforeDispatch = p, t -> t.defaultDelayBeforeDispatch);
+   }
    private Long defaultDelayBeforeDispatch = null;
 
+   {
+      jsonParser.addMetadata(RoutingType.class, "defaultQueueRoutingType", (t, p) -> t.defaultQueueRoutingType = p, t -> t.defaultQueueRoutingType);
+   }
    private RoutingType defaultQueueRoutingType = null;
 
+   {
+      jsonParser.addMetadata(RoutingType.class, "defaultAddressRoutingType", (t, p) -> t.defaultAddressRoutingType = p, t -> t.defaultAddressRoutingType);
+   }
    private RoutingType defaultAddressRoutingType = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "defaultConsumerWindowSize", (t, p) -> t.defaultConsumerWindowSize = p, t -> t.defaultConsumerWindowSize);
+   }
    private Integer defaultConsumerWindowSize = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateDeadLetterResources", (t, p) -> t.autoCreateDeadLetterResources = p, t -> t.autoCreateDeadLetterResources);
+   }
    private Boolean autoCreateDeadLetterResources = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "deadLetterQueuePrefix", (t, p) -> t.deadLetterQueuePrefix = p, t -> t.deadLetterQueuePrefix);
+   }
    private SimpleString deadLetterQueuePrefix = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "deadLetterQueueSuffix", (t, p) -> t.deadLetterQueueSuffix = p, t -> t.deadLetterQueueSuffix);
+   }
    private SimpleString deadLetterQueueSuffix = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "autoCreateExpiryResources", (t, p) -> t.autoCreateExpiryResources = p, t -> t.autoCreateExpiryResources);
+   }
    private Boolean autoCreateExpiryResources = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "expiryQueuePrefix", (t, p) -> t.expiryQueuePrefix = p, t -> t.expiryQueuePrefix);
+   }
    private SimpleString expiryQueuePrefix = null;
 
+   {
+      jsonParser.addMetadata(SimpleString.class, "expiryQueueSuffix", (t, p) -> t.expiryQueueSuffix = p, t -> t.expiryQueueSuffix);
+   }
    private SimpleString expiryQueueSuffix = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "enableMetrics", (t, p) -> t.enableMetrics = p, t -> t.enableMetrics);
+   }
    private Boolean enableMetrics = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "managementMessageAttributeSizeLimit", (t, p) -> t.managementMessageAttributeSizeLimit = p, t -> t.managementMessageAttributeSizeLimit);
+   }
    private Integer managementMessageAttributeSizeLimit = null;
 
+   {
+      jsonParser.addMetadata(Boolean.class, "enableIngressTimestamp", (t, p) -> t.enableIngressTimestamp = p, t -> t.enableIngressTimestamp);
+   }
    private Boolean enableIngressTimestamp = null;
 
+   {
+      jsonParser.addMetadata(Integer.class, "idCacheSize", (t, p) -> t.idCacheSize = p, t -> t.idCacheSize);
+   }
    private Integer idCacheSize = null;
 
    //from amq5
@@ -520,269 +614,19 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
    public AddressSettings() {
    }
 
-   public AddressSettings set(String key, String value) {
-      if (key != null && value != null) {
-         if (key.equals(ADDRESS_FULL_MESSAGE_POLICY)) {
-            setAddressFullMessagePolicy(AddressFullMessagePolicy.valueOf(value));
-         } else if (key.equals(MAX_SIZE_BYTES)) {
-            setMaxSizeBytes(Long.parseLong(value));
-         } else if (key.equals(MAX_READ_PAGE_BYTES)) {
-            setMaxReadPageBytes(Integer.parseInt(value));
-         } else if (key.equals(MAX_READ_PAGE_MESSAGES)) {
-            setMaxReadPageMessages(Integer.parseInt(value));
-         } else if (key.equals(MAX_SIZE_MESSAGES)) {
-            setMaxSizeMessages(Integer.parseInt(value));
-         } else if (key.equals(PAGE_SIZE_BYTES)) {
-            setPageSizeBytes(Integer.parseInt(value));
-         } else if (key.equals(PAGE_MAX_CACHE_SIZE)) {
-            setPageCacheMaxSize(Integer.parseInt(value));
-         } else if (key.equals(DROP_MESSAGES_WHEN_FULL)) {
-            setDropMessagesWhenFull(Boolean.valueOf(value));
-         } else if (key.equals(MAX_DELIVERY_ATTEMPTS)) {
-            setMaxDeliveryAttempts(Integer.parseInt(value));
-         } else if (key.equals(MESSAGE_COUNTER_HISTORY_DAY_LIMIT)) {
-            setMessageCounterHistoryDayLimit(Integer.parseInt(value));
-         } else if (key.equals(REDELIVERY_DELAY)) {
-            setRedeliveryDelay(Long.parseLong(value));
-         } else if (key.equals(REDELIVERY_DELAY_MULTIPLIER)) {
-            setRedeliveryMultiplier(Double.parseDouble(value));
-         } else if (key.equals(REDELIVERY_COLLISION_AVOIDANCE_FACTOR)) {
-            setRedeliveryCollisionAvoidanceFactor(Double.parseDouble(value));
-         } else if (key.equals(MAX_REDELIVERY_DELAY)) {
-            setMaxRedeliveryDelay(Long.parseLong(value));
-         } else if (key.equals(DEAD_LETTER_ADDRESS)) {
-            setDeadLetterAddress(new SimpleString(value));
-         } else if (key.equals(EXPIRY_ADDRESS)) {
-            setExpiryAddress(new SimpleString(value));
-         } else if (key.equals(EXPIRY_DELAY)) {
-            setExpiryDelay(Long.valueOf(value));
-         } else if (key.equals(MIN_EXPIRY_DELAY)) {
-            setMinExpiryDelay(Long.valueOf(value));
-         } else if (key.equals(MAX_EXPIRY_DELAY)) {
-            setMaxExpiryDelay(Long.valueOf(value));
-         } else if (key.equals(DEFAULT_LAST_VALUE_QUEUE_PROP)) {
-            setDefaultLastValueQueue(Boolean.parseBoolean(value));
-         } else if (key.equals(DEFAULT_LAST_VALUE_KEY)) {
-            setDefaultLastValueKey(new SimpleString(value));
-         } else if (key.equals(DEFAULT_NON_DESTRUCTIVE)) {
-            setDefaultNonDestructive(Boolean.parseBoolean(value));
-         } else if (key.equals(DEFAULT_EXCLUSIVE_QUEUE)) {
-            setDefaultExclusiveQueue(Boolean.valueOf(value));
-         } else if (key.equals(DEFAULT_GROUP_REBALANCE)) {
-            setDefaultGroupRebalance(Boolean.parseBoolean(value));
-         } else if (key.equals(DEFAULT_GROUP_REBALANCE_PAUSE_DISPATCH)) {
-            setDefaultGroupRebalancePauseDispatch(Boolean.parseBoolean(value));
-         } else if (key.equals(DEFAULT_GROUP_BUCKETS)) {
-            setDefaultGroupBuckets(Integer.parseInt(value));
-         } else if (key.equals(DEFAULT_GROUP_FIRST_KEY)) {
-            setDefaultGroupFirstKey(new SimpleString(value));
-         } else if (key.equals(REDISTRIBUTION_DELAY)) {
-            setRedistributionDelay(Long.parseLong(value));
-         } else if (key.equals(SEND_TO_DLA_ON_NO_ROUTE)) {
-            setSendToDLAOnNoRoute(Boolean.parseBoolean(value));
-         } else if (key.equals(SLOW_CONSUMER_THRESHOLD)) {
-            setSlowConsumerThreshold(Long.parseLong(value));
-         } else if (key.equals(SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT)) {
-            setSlowConsumerThresholdMeasurementUnit(SlowConsumerThresholdMeasurementUnit.valueOf(value));
-         } else if (key.equals(SLOW_CONSUMER_CHECK_PERIOD)) {
-            setSlowConsumerCheckPeriod(Long.parseLong(value));
-         } else if (key.equals(SLOW_CONSUMER_POLICY)) {
-            setSlowConsumerPolicy(SlowConsumerPolicy.valueOf(value));
-         } else if (key.equals(AUTO_CREATE_QUEUES)) {
-            setAutoCreateQueues(Boolean.valueOf(value));
-         } else if (key.equals(AUTO_DELETE_QUEUES)) {
-            setAutoDeleteQueues(Boolean.valueOf(value));
-         } else if (key.equals(AUTO_DELETE_CREATED_QUEUES)) {
-            setAutoDeleteCreatedQueues(Boolean.valueOf(value));
-         } else if (key.equals(AUTO_DELETE_QUEUES_DELAY)) {
-            setAutoDeleteQueuesDelay(Long.parseLong(value));
-         } else if (key.equals(AUTO_DELETE_QUEUE_MESSAGE_COUNT)) {
-            setAutoDeleteQueuesMessageCount(Long.parseLong(value));
-         } else if (key.equals(DEFAULT_RING_SIZE)) {
-            setDefaultRingSize(Long.parseLong(value));
-         } else if (key.equals(RETROACTIVE_MESSAGE_COUNT)) {
-            setRetroactiveMessageCount(Long.parseLong(value));
-         } else if (key.equals(CONFIG_DELETE_QUEUES)) {
-            setConfigDeleteQueues(DeletionPolicy.valueOf(value));
-         } else if (key.equals(AUTO_CREATE_ADDRESSES)) {
-            setAutoCreateAddresses(Boolean.valueOf(value));
-         } else if (key.equals(AUTO_DELETE_ADDRESSES)) {
-            setAutoDeleteAddresses(Boolean.valueOf(value));
-         } else if (key.equals(AUTO_DELETE_ADDRESS_DELAY)) {
-            setAutoDeleteAddressesDelay(Long.parseLong(value));
-         } else if (key.equals(CONFIG_DELETE_ADDRESSES)) {
-            setConfigDeleteAddresses(DeletionPolicy.valueOf(value));
-         } else if (key.equals(CONFIG_DELETE_DIVERTS)) {
-            setConfigDeleteDiverts(DeletionPolicy.valueOf(value));
-         } else if (key.equals(MANAGEMENT_BROWSE_PAGE_SIZE_PROP)) {
-            setManagementBrowsePageSize(Integer.parseInt(value));
-         } else if (key.equals(MAX_SIZE_BYTES_REJECT_THRESHOLD)) {
-            setMaxSizeBytesRejectThreshold(Long.parseLong(value));
-         } else if (key.equals(DEFAULT_MAX_CONSUMERS)) {
-            setDefaultMaxConsumers(Integer.valueOf(value));
-         } else if (key.equals(DEFAULT_PURGE_ON_NO_CONSUMERS)) {
-            setDefaultPurgeOnNoConsumers(Boolean.valueOf(value));
-         } else if (key.equals(DEFAULT_CONSUMERS_BEFORE_DISPATCH)) {
-            setDefaultConsumersBeforeDispatch(Integer.valueOf(value));
-         } else if (key.equals(DEFAULT_DELAY_BEFORE_DISPATCH)) {
-            setDefaultDelayBeforeDispatch(Long.valueOf(value));
-         } else if (key.equals(DEFAULT_QUEUE_ROUTING_TYPE)) {
-            setDefaultQueueRoutingType(RoutingType.valueOf(value));
-         } else if (key.equals(DEFAULT_ADDRESS_ROUTING_TYPE)) {
-            setDefaultAddressRoutingType(RoutingType.valueOf(value));
-         } else if (key.equals(DEFAULT_CONSUMER_WINDOW_SIZE_PROP)) {
-            setDefaultConsumerWindowSize(Integer.parseInt(value));
-         } else if (key.equals(AUTO_CREATE_DEAD_LETTER_RESOURCES)) {
-            setAutoCreateDeadLetterResources(Boolean.parseBoolean(value));
-         } else if (key.equals(DEAD_LETTER_QUEUE_PREFIX)) {
-            setDeadLetterQueuePrefix(new SimpleString(value));
-         } else if (key.equals(DEAD_LETTER_QUEUE_SUFFIX)) {
-            setDeadLetterQueueSuffix(new SimpleString(value));
-         } else if (key.equals(AUTO_CREATE_EXPIRY_RESOURCES)) {
-            setAutoCreateExpiryResources(Boolean.parseBoolean(value));
-         } else if (key.equals(EXPIRY_QUEUE_PREFIX)) {
-            setExpiryQueuePrefix(new SimpleString(value));
-         } else if (key.equals(EXPIRY_QUEUE_SUFFIX)) {
-            setExpiryQueueSuffix(new SimpleString(value));
-         } else if (key.equals(ENABLE_METRICS)) {
-            setEnableMetrics(Boolean.parseBoolean(value));
-         } else if (key.equals(MANAGEMENT_MESSAGE_ATTRIBUTE_SIZE_LIMIT_PROP)) {
-            setManagementMessageAttributeSizeLimit(Integer.parseInt(value));
-         } else if (key.equals(ENABLE_INGRESS_TIMESTAMP)) {
-            setEnableIngressTimestamp(Boolean.parseBoolean(value));
-         } else if (key.equals(QUEUE_PREFETCH)) {
-            setQueuePrefetch(Integer.parseInt(value));
-         }
-      }
-      return this;
-   }
-
-   /**
-    * This method returns a JSON-formatted {@code String} representation of this {@code AddressSettings}. It is a
-    * simple collection of key/value pairs. The keys used are referenced in {@link #set(String, String)}.
-    *
-    * @return a JSON-formatted {@code String} representation of this {@code AddressSettings}
-    */
-   public String toJSON() {
-      JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-
-      if (getAddressFullMessagePolicy() != null) {
-         builder.add(ADDRESS_FULL_MESSAGE_POLICY, getAddressFullMessagePolicy().toString());
-      }
-
-      builder.add(MAX_SIZE_BYTES, getMaxSizeBytes());
-      builder.add(MAX_SIZE_MESSAGES, getMaxSizeMessages());
-      builder.add(MAX_READ_PAGE_MESSAGES, getMaxReadPageBytes());
-      builder.add(MAX_READ_PAGE_BYTES, getMaxReadPageBytes());
-      builder.add(PAGE_SIZE_BYTES, getPageSizeBytes());
-      builder.add(PAGE_MAX_CACHE_SIZE, getPageCacheMaxSize());
-      if (getDropMessagesWhenFull() != null) {
-         builder.add(DROP_MESSAGES_WHEN_FULL, getDropMessagesWhenFull());
-      }
-      builder.add(MAX_DELIVERY_ATTEMPTS, getMaxDeliveryAttempts());
-      builder.add(MESSAGE_COUNTER_HISTORY_DAY_LIMIT, getMessageCounterHistoryDayLimit());
-      builder.add(REDELIVERY_DELAY, getRedeliveryDelay());
-      builder.add(REDELIVERY_DELAY_MULTIPLIER, getRedeliveryMultiplier());
-      builder.add(REDELIVERY_COLLISION_AVOIDANCE_FACTOR, getRedeliveryCollisionAvoidanceFactor());
-      builder.add(MAX_REDELIVERY_DELAY, getMaxRedeliveryDelay());
-      if (getDeadLetterAddress() != null) {
-         builder.add(DEAD_LETTER_ADDRESS, getDeadLetterAddress().toString());
-      }
-      builder.add(AUTO_CREATE_DEAD_LETTER_RESOURCES, isAutoCreateDeadLetterResources());
-      if (getDeadLetterQueuePrefix() != null) {
-         builder.add(DEAD_LETTER_QUEUE_PREFIX, getDeadLetterQueuePrefix().toString());
-      }
-      if (getDeadLetterQueueSuffix() != null) {
-         builder.add(DEAD_LETTER_QUEUE_SUFFIX, getDeadLetterQueueSuffix().toString());
-      }
-      if (getExpiryAddress() != null) {
-         builder.add(EXPIRY_ADDRESS, getExpiryAddress().toString());
-      }
-      builder.add(AUTO_CREATE_EXPIRY_RESOURCES, isAutoCreateExpiryResources());
-      if (getExpiryQueuePrefix() != null) {
-         builder.add(EXPIRY_QUEUE_PREFIX, getExpiryQueuePrefix().toString());
-      }
-      if (getExpiryQueueSuffix() != null) {
-         builder.add(EXPIRY_QUEUE_SUFFIX, getExpiryQueueSuffix().toString());
-      }
-      builder.add(EXPIRY_DELAY, getExpiryDelay());
-      builder.add(MIN_EXPIRY_DELAY, getMinExpiryDelay());
-      builder.add(MAX_EXPIRY_DELAY, getMaxExpiryDelay());
-      builder.add(DEFAULT_LAST_VALUE_QUEUE_PROP, isDefaultLastValueQueue());
-      if (getDefaultLastValueKey() != null ) {
-         builder.add(DEFAULT_LAST_VALUE_KEY, getDefaultLastValueKey().toString());
-      }
-      builder.add(DEFAULT_NON_DESTRUCTIVE, isDefaultNonDestructive());
-      builder.add(DEFAULT_EXCLUSIVE_QUEUE, isDefaultExclusiveQueue());
-      builder.add(REDISTRIBUTION_DELAY, getRedistributionDelay());
-      builder.add(SEND_TO_DLA_ON_NO_ROUTE, isSendToDLAOnNoRoute());
-      builder.add(SLOW_CONSUMER_THRESHOLD, getSlowConsumerThreshold());
-      builder.add(SLOW_CONSUMER_CHECK_PERIOD, getSlowConsumerCheckPeriod());
-      if (getSlowConsumerPolicy() != null ) {
-         builder.add(SLOW_CONSUMER_POLICY, getSlowConsumerPolicy().toString());
-      }
-      builder.add(AUTO_CREATE_QUEUES, isAutoCreateQueues());
-      builder.add(AUTO_DELETE_QUEUES, isAutoDeleteQueues());
-      builder.add(AUTO_DELETE_CREATED_QUEUES, isAutoDeleteCreatedQueues());
-      builder.add(AUTO_DELETE_QUEUES_DELAY, getAutoDeleteQueuesDelay());
-      builder.add(AUTO_DELETE_QUEUE_MESSAGE_COUNT, getAutoDeleteQueuesMessageCount());
-      if (getConfigDeleteQueues() != null) {
-         builder.add(CONFIG_DELETE_QUEUES, getConfigDeleteQueues().toString());
-      }
-      builder.add(AUTO_CREATE_ADDRESSES, isAutoCreateAddresses());
-      builder.add(AUTO_DELETE_ADDRESSES, isAutoDeleteAddresses());
-      builder.add(AUTO_DELETE_ADDRESS_DELAY, getAutoDeleteAddressesDelay());
-      if (getConfigDeleteAddresses() != null) {
-         builder.add(CONFIG_DELETE_ADDRESSES, getConfigDeleteAddresses().toString());
-      }
-      if (getConfigDeleteDiverts() != null) {
-         builder.add(CONFIG_DELETE_DIVERTS, getConfigDeleteDiverts().toString());
-      }
-      builder.add(MANAGEMENT_BROWSE_PAGE_SIZE_PROP, getManagementBrowsePageSize());
-      builder.add(QUEUE_PREFETCH, getQueuePrefetch());
-      builder.add(MAX_SIZE_BYTES_REJECT_THRESHOLD, getMaxSizeBytesRejectThreshold());
-      builder.add(DEFAULT_MAX_CONSUMERS, getDefaultMaxConsumers());
-      if (defaultPurgeOnNoConsumers != null) {
-         builder.add(DEFAULT_PURGE_ON_NO_CONSUMERS, defaultPurgeOnNoConsumers);
-      }
-      builder.add(DEFAULT_CONSUMERS_BEFORE_DISPATCH, getDefaultConsumersBeforeDispatch());
-      builder.add(DEFAULT_DELAY_BEFORE_DISPATCH, getDefaultDelayBeforeDispatch());
-      if (getDefaultQueueRoutingType() != null ) {
-         builder.add(DEFAULT_QUEUE_ROUTING_TYPE, getDefaultQueueRoutingType().toString());
-      }
-      if (getDefaultAddressRoutingType() != null ) {
-         builder.add(DEFAULT_ADDRESS_ROUTING_TYPE, getDefaultAddressRoutingType().toString());
-      }
-      builder.add(DEFAULT_CONSUMER_WINDOW_SIZE_PROP, getDefaultConsumerWindowSize());
-      builder.add(DEFAULT_GROUP_REBALANCE, isDefaultGroupRebalance());
-      builder.add(DEFAULT_GROUP_REBALANCE_PAUSE_DISPATCH, isDefaultGroupRebalancePauseDispatch());
-      builder.add(DEFAULT_GROUP_BUCKETS, getDefaultGroupBuckets());
-      if (getDefaultGroupFirstKey() != null ) {
-         builder.add(DEFAULT_GROUP_FIRST_KEY, getDefaultGroupFirstKey().toString());
-      }
-      builder.add(DEFAULT_RING_SIZE, getDefaultRingSize());
-      builder.add(RETROACTIVE_MESSAGE_COUNT, getRetroactiveMessageCount());
-      builder.add(ENABLE_METRICS, isEnableMetrics());
-      builder.add(MANAGEMENT_MESSAGE_ATTRIBUTE_SIZE_LIMIT_PROP, getManagementMessageAttributeSizeLimit());
-      if (getSlowConsumerThresholdMeasurementUnit() != null ) {
-         builder.add(SLOW_CONSUMER_THRESHOLD_MEASUREMENT_UNIT, getSlowConsumerThresholdMeasurementUnit().toString());
-      }
-      builder.add(ENABLE_INGRESS_TIMESTAMP, isEnableIngressTimestamp());
-      return builder.build().toString();
-   }
-
-   public Boolean getDropMessagesWhenFull() {
-      return dropMessagesWhenFull;
-   }
-
-   public AddressSettings setDropMessagesWhenFull(Boolean dropMessagesWhenFull) {
-      this.dropMessagesWhenFull = dropMessagesWhenFull;
-      return this;
-   }
-
    @Deprecated
    public boolean isAutoCreateJmsQueues() {
       return autoCreateJmsQueues != null ? autoCreateJmsQueues : AddressSettings.DEFAULT_AUTO_CREATE_JMS_QUEUES;
+   }
+
+   public String toJSON() {
+      return jsonParser.toJSON(this, true).toString();
+   }
+
+   public static AddressSettings fromJSON(String jsonString) {
+      AddressSettings newSettings = new AddressSettings();
+      jsonParser.fromJSON(newSettings, jsonString);
+      return newSettings;
    }
 
    @Deprecated
@@ -2267,691 +2111,254 @@ public class AddressSettings implements Mergeable<AddressSettings>, Serializable
       BufferHelper.writeNullableInteger(buffer, prefetchPageMessages);
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+      if (o == null || getClass() != o.getClass())
+         return false;
 
-   /**
-    * This method returns a {@code AddressSettings} created from the JSON-formatted input {@code String}. The input
-    * should be a simple object of key/value pairs. Valid keys are referenced in {@link #set(String, String)}.
-    *
-    * @param jsonString
-    * @return the {@code QueueConfiguration} created from the JSON-formatted input {@code String}
-    */
-   public static AddressSettings fromJSON(String jsonString) {
-      JsonObject json = JsonLoader.readObject(new StringReader(jsonString));
+      AddressSettings that = (AddressSettings) o;
 
-      AddressSettings result = new AddressSettings();
-
-      for (Map.Entry<String, JsonValue> entry : json.entrySet()) {
-         result.set(entry.getKey(), entry.getValue().getValueType() == JsonValue.ValueType.STRING ? ((JsonString)entry.getValue()).getString() : entry.getValue().toString());
-      }
-
-      return result;
+      if (addressFullMessagePolicy != that.addressFullMessagePolicy)
+         return false;
+      if (!Objects.equals(maxSizeBytes, that.maxSizeBytes))
+         return false;
+      if (!Objects.equals(maxReadPageBytes, that.maxReadPageBytes))
+         return false;
+      if (!Objects.equals(maxReadPageMessages, that.maxReadPageMessages))
+         return false;
+      if (!Objects.equals(prefetchPageBytes, that.prefetchPageBytes))
+         return false;
+      if (!Objects.equals(prefetchPageMessages, that.prefetchPageMessages))
+         return false;
+      if (!Objects.equals(pageLimitBytes, that.pageLimitBytes))
+         return false;
+      if (!Objects.equals(pageLimitMessages, that.pageLimitMessages))
+         return false;
+      if (pageFullMessagePolicy != that.pageFullMessagePolicy)
+         return false;
+      if (!Objects.equals(maxSizeMessages, that.maxSizeMessages))
+         return false;
+      if (!Objects.equals(pageSizeBytes, that.pageSizeBytes))
+         return false;
+      if (!Objects.equals(pageMaxCache, that.pageMaxCache))
+         return false;
+      if (!Objects.equals(dropMessagesWhenFull, that.dropMessagesWhenFull))
+         return false;
+      if (!Objects.equals(maxDeliveryAttempts, that.maxDeliveryAttempts))
+         return false;
+      if (!Objects.equals(messageCounterHistoryDayLimit, that.messageCounterHistoryDayLimit))
+         return false;
+      if (!Objects.equals(redeliveryDelay, that.redeliveryDelay))
+         return false;
+      if (!Objects.equals(redeliveryMultiplier, that.redeliveryMultiplier))
+         return false;
+      if (!Objects.equals(redeliveryCollisionAvoidanceFactor, that.redeliveryCollisionAvoidanceFactor))
+         return false;
+      if (!Objects.equals(maxRedeliveryDelay, that.maxRedeliveryDelay))
+         return false;
+      if (!Objects.equals(deadLetterAddress, that.deadLetterAddress))
+         return false;
+      if (!Objects.equals(expiryAddress, that.expiryAddress))
+         return false;
+      if (!Objects.equals(expiryDelay, that.expiryDelay))
+         return false;
+      if (!Objects.equals(minExpiryDelay, that.minExpiryDelay))
+         return false;
+      if (!Objects.equals(maxExpiryDelay, that.maxExpiryDelay))
+         return false;
+      if (!Objects.equals(defaultLastValueQueue, that.defaultLastValueQueue))
+         return false;
+      if (!Objects.equals(defaultLastValueKey, that.defaultLastValueKey))
+         return false;
+      if (!Objects.equals(defaultNonDestructive, that.defaultNonDestructive))
+         return false;
+      if (!Objects.equals(defaultExclusiveQueue, that.defaultExclusiveQueue))
+         return false;
+      if (!Objects.equals(defaultGroupRebalance, that.defaultGroupRebalance))
+         return false;
+      if (!Objects.equals(defaultGroupRebalancePauseDispatch, that.defaultGroupRebalancePauseDispatch))
+         return false;
+      if (!Objects.equals(defaultGroupBuckets, that.defaultGroupBuckets))
+         return false;
+      if (!Objects.equals(defaultGroupFirstKey, that.defaultGroupFirstKey))
+         return false;
+      if (!Objects.equals(redistributionDelay, that.redistributionDelay))
+         return false;
+      if (!Objects.equals(sendToDLAOnNoRoute, that.sendToDLAOnNoRoute))
+         return false;
+      if (!Objects.equals(slowConsumerThreshold, that.slowConsumerThreshold))
+         return false;
+      if (slowConsumerThresholdMeasurementUnit != that.slowConsumerThresholdMeasurementUnit)
+         return false;
+      if (!Objects.equals(slowConsumerCheckPeriod, that.slowConsumerCheckPeriod))
+         return false;
+      if (slowConsumerPolicy != that.slowConsumerPolicy)
+         return false;
+      if (!Objects.equals(autoCreateJmsQueues, that.autoCreateJmsQueues))
+         return false;
+      if (!Objects.equals(autoDeleteJmsQueues, that.autoDeleteJmsQueues))
+         return false;
+      if (!Objects.equals(autoCreateJmsTopics, that.autoCreateJmsTopics))
+         return false;
+      if (!Objects.equals(autoDeleteJmsTopics, that.autoDeleteJmsTopics))
+         return false;
+      if (!Objects.equals(autoCreateQueues, that.autoCreateQueues))
+         return false;
+      if (!Objects.equals(autoDeleteQueues, that.autoDeleteQueues))
+         return false;
+      if (!Objects.equals(autoDeleteCreatedQueues, that.autoDeleteCreatedQueues))
+         return false;
+      if (!Objects.equals(autoDeleteQueuesDelay, that.autoDeleteQueuesDelay))
+         return false;
+      if (!Objects.equals(autoDeleteQueuesSkipUsageCheck, that.autoDeleteQueuesSkipUsageCheck))
+         return false;
+      if (!Objects.equals(autoDeleteQueuesMessageCount, that.autoDeleteQueuesMessageCount))
+         return false;
+      if (!Objects.equals(defaultRingSize, that.defaultRingSize))
+         return false;
+      if (!Objects.equals(retroactiveMessageCount, that.retroactiveMessageCount))
+         return false;
+      if (configDeleteQueues != that.configDeleteQueues)
+         return false;
+      if (!Objects.equals(autoCreateAddresses, that.autoCreateAddresses))
+         return false;
+      if (!Objects.equals(autoDeleteAddresses, that.autoDeleteAddresses))
+         return false;
+      if (!Objects.equals(autoDeleteAddressesDelay, that.autoDeleteAddressesDelay))
+         return false;
+      if (!Objects.equals(autoDeleteAddressesSkipUsageCheck, that.autoDeleteAddressesSkipUsageCheck))
+         return false;
+      if (configDeleteAddresses != that.configDeleteAddresses)
+         return false;
+      if (configDeleteDiverts != that.configDeleteDiverts)
+         return false;
+      if (!Objects.equals(managementBrowsePageSize, that.managementBrowsePageSize))
+         return false;
+      if (!Objects.equals(maxSizeBytesRejectThreshold, that.maxSizeBytesRejectThreshold))
+         return false;
+      if (!Objects.equals(defaultMaxConsumers, that.defaultMaxConsumers))
+         return false;
+      if (!Objects.equals(defaultPurgeOnNoConsumers, that.defaultPurgeOnNoConsumers))
+         return false;
+      if (!Objects.equals(defaultConsumersBeforeDispatch, that.defaultConsumersBeforeDispatch))
+         return false;
+      if (!Objects.equals(defaultDelayBeforeDispatch, that.defaultDelayBeforeDispatch))
+         return false;
+      if (defaultQueueRoutingType != that.defaultQueueRoutingType)
+         return false;
+      if (defaultAddressRoutingType != that.defaultAddressRoutingType)
+         return false;
+      if (!Objects.equals(defaultConsumerWindowSize, that.defaultConsumerWindowSize))
+         return false;
+      if (!Objects.equals(autoCreateDeadLetterResources, that.autoCreateDeadLetterResources))
+         return false;
+      if (!Objects.equals(deadLetterQueuePrefix, that.deadLetterQueuePrefix))
+         return false;
+      if (!Objects.equals(deadLetterQueueSuffix, that.deadLetterQueueSuffix))
+         return false;
+      if (!Objects.equals(autoCreateExpiryResources, that.autoCreateExpiryResources))
+         return false;
+      if (!Objects.equals(expiryQueuePrefix, that.expiryQueuePrefix))
+         return false;
+      if (!Objects.equals(expiryQueueSuffix, that.expiryQueueSuffix))
+         return false;
+      if (!Objects.equals(enableMetrics, that.enableMetrics))
+         return false;
+      if (!Objects.equals(managementMessageAttributeSizeLimit, that.managementMessageAttributeSizeLimit))
+         return false;
+      if (!Objects.equals(enableIngressTimestamp, that.enableIngressTimestamp))
+         return false;
+      if (!Objects.equals(idCacheSize, that.idCacheSize))
+         return false;
+      return Objects.equals(queuePrefetch, that.queuePrefetch);
    }
-   /* (non-Javadoc)
-       * @see java.lang.Object#hashCode()
-       */
+
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((addressFullMessagePolicy == null) ? 0 : addressFullMessagePolicy.hashCode());
-      result = prime * result + ((deadLetterAddress == null) ? 0 : deadLetterAddress.hashCode());
-      result = prime * result + ((dropMessagesWhenFull == null) ? 0 : dropMessagesWhenFull.hashCode());
-      result = prime * result + ((expiryAddress == null) ? 0 : expiryAddress.hashCode());
-      result = prime * result + ((expiryDelay == null) ? 0 : expiryDelay.hashCode());
-      result = prime * result + ((minExpiryDelay == null) ? 0 : expiryDelay.hashCode());
-      result = prime * result + ((maxExpiryDelay == null) ? 0 : expiryDelay.hashCode());
-      result = prime * result + ((defaultLastValueQueue == null) ? 0 : defaultLastValueQueue.hashCode());
-      result = prime * result + ((defaultLastValueKey == null) ? 0 : defaultLastValueKey.hashCode());
-      result = prime * result + ((defaultNonDestructive == null) ? 0 : defaultNonDestructive.hashCode());
-      result = prime * result + ((defaultExclusiveQueue == null) ? 0 : defaultExclusiveQueue.hashCode());
-      result = prime * result + ((maxDeliveryAttempts == null) ? 0 : maxDeliveryAttempts.hashCode());
-      result = prime * result + ((maxSizeBytes == null) ? 0 : maxSizeBytes.hashCode());
-      result = prime * result + ((messageCounterHistoryDayLimit == null) ? 0 : messageCounterHistoryDayLimit.hashCode());
-      result = prime * result + ((pageSizeBytes == null) ? 0 : pageSizeBytes.hashCode());
-      result = prime * result + ((pageMaxCache == null) ? 0 : pageMaxCache.hashCode());
-      result = prime * result + ((redeliveryDelay == null) ? 0 : redeliveryDelay.hashCode());
-      result = prime * result + ((redeliveryMultiplier == null) ? 0 : redeliveryMultiplier.hashCode());
-      result = prime * result + ((redeliveryCollisionAvoidanceFactor == null) ? 0 : redeliveryCollisionAvoidanceFactor.hashCode());
-      result = prime * result + ((maxRedeliveryDelay == null) ? 0 : maxRedeliveryDelay.hashCode());
-      result = prime * result + ((redistributionDelay == null) ? 0 : redistributionDelay.hashCode());
-      result = prime * result + ((sendToDLAOnNoRoute == null) ? 0 : sendToDLAOnNoRoute.hashCode());
-      result = prime * result + ((slowConsumerThreshold == null) ? 0 : slowConsumerThreshold.hashCode());
-      result = prime * result + ((slowConsumerCheckPeriod == null) ? 0 : slowConsumerCheckPeriod.hashCode());
-      result = prime * result + ((slowConsumerPolicy == null) ? 0 : slowConsumerPolicy.hashCode());
-      result = prime * result + ((autoCreateJmsQueues == null) ? 0 : autoCreateJmsQueues.hashCode());
-      result = prime * result + ((autoDeleteJmsQueues == null) ? 0 : autoDeleteJmsQueues.hashCode());
-      result = prime * result + ((autoCreateJmsTopics == null) ? 0 : autoCreateJmsTopics.hashCode());
-      result = prime * result + ((autoDeleteJmsTopics == null) ? 0 : autoDeleteJmsTopics.hashCode());
-      result = prime * result + ((autoCreateQueues == null) ? 0 : autoCreateQueues.hashCode());
-      result = prime * result + ((autoDeleteQueues == null) ? 0 : autoDeleteQueues.hashCode());
-      result = prime * result + ((autoDeleteCreatedQueues == null) ? 0 : autoDeleteCreatedQueues.hashCode());
-      result = prime * result + ((autoDeleteQueuesDelay == null) ? 0 : autoDeleteQueuesDelay.hashCode());
-      result = prime * result + ((autoDeleteQueuesSkipUsageCheck == null) ? 0 : autoDeleteQueuesSkipUsageCheck.hashCode());
-      result = prime * result + ((autoDeleteQueuesMessageCount == null) ? 0 : autoDeleteQueuesMessageCount.hashCode());
-      result = prime * result + ((configDeleteQueues == null) ? 0 : configDeleteQueues.hashCode());
-      result = prime * result + ((autoCreateAddresses == null) ? 0 : autoCreateAddresses.hashCode());
-      result = prime * result + ((autoDeleteAddresses == null) ? 0 : autoDeleteAddresses.hashCode());
-      result = prime * result + ((autoDeleteAddressesDelay == null) ? 0 : autoDeleteAddressesDelay.hashCode());
-      result = prime * result + ((autoDeleteAddressesSkipUsageCheck == null) ? 0 : autoDeleteAddressesSkipUsageCheck.hashCode());
-      result = prime * result + ((configDeleteAddresses == null) ? 0 : configDeleteAddresses.hashCode());
-      result = prime * result + ((configDeleteDiverts == null) ? 0 : configDeleteDiverts.hashCode());
-      result = prime * result + ((managementBrowsePageSize == null) ? 0 : managementBrowsePageSize.hashCode());
-      result = prime * result + ((queuePrefetch == null) ? 0 : queuePrefetch.hashCode());
-      result = prime * result + ((maxSizeBytesRejectThreshold == null) ? 0 : maxSizeBytesRejectThreshold.hashCode());
-      result = prime * result + ((defaultMaxConsumers == null) ? 0 : defaultMaxConsumers.hashCode());
-      result = prime * result + ((defaultPurgeOnNoConsumers == null) ? 0 : defaultPurgeOnNoConsumers.hashCode());
-      result = prime * result + ((defaultQueueRoutingType == null) ? 0 : defaultQueueRoutingType.hashCode());
-      result = prime * result + ((defaultAddressRoutingType == null) ? 0 : defaultAddressRoutingType.hashCode());
-      result = prime * result + ((defaultConsumersBeforeDispatch == null) ? 0 : defaultConsumersBeforeDispatch.hashCode());
-      result = prime * result + ((defaultDelayBeforeDispatch == null) ? 0 : defaultDelayBeforeDispatch.hashCode());
-      result = prime * result + ((defaultConsumerWindowSize == null) ? 0 : defaultConsumerWindowSize.hashCode());
-      result = prime * result + ((defaultGroupRebalance == null) ? 0 : defaultGroupRebalance.hashCode());
-      result = prime * result + ((defaultGroupRebalancePauseDispatch == null) ? 0 : defaultGroupRebalancePauseDispatch.hashCode());
-      result = prime * result + ((defaultGroupBuckets == null) ? 0 : defaultGroupBuckets.hashCode());
-      result = prime * result + ((defaultGroupFirstKey == null) ? 0 : defaultGroupFirstKey.hashCode());
-      result = prime * result + ((defaultRingSize == null) ? 0 : defaultRingSize.hashCode());
-      result = prime * result + ((retroactiveMessageCount == null) ? 0 : retroactiveMessageCount.hashCode());
-      result = prime * result + ((autoCreateDeadLetterResources == null) ? 0 : autoCreateDeadLetterResources.hashCode());
-      result = prime * result + ((deadLetterQueuePrefix == null) ? 0 : deadLetterQueuePrefix.hashCode());
-      result = prime * result + ((deadLetterQueueSuffix == null) ? 0 : deadLetterQueueSuffix.hashCode());
-      result = prime * result + ((autoCreateExpiryResources == null) ? 0 : autoCreateExpiryResources.hashCode());
-      result = prime * result + ((expiryQueuePrefix == null) ? 0 : expiryQueuePrefix.hashCode());
-      result = prime * result + ((expiryQueueSuffix == null) ? 0 : expiryQueueSuffix.hashCode());
-      result = prime * result + ((enableMetrics == null) ? 0 : enableMetrics.hashCode());
-      result = prime * result + ((managementMessageAttributeSizeLimit == null) ? 0 : managementMessageAttributeSizeLimit.hashCode());
-      result = prime * result + ((slowConsumerThresholdMeasurementUnit == null) ? 0 : slowConsumerThresholdMeasurementUnit.hashCode());
-      result = prime * result + ((enableIngressTimestamp == null) ? 0 : enableIngressTimestamp.hashCode());
-      result = prime * result + ((maxSizeMessages == null) ? 0 : maxSizeMessages.hashCode());
-      result = prime * result + ((pageLimitBytes == null) ? 0 : pageLimitBytes.hashCode());
-      result = prime * result + ((pageLimitMessages == null) ? 0 : pageLimitMessages.hashCode());
-      result = prime * result + ((pageFullMessagePolicy == null) ? 0 : pageFullMessagePolicy.hashCode());
-      result = prime * result + ((idCacheSize == null) ? 0 : idCacheSize.hashCode());
-      result = prime * result + ((prefetchPageBytes == null) ? 0 : prefetchPageBytes.hashCode());
-      result = prime * result + ((prefetchPageMessages == null) ? 0 : prefetchPageMessages.hashCode());
-
+      int result = addressFullMessagePolicy != null ? addressFullMessagePolicy.hashCode() : 0;
+      result = 31 * result + (maxSizeBytes != null ? maxSizeBytes.hashCode() : 0);
+      result = 31 * result + (maxReadPageBytes != null ? maxReadPageBytes.hashCode() : 0);
+      result = 31 * result + (maxReadPageMessages != null ? maxReadPageMessages.hashCode() : 0);
+      result = 31 * result + (prefetchPageBytes != null ? prefetchPageBytes.hashCode() : 0);
+      result = 31 * result + (prefetchPageMessages != null ? prefetchPageMessages.hashCode() : 0);
+      result = 31 * result + (pageLimitBytes != null ? pageLimitBytes.hashCode() : 0);
+      result = 31 * result + (pageLimitMessages != null ? pageLimitMessages.hashCode() : 0);
+      result = 31 * result + (pageFullMessagePolicy != null ? pageFullMessagePolicy.hashCode() : 0);
+      result = 31 * result + (maxSizeMessages != null ? maxSizeMessages.hashCode() : 0);
+      result = 31 * result + (pageSizeBytes != null ? pageSizeBytes.hashCode() : 0);
+      result = 31 * result + (pageMaxCache != null ? pageMaxCache.hashCode() : 0);
+      result = 31 * result + (dropMessagesWhenFull != null ? dropMessagesWhenFull.hashCode() : 0);
+      result = 31 * result + (maxDeliveryAttempts != null ? maxDeliveryAttempts.hashCode() : 0);
+      result = 31 * result + (messageCounterHistoryDayLimit != null ? messageCounterHistoryDayLimit.hashCode() : 0);
+      result = 31 * result + (redeliveryDelay != null ? redeliveryDelay.hashCode() : 0);
+      result = 31 * result + (redeliveryMultiplier != null ? redeliveryMultiplier.hashCode() : 0);
+      result = 31 * result + (redeliveryCollisionAvoidanceFactor != null ? redeliveryCollisionAvoidanceFactor.hashCode() : 0);
+      result = 31 * result + (maxRedeliveryDelay != null ? maxRedeliveryDelay.hashCode() : 0);
+      result = 31 * result + (deadLetterAddress != null ? deadLetterAddress.hashCode() : 0);
+      result = 31 * result + (expiryAddress != null ? expiryAddress.hashCode() : 0);
+      result = 31 * result + (expiryDelay != null ? expiryDelay.hashCode() : 0);
+      result = 31 * result + (minExpiryDelay != null ? minExpiryDelay.hashCode() : 0);
+      result = 31 * result + (maxExpiryDelay != null ? maxExpiryDelay.hashCode() : 0);
+      result = 31 * result + (defaultLastValueQueue != null ? defaultLastValueQueue.hashCode() : 0);
+      result = 31 * result + (defaultLastValueKey != null ? defaultLastValueKey.hashCode() : 0);
+      result = 31 * result + (defaultNonDestructive != null ? defaultNonDestructive.hashCode() : 0);
+      result = 31 * result + (defaultExclusiveQueue != null ? defaultExclusiveQueue.hashCode() : 0);
+      result = 31 * result + (defaultGroupRebalance != null ? defaultGroupRebalance.hashCode() : 0);
+      result = 31 * result + (defaultGroupRebalancePauseDispatch != null ? defaultGroupRebalancePauseDispatch.hashCode() : 0);
+      result = 31 * result + (defaultGroupBuckets != null ? defaultGroupBuckets.hashCode() : 0);
+      result = 31 * result + (defaultGroupFirstKey != null ? defaultGroupFirstKey.hashCode() : 0);
+      result = 31 * result + (redistributionDelay != null ? redistributionDelay.hashCode() : 0);
+      result = 31 * result + (sendToDLAOnNoRoute != null ? sendToDLAOnNoRoute.hashCode() : 0);
+      result = 31 * result + (slowConsumerThreshold != null ? slowConsumerThreshold.hashCode() : 0);
+      result = 31 * result + (slowConsumerThresholdMeasurementUnit != null ? slowConsumerThresholdMeasurementUnit.hashCode() : 0);
+      result = 31 * result + (slowConsumerCheckPeriod != null ? slowConsumerCheckPeriod.hashCode() : 0);
+      result = 31 * result + (slowConsumerPolicy != null ? slowConsumerPolicy.hashCode() : 0);
+      result = 31 * result + (autoCreateJmsQueues != null ? autoCreateJmsQueues.hashCode() : 0);
+      result = 31 * result + (autoDeleteJmsQueues != null ? autoDeleteJmsQueues.hashCode() : 0);
+      result = 31 * result + (autoCreateJmsTopics != null ? autoCreateJmsTopics.hashCode() : 0);
+      result = 31 * result + (autoDeleteJmsTopics != null ? autoDeleteJmsTopics.hashCode() : 0);
+      result = 31 * result + (autoCreateQueues != null ? autoCreateQueues.hashCode() : 0);
+      result = 31 * result + (autoDeleteQueues != null ? autoDeleteQueues.hashCode() : 0);
+      result = 31 * result + (autoDeleteCreatedQueues != null ? autoDeleteCreatedQueues.hashCode() : 0);
+      result = 31 * result + (autoDeleteQueuesDelay != null ? autoDeleteQueuesDelay.hashCode() : 0);
+      result = 31 * result + (autoDeleteQueuesSkipUsageCheck != null ? autoDeleteQueuesSkipUsageCheck.hashCode() : 0);
+      result = 31 * result + (autoDeleteQueuesMessageCount != null ? autoDeleteQueuesMessageCount.hashCode() : 0);
+      result = 31 * result + (defaultRingSize != null ? defaultRingSize.hashCode() : 0);
+      result = 31 * result + (retroactiveMessageCount != null ? retroactiveMessageCount.hashCode() : 0);
+      result = 31 * result + (configDeleteQueues != null ? configDeleteQueues.hashCode() : 0);
+      result = 31 * result + (autoCreateAddresses != null ? autoCreateAddresses.hashCode() : 0);
+      result = 31 * result + (autoDeleteAddresses != null ? autoDeleteAddresses.hashCode() : 0);
+      result = 31 * result + (autoDeleteAddressesDelay != null ? autoDeleteAddressesDelay.hashCode() : 0);
+      result = 31 * result + (autoDeleteAddressesSkipUsageCheck != null ? autoDeleteAddressesSkipUsageCheck.hashCode() : 0);
+      result = 31 * result + (configDeleteAddresses != null ? configDeleteAddresses.hashCode() : 0);
+      result = 31 * result + (configDeleteDiverts != null ? configDeleteDiverts.hashCode() : 0);
+      result = 31 * result + (managementBrowsePageSize != null ? managementBrowsePageSize.hashCode() : 0);
+      result = 31 * result + (maxSizeBytesRejectThreshold != null ? maxSizeBytesRejectThreshold.hashCode() : 0);
+      result = 31 * result + (defaultMaxConsumers != null ? defaultMaxConsumers.hashCode() : 0);
+      result = 31 * result + (defaultPurgeOnNoConsumers != null ? defaultPurgeOnNoConsumers.hashCode() : 0);
+      result = 31 * result + (defaultConsumersBeforeDispatch != null ? defaultConsumersBeforeDispatch.hashCode() : 0);
+      result = 31 * result + (defaultDelayBeforeDispatch != null ? defaultDelayBeforeDispatch.hashCode() : 0);
+      result = 31 * result + (defaultQueueRoutingType != null ? defaultQueueRoutingType.hashCode() : 0);
+      result = 31 * result + (defaultAddressRoutingType != null ? defaultAddressRoutingType.hashCode() : 0);
+      result = 31 * result + (defaultConsumerWindowSize != null ? defaultConsumerWindowSize.hashCode() : 0);
+      result = 31 * result + (autoCreateDeadLetterResources != null ? autoCreateDeadLetterResources.hashCode() : 0);
+      result = 31 * result + (deadLetterQueuePrefix != null ? deadLetterQueuePrefix.hashCode() : 0);
+      result = 31 * result + (deadLetterQueueSuffix != null ? deadLetterQueueSuffix.hashCode() : 0);
+      result = 31 * result + (autoCreateExpiryResources != null ? autoCreateExpiryResources.hashCode() : 0);
+      result = 31 * result + (expiryQueuePrefix != null ? expiryQueuePrefix.hashCode() : 0);
+      result = 31 * result + (expiryQueueSuffix != null ? expiryQueueSuffix.hashCode() : 0);
+      result = 31 * result + (enableMetrics != null ? enableMetrics.hashCode() : 0);
+      result = 31 * result + (managementMessageAttributeSizeLimit != null ? managementMessageAttributeSizeLimit.hashCode() : 0);
+      result = 31 * result + (enableIngressTimestamp != null ? enableIngressTimestamp.hashCode() : 0);
+      result = 31 * result + (idCacheSize != null ? idCacheSize.hashCode() : 0);
+      result = 31 * result + (queuePrefetch != null ? queuePrefetch.hashCode() : 0);
       return result;
    }
 
-   /* (non-Javadoc)
-    * @see java.lang.Object#equals(java.lang.Object)
-    */
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      AddressSettings other = (AddressSettings) obj;
-      if (addressFullMessagePolicy == null) {
-         if (other.addressFullMessagePolicy != null)
-            return false;
-      } else if (!addressFullMessagePolicy.equals(other.addressFullMessagePolicy))
-         return false;
-      if (deadLetterAddress == null) {
-         if (other.deadLetterAddress != null)
-            return false;
-      } else if (!deadLetterAddress.equals(other.deadLetterAddress))
-         return false;
-      if (dropMessagesWhenFull == null) {
-         if (other.dropMessagesWhenFull != null)
-            return false;
-      } else if (!dropMessagesWhenFull.equals(other.dropMessagesWhenFull))
-         return false;
-      if (expiryAddress == null) {
-         if (other.expiryAddress != null)
-            return false;
-      } else if (!expiryAddress.equals(other.expiryAddress))
-         return false;
-      if (expiryDelay == null) {
-         if (other.expiryDelay != null)
-            return false;
-      } else if (!expiryDelay.equals(other.expiryDelay))
-         return false;
-      if (minExpiryDelay == null) {
-         if (other.minExpiryDelay != null)
-            return false;
-      } else if (!minExpiryDelay.equals(other.minExpiryDelay))
-         return false;
-      if (maxExpiryDelay == null) {
-         if (other.maxExpiryDelay != null)
-            return false;
-      } else if (!maxExpiryDelay.equals(other.maxExpiryDelay))
-         return false;
-      if (defaultLastValueQueue == null) {
-         if (other.defaultLastValueQueue != null)
-            return false;
-      } else if (!defaultLastValueQueue.equals(other.defaultLastValueQueue))
-         return false;
-      if (defaultLastValueKey == null) {
-         if (other.defaultLastValueKey != null)
-            return false;
-      } else if (!defaultLastValueKey.equals(other.defaultLastValueKey))
-         return false;
-      if (defaultNonDestructive == null) {
-         if (other.defaultNonDestructive != null)
-            return false;
-      } else if (!defaultNonDestructive.equals(other.defaultNonDestructive))
-         return false;
-      if (defaultExclusiveQueue == null) {
-         if (other.defaultExclusiveQueue != null)
-            return false;
-      } else if (!defaultExclusiveQueue.equals(other.defaultExclusiveQueue))
-         return false;
-      if (maxDeliveryAttempts == null) {
-         if (other.maxDeliveryAttempts != null)
-            return false;
-      } else if (!maxDeliveryAttempts.equals(other.maxDeliveryAttempts))
-         return false;
-      if (maxSizeBytes == null) {
-         if (other.maxSizeBytes != null)
-            return false;
-      } else if (!maxSizeBytes.equals(other.maxSizeBytes))
-         return false;
-      if (messageCounterHistoryDayLimit == null) {
-         if (other.messageCounterHistoryDayLimit != null)
-            return false;
-      } else if (!messageCounterHistoryDayLimit.equals(other.messageCounterHistoryDayLimit))
-         return false;
-      if (pageSizeBytes == null) {
-         if (other.pageSizeBytes != null)
-            return false;
-      } else if (!pageSizeBytes.equals(other.pageSizeBytes))
-         return false;
-      if (pageMaxCache == null) {
-         if (other.pageMaxCache != null)
-            return false;
-      } else if (!pageMaxCache.equals(other.pageMaxCache))
-         return false;
-      if (redeliveryDelay == null) {
-         if (other.redeliveryDelay != null)
-            return false;
-      } else if (!redeliveryDelay.equals(other.redeliveryDelay))
-         return false;
-      if (redeliveryMultiplier == null) {
-         if (other.redeliveryMultiplier != null)
-            return false;
-      } else if (!redeliveryMultiplier.equals(other.redeliveryMultiplier))
-         return false;
-      if (redeliveryCollisionAvoidanceFactor == null) {
-         if (other.redeliveryCollisionAvoidanceFactor != null)
-            return false;
-      } else if (!redeliveryCollisionAvoidanceFactor.equals(other.redeliveryCollisionAvoidanceFactor))
-         return false;
-      if (maxRedeliveryDelay == null) {
-         if (other.maxRedeliveryDelay != null)
-            return false;
-      } else if (!maxRedeliveryDelay.equals(other.maxRedeliveryDelay))
-         return false;
-      if (redistributionDelay == null) {
-         if (other.redistributionDelay != null)
-            return false;
-      } else if (!redistributionDelay.equals(other.redistributionDelay))
-         return false;
-      if (sendToDLAOnNoRoute == null) {
-         if (other.sendToDLAOnNoRoute != null)
-            return false;
-      } else if (!sendToDLAOnNoRoute.equals(other.sendToDLAOnNoRoute))
-         return false;
-      if (slowConsumerThreshold == null) {
-         if (other.slowConsumerThreshold != null)
-            return false;
-      } else if (!slowConsumerThreshold.equals(other.slowConsumerThreshold))
-         return false;
-      if (slowConsumerCheckPeriod == null) {
-         if (other.slowConsumerCheckPeriod != null)
-            return false;
-      } else if (!slowConsumerCheckPeriod.equals(other.slowConsumerCheckPeriod))
-         return false;
-      if (slowConsumerPolicy == null) {
-         if (other.slowConsumerPolicy != null)
-            return false;
-      } else if (!slowConsumerPolicy.equals(other.slowConsumerPolicy))
-         return false;
-      if (autoCreateJmsQueues == null) {
-         if (other.autoCreateJmsQueues != null)
-            return false;
-      } else if (!autoCreateJmsQueues.equals(other.autoCreateJmsQueues))
-         return false;
-      if (autoDeleteJmsQueues == null) {
-         if (other.autoDeleteJmsQueues != null)
-            return false;
-      } else if (!autoDeleteJmsQueues.equals(other.autoDeleteJmsQueues))
-         return false;
-      if (autoCreateJmsTopics == null) {
-         if (other.autoCreateJmsTopics != null)
-            return false;
-      } else if (!autoCreateJmsTopics.equals(other.autoCreateJmsTopics))
-         return false;
-      if (autoDeleteJmsTopics == null) {
-         if (other.autoDeleteJmsTopics != null)
-            return false;
-      } else if (!autoDeleteJmsTopics.equals(other.autoDeleteJmsTopics))
-         return false;
-      if (autoCreateQueues == null) {
-         if (other.autoCreateQueues != null)
-            return false;
-      } else if (!autoCreateQueues.equals(other.autoCreateQueues))
-         return false;
-      if (autoDeleteQueues == null) {
-         if (other.autoDeleteQueues != null)
-            return false;
-      } else if (!autoDeleteQueues.equals(other.autoDeleteQueues))
-         return false;
-      if (autoDeleteCreatedQueues == null) {
-         if (other.autoDeleteCreatedQueues != null)
-            return false;
-      } else if (!autoDeleteCreatedQueues.equals(other.autoDeleteCreatedQueues))
-         return false;
-      if (autoDeleteQueuesDelay == null) {
-         if (other.autoDeleteQueuesDelay != null)
-            return false;
-      } else if (!autoDeleteQueuesDelay.equals(other.autoDeleteQueuesDelay))
-         return false;
-      if (autoDeleteQueuesSkipUsageCheck == null) {
-         if (other.autoDeleteQueuesSkipUsageCheck != null)
-            return false;
-      } else if (!autoDeleteQueuesSkipUsageCheck.equals(other.autoDeleteQueuesSkipUsageCheck))
-         return false;
-      if (autoDeleteQueuesMessageCount == null) {
-         if (other.autoDeleteQueuesMessageCount != null)
-            return false;
-      } else if (!autoDeleteQueuesMessageCount.equals(other.autoDeleteQueuesMessageCount))
-         return false;
-      if (configDeleteQueues == null) {
-         if (other.configDeleteQueues != null)
-            return false;
-      } else if (!configDeleteQueues.equals(other.configDeleteQueues))
-         return false;
-      if (autoCreateAddresses == null) {
-         if (other.autoCreateAddresses != null)
-            return false;
-      } else if (!autoCreateAddresses.equals(other.autoCreateAddresses))
-         return false;
-      if (autoDeleteAddresses == null) {
-         if (other.autoDeleteAddresses != null)
-            return false;
-      } else if (!autoDeleteAddresses.equals(other.autoDeleteAddresses))
-         return false;
-      if (autoDeleteAddressesDelay == null) {
-         if (other.autoDeleteAddressesDelay != null)
-            return false;
-      } else if (!autoDeleteAddressesDelay.equals(other.autoDeleteAddressesDelay))
-         return false;
-      if (autoDeleteAddressesSkipUsageCheck == null) {
-         if (other.autoDeleteAddressesSkipUsageCheck != null)
-            return false;
-      } else if (!autoDeleteAddressesSkipUsageCheck.equals(other.autoDeleteAddressesSkipUsageCheck))
-         return false;
-      if (configDeleteAddresses == null) {
-         if (other.configDeleteAddresses != null)
-            return false;
-      } else if (!configDeleteAddresses.equals(other.configDeleteAddresses))
-         return false;
-      if (configDeleteDiverts == null) {
-         if (other.configDeleteDiverts != null)
-            return false;
-      } else if (!configDeleteDiverts.equals(other.configDeleteDiverts))
-         return false;
-      if (managementBrowsePageSize == null) {
-         if (other.managementBrowsePageSize != null)
-            return false;
-      } else if (!managementBrowsePageSize.equals(other.managementBrowsePageSize))
-         return false;
-      if (managementMessageAttributeSizeLimit == null) {
-         if (other.managementMessageAttributeSizeLimit != null)
-            return false;
-      } else if (!managementMessageAttributeSizeLimit.equals(other.managementMessageAttributeSizeLimit))
-         return false;
-      if (queuePrefetch == null) {
-         if (other.queuePrefetch != null)
-            return false;
-      } else if (!queuePrefetch.equals(other.queuePrefetch))
-         return false;
-
-      if (maxSizeBytesRejectThreshold == null) {
-         if (other.maxSizeBytesRejectThreshold != null)
-            return false;
-      } else if (!maxSizeBytesRejectThreshold.equals(other.maxSizeBytesRejectThreshold))
-         return false;
-
-      if (defaultMaxConsumers == null) {
-         if (other.defaultMaxConsumers != null)
-            return false;
-      } else if (!defaultMaxConsumers.equals(other.defaultMaxConsumers))
-         return false;
-
-      if (defaultPurgeOnNoConsumers == null) {
-         if (other.defaultPurgeOnNoConsumers != null)
-            return false;
-      } else if (!defaultPurgeOnNoConsumers.equals(other.defaultPurgeOnNoConsumers))
-         return false;
-
-      if (defaultQueueRoutingType == null) {
-         if (other.defaultQueueRoutingType != null)
-            return false;
-      } else if (!defaultQueueRoutingType.equals(other.defaultQueueRoutingType))
-         return false;
-
-      if (defaultAddressRoutingType == null) {
-         if (other.defaultAddressRoutingType != null)
-            return false;
-      } else if (!defaultAddressRoutingType.equals(other.defaultAddressRoutingType))
-         return false;
-
-      if (defaultConsumersBeforeDispatch == null) {
-         if (other.defaultConsumersBeforeDispatch != null)
-            return false;
-      } else if (!defaultConsumersBeforeDispatch.equals(other.defaultConsumersBeforeDispatch))
-         return false;
-
-      if (defaultDelayBeforeDispatch == null) {
-         if (other.defaultDelayBeforeDispatch != null)
-            return false;
-      } else if (!defaultDelayBeforeDispatch.equals(other.defaultDelayBeforeDispatch))
-         return false;
-
-      if (defaultConsumerWindowSize == null) {
-         if (other.defaultConsumerWindowSize != null)
-            return false;
-      } else if (!defaultConsumerWindowSize.equals(other.defaultConsumerWindowSize))
-         return false;
-
-      if (defaultGroupRebalance == null) {
-         if (other.defaultGroupRebalance != null)
-            return false;
-      } else if (!defaultGroupRebalance.equals(other.defaultGroupRebalance))
-         return false;
-
-      if (defaultGroupRebalancePauseDispatch == null) {
-         if (other.defaultGroupRebalancePauseDispatch != null)
-            return false;
-      } else if (!defaultGroupRebalancePauseDispatch.equals(other.defaultGroupRebalancePauseDispatch))
-         return false;
-
-      if (defaultGroupBuckets == null) {
-         if (other.defaultGroupBuckets != null)
-            return false;
-      } else if (!defaultGroupBuckets.equals(other.defaultGroupBuckets))
-         return false;
-
-      if (defaultGroupFirstKey == null) {
-         if (other.defaultGroupFirstKey != null)
-            return false;
-      } else if (!defaultGroupFirstKey.equals(other.defaultGroupFirstKey))
-         return false;
-
-      if (defaultRingSize == null) {
-         if (other.defaultRingSize != null)
-            return false;
-      } else if (!defaultRingSize.equals(other.defaultRingSize))
-         return false;
-
-      if (retroactiveMessageCount == null) {
-         if (other.retroactiveMessageCount != null)
-            return false;
-      } else if (!retroactiveMessageCount.equals(other.retroactiveMessageCount))
-         return false;
-
-      if (autoCreateDeadLetterResources == null) {
-         if (other.autoCreateDeadLetterResources != null)
-            return false;
-      } else if (!autoCreateDeadLetterResources.equals(other.autoCreateDeadLetterResources))
-         return false;
-
-      if (deadLetterQueuePrefix == null) {
-         if (other.deadLetterQueuePrefix != null)
-            return false;
-      } else if (!deadLetterQueuePrefix.equals(other.deadLetterQueuePrefix))
-         return false;
-
-      if (deadLetterQueueSuffix == null) {
-         if (other.deadLetterQueueSuffix != null)
-            return false;
-      } else if (!deadLetterQueueSuffix.equals(other.deadLetterQueueSuffix))
-         return false;
-
-      if (autoCreateExpiryResources == null) {
-         if (other.autoCreateExpiryResources != null)
-            return false;
-      } else if (!autoCreateExpiryResources.equals(other.autoCreateExpiryResources))
-         return false;
-
-      if (expiryQueuePrefix == null) {
-         if (other.expiryQueuePrefix != null)
-            return false;
-      } else if (!expiryQueuePrefix.equals(other.expiryQueuePrefix))
-         return false;
-
-      if (expiryQueueSuffix == null) {
-         if (other.expiryQueueSuffix != null)
-            return false;
-      } else if (!expiryQueueSuffix.equals(other.expiryQueueSuffix))
-         return false;
-
-      if (enableMetrics == null) {
-         if (other.enableMetrics != null)
-            return false;
-      } else if (!enableMetrics.equals(other.enableMetrics))
-         return false;
-
-      if (slowConsumerThresholdMeasurementUnit != other.slowConsumerThresholdMeasurementUnit)
-         return false;
-
-      if (enableIngressTimestamp == null) {
-         if (other.enableIngressTimestamp != null)
-            return false;
-      } else if (!enableIngressTimestamp.equals(other.enableIngressTimestamp))
-         return false;
-
-      if (maxSizeMessages == null) {
-         if (other.maxSizeMessages != null)
-            return false;
-      } else if (!maxSizeMessages.equals(other.maxSizeMessages))
-         return false;
-
-      if (pageLimitBytes == null) {
-         if (other.pageLimitBytes != null) {
-            return false;
-         }
-      } else if (!pageLimitBytes.equals(other.pageLimitBytes)) {
-         return false;
-      }
-
-      if (pageLimitMessages == null) {
-         if (other.pageLimitMessages != null) {
-            return false;
-         }
-      } else if (!pageLimitMessages.equals(other.pageLimitMessages)) {
-         return false;
-      }
-
-      if (pageFullMessagePolicy == null) {
-         if (other.pageFullMessagePolicy != null) {
-            return false;
-         }
-      } else if (!pageFullMessagePolicy.equals(other.pageFullMessagePolicy)) {
-         return false;
-      }
-
-      if (idCacheSize == null) {
-         if (other.idCacheSize != null) {
-            return false;
-         }
-      } else if (!idCacheSize.equals(other.idCacheSize)) {
-         return false;
-      }
-
-      if (prefetchPageMessages == null) {
-         if (other.prefetchPageMessages != null) {
-            return false;
-         }
-      } else if (!prefetchPageMessages.equals(other.prefetchPageMessages)) {
-         return false;
-      }
-
-      if (prefetchPageBytes == null) {
-         if (other.prefetchPageBytes != null) {
-            return false;
-         }
-      } else if (!prefetchPageBytes.equals(other.prefetchPageBytes)) {
-         return false;
-      }
-
-      return true;
-   }
-
-   /* (non-Javadoc)
-    * @see java.lang.Object#toString()
-    */
    @Override
    public String toString() {
-      return "AddressSettings [addressFullMessagePolicy=" + addressFullMessagePolicy +
-         ", deadLetterAddress=" +
-         deadLetterAddress +
-         ", dropMessagesWhenFull=" +
-         dropMessagesWhenFull +
-         ", expiryAddress=" +
-         expiryAddress +
-         ", expiryDelay=" +
-         expiryDelay +
-         ", minExpiryDelay=" +
-         minExpiryDelay +
-         ", maxExpiryDelay=" +
-         maxExpiryDelay +
-         ", defaultLastValueQueue=" +
-         defaultLastValueQueue +
-         ", defaultLastValueKey=" +
-         defaultLastValueKey +
-         ", defaultNonDestructive=" +
-         defaultNonDestructive +
-         ", defaultExclusiveQueue=" +
-         defaultExclusiveQueue +
-         ", maxDeliveryAttempts=" +
-         maxDeliveryAttempts +
-         ", maxSizeBytes=" +
-         maxSizeBytes +
-         ", maxSizeBytesRejectThreshold=" +
-         maxSizeBytesRejectThreshold +
-         ", messageCounterHistoryDayLimit=" +
-         messageCounterHistoryDayLimit +
-         ", pageSizeBytes=" +
-         pageSizeBytes +
-         ", pageMaxCache=" +
-         pageMaxCache +
-         ", redeliveryDelay=" +
-         redeliveryDelay +
-         ", redeliveryMultiplier=" +
-         redeliveryMultiplier +
-         ", redeliveryCollisionAvoidanceFactor=" +
-         redeliveryCollisionAvoidanceFactor +
-         ", maxRedeliveryDelay=" +
-         maxRedeliveryDelay +
-         ", redistributionDelay=" +
-         redistributionDelay +
-         ", sendToDLAOnNoRoute=" +
-         sendToDLAOnNoRoute +
-         ", slowConsumerThreshold=" +
-         slowConsumerThreshold +
-         ", slowConsumerThresholdMeasurementUnit=" +
-         slowConsumerThresholdMeasurementUnit +
-         ", slowConsumerCheckPeriod=" +
-         slowConsumerCheckPeriod +
-         ", slowConsumerPolicy=" +
-         slowConsumerPolicy +
-         ", autoCreateJmsQueues=" +
-         autoCreateJmsQueues +
-         ", autoDeleteJmsQueues=" +
-         autoDeleteJmsQueues +
-         ", autoCreateJmsTopics=" +
-         autoCreateJmsTopics +
-         ", autoDeleteJmsTopics=" +
-         autoDeleteJmsTopics +
-         ", autoCreateQueues=" +
-         autoCreateQueues +
-         ", autoDeleteQueues=" +
-         autoDeleteQueues +
-         ", autoDeleteCreatedQueues=" +
-         autoDeleteCreatedQueues +
-         ", autoDeleteQueuesDelay=" +
-         autoDeleteQueuesDelay +
-         ", autoDeleteQueuesSkipUsageCheck=" +
-         autoDeleteQueuesSkipUsageCheck +
-         ", autoDeleteQueuesMessageCount=" +
-         autoDeleteQueuesMessageCount +
-         ", configDeleteQueues=" +
-         configDeleteQueues +
-         ", autoCreateAddresses=" +
-         autoCreateAddresses +
-         ", autoDeleteAddresses=" +
-         autoDeleteAddresses +
-         ", autoDeleteAddressesDelay=" +
-         autoDeleteAddressesDelay +
-         ", autoDeleteAddressesSkipUsageCheck=" +
-         autoDeleteAddressesSkipUsageCheck +
-         ", configDeleteAddresses=" +
-         configDeleteAddresses  +
-         ", configDeleteDiverts=" +
-         configDeleteDiverts +
-         ", managementBrowsePageSize=" +
-         managementBrowsePageSize +
-         ", managementMessageAttributeSizeLimit=" +
-         managementMessageAttributeSizeLimit +
-         ", defaultMaxConsumers=" +
-         defaultMaxConsumers +
-         ", defaultPurgeOnNoConsumers=" +
-         defaultPurgeOnNoConsumers +
-         ", defaultQueueRoutingType=" +
-         defaultQueueRoutingType +
-         ", defaultAddressRoutingType=" +
-         defaultAddressRoutingType +
-         ", defaultConsumersBeforeDispatch=" +
-         defaultConsumersBeforeDispatch +
-         ", defaultDelayBeforeDispatch=" +
-         defaultDelayBeforeDispatch +
-         ", defaultClientWindowSize=" +
-         defaultConsumerWindowSize +
-         ", defaultGroupRebalance=" +
-         defaultGroupRebalance +
-         ", defaultGroupRebalancePauseDispatch=" +
-         defaultGroupRebalancePauseDispatch +
-         ", defaultGroupBuckets=" +
-         defaultGroupBuckets +
-         ", defaultGroupFirstKey=" +
-         defaultGroupFirstKey +
-         ", defaultRingSize=" +
-         defaultRingSize +
-         ", retroactiveMessageCount=" +
-         retroactiveMessageCount +
-         ", autoCreateDeadLetterResources=" +
-         autoCreateDeadLetterResources +
-         ", deadLetterQueuePrefix=" +
-         deadLetterQueuePrefix +
-         ", deadLetterQueueSuffix=" +
-         deadLetterQueueSuffix +
-         ", autoCreateExpiryResources=" +
-         autoCreateExpiryResources +
-         ", expiryQueuePrefix=" +
-         expiryQueuePrefix +
-         ", expiryQueueSuffix=" +
-         expiryQueueSuffix +
-         ", enableMetrics=" +
-         enableMetrics +
-         ", enableIngressTime=" +
-         enableIngressTimestamp +
-         ", pageLimitBytes=" +
-         pageLimitBytes +
-         ", pageLimitMessages=" +
-         pageLimitMessages +
-         ", pageFullMessagePolicy=" +
-         pageFullMessagePolicy +
-         ", idCacheSize=" +
-         idCacheSize +
-         ", prefetchPageMessages=" +
-         prefetchPageMessages +
-         ", prefetchPageBytes=" +
-         prefetchPageBytes +
-         "]";
+      return "AddressSettings{" + "addressFullMessagePolicy=" + addressFullMessagePolicy + ", maxSizeBytes=" + maxSizeBytes + ", maxReadPageBytes=" + maxReadPageBytes + ", maxReadPageMessages=" + maxReadPageMessages + ", prefetchPageBytes=" + prefetchPageBytes + ", prefetchPageMessages=" + prefetchPageMessages + ", pageLimitBytes=" + pageLimitBytes + ", pageLimitMessages=" + pageLimitMessages + ", pageFullMessagePolicy=" + pageFullMessagePolicy + ", maxSizeMessages=" + maxSizeMessages + ", pageSizeBytes=" + pageSizeBytes + ", pageMaxCache=" + pageMaxCache + ", dropMessagesWhenFull=" + dropMessagesWhenFull + ", maxDeliveryAttempts=" + maxDeliveryAttempts + ", messageCounterHistoryDayLimit=" + messageCounterHistoryDayLimit + ", redeliveryDelay=" + redeliveryDelay + ", redeliveryMultiplier=" + redeliveryMultiplier + ", redeliveryCollisionAvoidanceFactor=" + redeliveryCollisionAvoidanceFactor + ", maxRedeliveryDelay=" + maxRedeliveryDelay + ", deadLetterAddress=" + deadLetterAddress + ", expiryAddress=" + expiryAddress + ", expiryDelay=" + expiryDelay + ", minExpiryDelay=" + minExpiryDelay + ", maxExpiryDelay=" + maxExpiryDelay + ", defaultLastValueQueue=" + defaultLastValueQueue + ", defaultLastValueKey=" + defaultLastValueKey + ", defaultNonDestructive=" + defaultNonDestructive + ", defaultExclusiveQueue=" + defaultExclusiveQueue + ", defaultGroupRebalance=" + defaultGroupRebalance + ", defaultGroupRebalancePauseDispatch=" + defaultGroupRebalancePauseDispatch + ", defaultGroupBuckets=" + defaultGroupBuckets + ", defaultGroupFirstKey=" + defaultGroupFirstKey + ", redistributionDelay=" + redistributionDelay + ", sendToDLAOnNoRoute=" + sendToDLAOnNoRoute + ", slowConsumerThreshold=" + slowConsumerThreshold + ", slowConsumerThresholdMeasurementUnit=" + slowConsumerThresholdMeasurementUnit + ", slowConsumerCheckPeriod=" + slowConsumerCheckPeriod + ", slowConsumerPolicy=" + slowConsumerPolicy + ", autoCreateJmsQueues=" + autoCreateJmsQueues + ", autoDeleteJmsQueues=" + autoDeleteJmsQueues + ", autoCreateJmsTopics=" + autoCreateJmsTopics + ", autoDeleteJmsTopics=" + autoDeleteJmsTopics + ", autoCreateQueues=" + autoCreateQueues + ", autoDeleteQueues=" + autoDeleteQueues + ", autoDeleteCreatedQueues=" + autoDeleteCreatedQueues + ", autoDeleteQueuesDelay=" + autoDeleteQueuesDelay + ", autoDeleteQueuesSkipUsageCheck=" + autoDeleteQueuesSkipUsageCheck + ", autoDeleteQueuesMessageCount=" + autoDeleteQueuesMessageCount + ", defaultRingSize=" + defaultRingSize + ", retroactiveMessageCount=" + retroactiveMessageCount + ", configDeleteQueues=" + configDeleteQueues + ", autoCreateAddresses=" + autoCreateAddresses + ", autoDeleteAddresses=" + autoDeleteAddresses + ", autoDeleteAddressesDelay=" + autoDeleteAddressesDelay + ", autoDeleteAddressesSkipUsageCheck=" + autoDeleteAddressesSkipUsageCheck + ", configDeleteAddresses=" + configDeleteAddresses + ", configDeleteDiverts=" + configDeleteDiverts + ", managementBrowsePageSize=" + managementBrowsePageSize + ", maxSizeBytesRejectThreshold=" + maxSizeBytesRejectThreshold + ", defaultMaxConsumers=" + defaultMaxConsumers + ", defaultPurgeOnNoConsumers=" + defaultPurgeOnNoConsumers + ", defaultConsumersBeforeDispatch=" + defaultConsumersBeforeDispatch + ", defaultDelayBeforeDispatch=" + defaultDelayBeforeDispatch + ", defaultQueueRoutingType=" + defaultQueueRoutingType + ", defaultAddressRoutingType=" + defaultAddressRoutingType + ", defaultConsumerWindowSize=" + defaultConsumerWindowSize + ", autoCreateDeadLetterResources=" + autoCreateDeadLetterResources + ", deadLetterQueuePrefix=" + deadLetterQueuePrefix + ", deadLetterQueueSuffix=" + deadLetterQueueSuffix + ", autoCreateExpiryResources=" + autoCreateExpiryResources + ", expiryQueuePrefix=" + expiryQueuePrefix + ", expiryQueueSuffix=" + expiryQueueSuffix + ", enableMetrics=" + enableMetrics + ", managementMessageAttributeSizeLimit=" + managementMessageAttributeSizeLimit + ", enableIngressTimestamp=" + enableIngressTimestamp + ", idCacheSize=" + idCacheSize + ", queuePrefetch=" + queuePrefetch + '}';
    }
 }

@@ -35,18 +35,6 @@ public class DynamicJSONTest {
    @Test
    public void testToJson() throws Exception {
 
-      DynamicJSON<MYClass> dynamicJSON = new DynamicJSON<>();
-      dynamicJSON.addMetadata(String.class, "a", (obj, value) -> obj.setA(String.valueOf(value)),  obj -> obj.getA());
-      dynamicJSON.addMetadata(Integer.class, "b", (obj, value) -> obj.setB((Integer) value),  obj -> obj.getB());
-      dynamicJSON.addMetadata(Integer.class, "c", (obj, value) -> obj.setC((Integer) value),  obj -> obj.getC());
-      dynamicJSON.addMetadata(String.class, "d", (obj, value) -> obj.setD((String) value),  obj -> obj.getD());
-      dynamicJSON.addMetadata(SimpleString.class, "gated", (obj, value) -> obj.setGated((SimpleString) value),  obj -> obj.getGated(), obj -> obj.gated != null);
-      dynamicJSON.addMetadata(Integer.class, "IdCacheSize", (obj, value) -> obj.setIdCacheSize((Integer) value),  obj -> obj.getIdCacheSize());
-      dynamicJSON.addMetadata(SimpleString.class, "simpleString", (obj, value) -> obj.setSimpleString((SimpleString) value), obj -> obj.getSimpleString());
-      dynamicJSON.addMetadata(Long.class, "longValue", (obj, value) -> obj.setLongValue((Long) value), obj -> obj.getLongValue());
-      dynamicJSON.addMetadata(Double.class, "doubleValue", (obj, value) -> obj.setDoubleValue((Double) value), obj -> obj.getDoubleValue());
-      dynamicJSON.addMetadata(Float.class, "floatValue", (obj, value) -> obj.setFloatValue((Float) value), obj -> obj.getFloatValue());
-
       MYClass sourceObject = new MYClass();
       sourceObject.setA(RandomUtil.randomString());
       sourceObject.setB(RandomUtil.randomInt());
@@ -56,15 +44,17 @@ public class DynamicJSONTest {
       sourceObject.setSimpleString(SimpleString.toSimpleString("mySimpleString"));
       sourceObject.setFloatValue(33.33f);
       sourceObject.setDoubleValue(11.11);
+      sourceObject.setBoolValue(true);
+      sourceObject.setMyEnum(MyEnum.TWO);
 
 
-      JsonObject jsonObject = dynamicJSON.toJSON(sourceObject);
+      JsonObject jsonObject = MYClass.dynamicJSON.toJSON(sourceObject, false);
       Assert.assertFalse(jsonObject.containsKey("gated"));
 
       logger.debug("Result::" + jsonObject.toString());
 
       MYClass result = new MYClass();
-      dynamicJSON.fromJSON(result, jsonObject.toString());
+      MYClass.dynamicJSON.fromJSON(result, jsonObject.toString());
       Assert.assertEquals(sourceObject, result);
 
 
@@ -73,27 +63,90 @@ public class DynamicJSONTest {
       Assert.assertEquals(333, result.getIdCacheSize().intValue());
       Assert.assertEquals(33.33f, result.getFloatValue().floatValue(), 0);
       Assert.assertEquals(11.11, result.getDoubleValue().doubleValue(), 0);
+      Assert.assertEquals(MyEnum.TWO, result.getMyEnum());
+      Assert.assertTrue(result.getBoolValue());
 
       sourceObject.setGated(SimpleString.toSimpleString("gated-now-has-value"));
-      jsonObject = dynamicJSON.toJSON(sourceObject);
+      jsonObject = MYClass.dynamicJSON.toJSON(sourceObject, false);
       Assert.assertTrue(jsonObject.containsKey("gated"));
       Assert.assertEquals("gated-now-has-value", jsonObject.getString("gated"));
+   }
 
-
+   public enum MyEnum {
+      ONE, TWO, TRHEE
    }
 
    public static class MYClass {
+
+      public static DynamicJSON<MYClass> dynamicJSON = new DynamicJSON<>();
+
+      {
+         dynamicJSON.addMetadata(String.class, "a", (theInstance, parameter) -> theInstance.a = parameter, theInstance -> theInstance.a);
+      }
       String a;
+
+      {
+         dynamicJSON.addMetadata(Integer.class, "b", (theInstance, parameter) -> theInstance.b = parameter, theInstance -> theInstance.b);
+      }
       int b;
+
+      {
+         dynamicJSON.addMetadata(Integer.class, "c", (theInstance, parameter) -> theInstance.c = parameter, theInstance -> theInstance.c);
+      }
       Integer c;
+
+      {
+         dynamicJSON.addMetadata(String.class, "d", (theInstance, parameter) -> theInstance.d = parameter, theInstance -> theInstance.d);
+      }
       String d = "defaultString";
+
+      {
+         dynamicJSON.addMetadata(Integer.class, "IdCacheSize", (obj, value) -> obj.setIdCacheSize(value),  obj -> obj.getIdCacheSize());
+      }
       Integer idCacheSize;
+
+      {
+         dynamicJSON.addMetadata(SimpleString.class, "simpleString", (obj, value) -> obj.setSimpleString(value), obj -> obj.getSimpleString());
+      }
       SimpleString simpleString;
+
+      {
+         dynamicJSON.addMetadata(SimpleString.class, "gated", (obj, value) -> obj.setGated((SimpleString) value),  obj -> obj.getGated(), obj -> obj.gated != null);
+      }
       SimpleString gated;
 
+      {
+         dynamicJSON.addMetadata(Long.class, "longValue", (obj, value) -> obj.setLongValue(value), obj -> obj.getLongValue());
+      }
       Long longValue;
+      {
+         dynamicJSON.addMetadata(Double.class, "doubleValue", (obj, value) -> obj.setDoubleValue(value), obj -> obj.getDoubleValue());
+      }
       Double doubleValue;
+
+      {
+         dynamicJSON.addMetadata(Float.class, "floatValue", (obj, value) -> obj.setFloatValue(value), obj -> obj.getFloatValue());
+      }
       Float floatValue;
+
+      {
+         dynamicJSON.addMetadata(Boolean.class, "boolValue", (obj, value) -> obj.boolValue = value, obj -> obj.boolValue);
+      }
+      boolean boolValue;
+
+      {
+         dynamicJSON.addMetadata(MyEnum.class, "myEnum", (o, v) -> o.myEnum = v, o -> o.myEnum);
+      }
+      MyEnum myEnum;
+
+      public MyEnum getMyEnum() {
+         return myEnum;
+      }
+
+      public MYClass setMyEnum(MyEnum myEnum) {
+         this.myEnum = myEnum;
+         return this;
+      }
 
       public String getA() {
          return a;
@@ -185,6 +238,15 @@ public class DynamicJSONTest {
          return this;
       }
 
+      public boolean getBoolValue() {
+         return boolValue;
+      }
+
+      public MYClass setBoolValue(boolean boolValue) {
+         this.boolValue = boolValue;
+         return this;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o)
@@ -195,6 +257,8 @@ public class DynamicJSONTest {
          MYClass myClass = (MYClass) o;
 
          if (b != myClass.b)
+            return false;
+         if (boolValue != myClass.boolValue)
             return false;
          if (!Objects.equals(a, myClass.a))
             return false;
@@ -212,7 +276,9 @@ public class DynamicJSONTest {
             return false;
          if (!Objects.equals(doubleValue, myClass.doubleValue))
             return false;
-         return Objects.equals(floatValue, myClass.floatValue);
+         if (!Objects.equals(floatValue, myClass.floatValue))
+            return false;
+         return myEnum == myClass.myEnum;
       }
 
       @Override
@@ -227,12 +293,14 @@ public class DynamicJSONTest {
          result = 31 * result + (longValue != null ? longValue.hashCode() : 0);
          result = 31 * result + (doubleValue != null ? doubleValue.hashCode() : 0);
          result = 31 * result + (floatValue != null ? floatValue.hashCode() : 0);
+         result = 31 * result + (boolValue ? 1 : 0);
+         result = 31 * result + (myEnum != null ? myEnum.hashCode() : 0);
          return result;
       }
 
       @Override
       public String toString() {
-         return "MYClass{" + "a='" + a + '\'' + ", b=" + b + ", c=" + c + ", d='" + d + '\'' + ", idCacheSize=" + idCacheSize + ", simpleString=" + simpleString + ", gated=" + gated + ", longValue=" + longValue + ", doubleValue=" + doubleValue + ", floatValue=" + floatValue + '}';
+         return "MYClass{" + "a='" + a + '\'' + ", b=" + b + ", c=" + c + ", d='" + d + '\'' + ", idCacheSize=" + idCacheSize + ", simpleString=" + simpleString + ", gated=" + gated + ", longValue=" + longValue + ", doubleValue=" + doubleValue + ", floatValue=" + floatValue + ", boolValue=" + boolValue + ", myEnum=" + myEnum + '}';
       }
 
    }
