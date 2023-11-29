@@ -78,7 +78,7 @@ public class TransferTest extends CliTestBase {
 
       Queue sourceQueue = server.locateQueue(sourceQueueName);
 
-      Wait.assertEquals(messages, sourceQueue::getMessageCount);
+      Wait.assertEquals(messages, sourceQueue::getMessageCount, Wait.SHORT_WAIT);
 
       Transfer transfer = new Transfer()
          .setSourceUser("admin")
@@ -95,14 +95,14 @@ public class TransferTest extends CliTestBase {
          Assert.assertEquals(limit, transfer.execute(new TestActionContext()));
 
          Queue targetQueue = server.locateQueue(targetQueueName);
-         Wait.assertEquals(messages - limit, sourceQueue::getMessageCount);
-         Wait.assertEquals(limit, targetQueue::getMessageCount);
+         Wait.assertEquals(messages - limit, sourceQueue::getMessageCount, Wait.SHORT_WAIT);
+         Wait.assertEquals(limit, targetQueue::getMessageCount, Wait.SHORT_WAIT);
       } else {
          Assert.assertEquals(messages, transfer.execute(new TestActionContext()));
 
          Queue targetQueue = server.locateQueue(targetQueueName);
-         Wait.assertEquals(0, sourceQueue::getMessageCount);
-         Wait.assertEquals(messages, targetQueue::getMessageCount);
+         Wait.assertEquals(0, sourceQueue::getMessageCount, Wait.SHORT_WAIT);
+         Wait.assertEquals(messages, targetQueue::getMessageCount, Wait.SHORT_WAIT);
       }
    }
 }

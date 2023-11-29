@@ -276,7 +276,7 @@ public class OperationContextUnitTest extends ActiveMQTestBase {
 
          impl.done();
 
-         Wait.assertEquals(N, ()-> completions.size());
+         Wait.assertEquals(N, ()-> completions.size(), Wait.SHORT_WAIT);
 
          for (long i = 0; i < N; i++) {
             assertEquals("ordered", i, (long) completions.poll());
@@ -343,7 +343,7 @@ public class OperationContextUnitTest extends ActiveMQTestBase {
             public boolean isSatisfied() throws Exception {
                return errorsOnLateRegister.await(1, TimeUnit.SECONDS);
             }
-         }));
+         }, Wait.SHORT_WAIT));
 
 
       } finally {

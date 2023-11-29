@@ -320,7 +320,7 @@ public class CuratorDistributedLockTest extends DistributedLockTest {
       manager.addUnavailableManagerListener(managerListener);
       Assert.assertFalse(unavailable.get());
       stopMajority(true);
-      Wait.waitFor(unavailable::get);
+      Wait.waitFor(unavailable::get, Wait.LONG_WAIT);
       manager.removeUnavailableManagerListener(managerListener);
       final AtomicInteger unavailableOnRegister = new AtomicInteger();
       manager.addUnavailableManagerListener(unavailableOnRegister::incrementAndGet);

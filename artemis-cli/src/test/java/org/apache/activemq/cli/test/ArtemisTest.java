@@ -1484,14 +1484,14 @@ public class ArtemisTest extends CliTestBase {
             MessageProducer producer = session.createProducer(queue);
             producer.send(session.createTextMessage("hi"));
 
-            Wait.assertTrue(() -> run.getB().locateQueue(queueName) != null);
+            Wait.assertTrue(() -> run.getB().locateQueue(queueName) != null, Wait.SHORT_WAIT);
             connection.start();
             MessageConsumer consumer = session.createConsumer(queue);
             Assert.assertNotNull(consumer.receive(5000));
          }
 
          if (autoDelete) {
-            Wait.assertTrue(() -> run.getB().locateQueue(queueName) == null);
+            Wait.assertTrue(() -> run.getB().locateQueue(queueName) == null, Wait.SHORT_WAIT);
          } else {
             // Things are async, allowing some time to make sure it would eventually fail
             Thread.sleep(500);

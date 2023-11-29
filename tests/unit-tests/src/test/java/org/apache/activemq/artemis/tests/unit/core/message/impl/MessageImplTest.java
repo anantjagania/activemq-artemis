@@ -456,7 +456,7 @@ public class MessageImplTest extends ActiveMQTestBase {
 
       ClientMessage msg1 = consumer.receive(1000);
 
-      Wait.assertTrue(server::isActive);
+      Wait.assertTrue(server::isActive, Wait.SHORT_WAIT);
 
       assertNotNull(msg1);
    }

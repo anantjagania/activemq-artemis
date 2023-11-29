@@ -1348,7 +1348,7 @@ public abstract class ActiveMQTestBase extends Assert {
 
    protected static final void waitForBridges(ClusterConnection clusterConnection, int connectedBridges) throws Exception {
       Wait.assertTrue(() -> Arrays.stream(clusterConnection.getBridges())
-         .filter(bridge -> bridge.isConnected()).count() >= connectedBridges);
+         .filter(bridge -> bridge.isConnected()).count() >= connectedBridges, Wait.LONG_WAIT);
    }
 
    protected static final Map<String, Object> generateParams(final int node, final boolean netty) {
@@ -2157,7 +2157,7 @@ public abstract class ActiveMQTestBase extends Assert {
     */
    protected void validateNoFilesOnLargeDir(final String directory, final int expect) throws Exception {
       File largeMessagesFileDir = new File(directory);
-      Wait.assertEquals(expect, () -> getNumberOfFiles(largeMessagesFileDir));
+      Wait.assertEquals(expect, () -> getNumberOfFiles(largeMessagesFileDir), Wait.LONG_WAIT);
    }
 
    /**
@@ -2250,7 +2250,7 @@ public abstract class ActiveMQTestBase extends Assert {
          return;
       }
 
-      if (!Wait.waitFor(() -> LibaioContext.getTotalMaxIO() == 0)) {
+      if (!Wait.waitFor(() -> LibaioContext.getTotalMaxIO() == 0, Wait.LONG_WAIT)) {
          long totalMaxIO = LibaioContext.getTotalMaxIO();
 
          failDueToLibaioContextCheck("LibaioContext TotalMaxIO > 0 leak detected AFTER class %s, TotalMaxIO=%s.", totalMaxIO);
@@ -2419,7 +2419,7 @@ public abstract class ActiveMQTestBase extends Assert {
 
    protected int getMessageCount(final Queue queue) {
       try {
-         Wait.waitFor(() -> queue.getPageSubscription().isCounterPending() == false);
+         Wait.waitFor(() -> queue.getPageSubscription().isCounterPending() == false, Wait.LONG_WAIT);
       } catch (Exception ignored) {
       }
       queue.flushExecutor();

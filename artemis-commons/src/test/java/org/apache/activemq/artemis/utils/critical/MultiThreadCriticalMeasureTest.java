@@ -111,7 +111,7 @@ public class MultiThreadCriticalMeasureTest {
 
          Assert.assertEquals(0, errors.get());
          executorService.shutdown();
-         Wait.assertTrue(executorService::isShutdown);
+         Wait.assertTrue(executorService::isShutdown, Wait.SHORT_WAIT);
          Wait.assertTrue(executorService::isTerminated, 5000, 1);
       }
 

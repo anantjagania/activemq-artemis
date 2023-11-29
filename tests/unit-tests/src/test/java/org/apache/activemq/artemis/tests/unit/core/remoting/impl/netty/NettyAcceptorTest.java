@@ -138,11 +138,11 @@ public class NettyAcceptorTest extends ActiveMQTestBase {
       server.getConfiguration().addAcceptorConfiguration(normal, "tcp://127.0.0.1:61616");
       server.getConfiguration().addAcceptorConfiguration(invm, "vm://1");
       server.start();
-      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(firstPort0).getActualPort() > 0);
-      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(secondPort0).getActualPort() > 0);
-      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(firstPort0).getActualPort() != server.getRemotingService().getAcceptor(secondPort0).getActualPort());
-      Wait.assertEquals(61616, () -> server.getRemotingService().getAcceptor(normal).getActualPort());
-      Wait.assertEquals(-1, () -> server.getRemotingService().getAcceptor(invm).getActualPort());
+      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(firstPort0).getActualPort() > 0, Wait.SHORT_WAIT);
+      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(secondPort0).getActualPort() > 0, Wait.SHORT_WAIT);
+      Wait.assertTrue(() -> server.getRemotingService().getAcceptor(firstPort0).getActualPort() != server.getRemotingService().getAcceptor(secondPort0).getActualPort(), Wait.SHORT_WAIT);
+      Wait.assertEquals(61616, () -> server.getRemotingService().getAcceptor(normal).getActualPort(), Wait.SHORT_WAIT);
+      Wait.assertEquals(-1, () -> server.getRemotingService().getAcceptor(invm).getActualPort(), Wait.SHORT_WAIT);
    }
 
    @Test

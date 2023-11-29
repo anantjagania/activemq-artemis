@@ -391,7 +391,7 @@ public class JdbcLeaseLockTest extends ActiveMQTestBase {
       Assert.assertTrue(scheduledLeaseLock.lock().isHeldByCaller());
       scheduledLeaseLock.lock().release();
       Assert.assertFalse(scheduledLeaseLock.lock().isHeldByCaller());
-      Wait.assertTrue(() -> lostLock.get() > 0);
+      Wait.assertTrue(() -> lostLock.get() > 0, Wait.LONG_WAIT);
       Assert.assertFalse(scheduledLeaseLock.isStarted());
       // wait enough to see if it get triggered again
       TimeUnit.MILLISECONDS.sleep(scheduledLeaseLock.renewPeriodMillis());

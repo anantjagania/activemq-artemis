@@ -83,7 +83,7 @@ public class StatusTest extends ActiveMQTestBase {
       // mod of login.config dir - trigger a reload
       parentDir.setLastModified(System.currentTimeMillis());
 
-      Wait.assertFalse(() -> ServerStatus.getInstance().asJson().contains(UNKNOWN));
+      Wait.assertFalse(() -> ServerStatus.getInstance().asJson().contains(UNKNOWN), Wait.SHORT_WAIT);
    }
 
    @Test
