@@ -656,6 +656,7 @@ public class AMQPSessionCallback implements SessionCallback {
       try {
          return plugSender.deliverMessage(ref, consumer);
       } catch (Exception e) {
+         logger.warn(e.getMessage(), e);
          connection.runNow(() -> {
             plugSender.getSender().setCondition(new ErrorCondition(AmqpError.INTERNAL_ERROR, e.getMessage()));
             connection.flush();

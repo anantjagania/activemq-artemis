@@ -222,6 +222,9 @@ public class AMQPMirrorControllerSource extends BasicMirrorController<Sender> im
    }
 
    private boolean ignoreAddress(SimpleString address) {
+      if (address.startsWith(server.getConfiguration().getManagementAddress())) {
+         return true;
+      }
       return !addressFilter.match(address);
    }
 

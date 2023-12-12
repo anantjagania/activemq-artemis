@@ -16,6 +16,8 @@
  */
 package org.apache.activemq.artemis.protocol.amqp.proton;
 
+import java.lang.invoke.MethodHandles;
+
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.persistence.impl.nullpm.NullStorageManager;
 import org.apache.activemq.artemis.core.server.RoutingContext;
@@ -29,8 +31,12 @@ import org.apache.qpid.proton.amqp.transaction.TransactionalState;
 import org.apache.qpid.proton.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton.engine.Delivery;
 import org.apache.qpid.proton.engine.Receiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ProtonAbstractReceiver extends ProtonInitializable implements ProtonDeliveryHandler {
+
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    protected final AMQPConnectionContext connection;
 
@@ -341,6 +347,7 @@ public abstract class ProtonAbstractReceiver extends ProtonInitializable impleme
             actualDelivery(message, delivery, deliveryAnnotations, receiver, tx);
          }
       } catch (Exception e) {
+         logger.warn(e.getMessage(), e);
          throw new ActiveMQAMQPInternalErrorException(e.getMessage(), e);
       }
    }
