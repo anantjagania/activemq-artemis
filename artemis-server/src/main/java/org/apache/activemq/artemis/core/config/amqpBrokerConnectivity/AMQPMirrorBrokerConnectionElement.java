@@ -23,7 +23,7 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 
 public class AMQPMirrorBrokerConnectionElement extends AMQPBrokerConnectionElement {
 
-   boolean durable;
+   boolean durable = true;
 
    boolean queueCreation = true;
 
@@ -149,5 +149,10 @@ public class AMQPMirrorBrokerConnectionElement extends AMQPBrokerConnectionEleme
     */
    public Map<String, Object> getProperties() {
       return properties;
+   }
+
+   @Override
+   public String toString() {
+      return "AMQPMirrorBrokerConnectionElement{" + "durable=" + durable + ", queueCreation=" + queueCreation + ", queueRemoval=" + queueRemoval + ", messageAcknowledgements=" + messageAcknowledgements + ", sync=" + sync + ", mirrorSNF=" + mirrorSNF + ", addressFilter='" + addressFilter + '\'' + ", properties=" + properties + ", name='" + name + '\'' + ", matchAddress=" + matchAddress + ", queueName=" + queueName + ", type=" + type + ", parent=" + parent + '}';
    }
 }
