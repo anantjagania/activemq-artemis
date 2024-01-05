@@ -29,7 +29,6 @@ import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 
-import org.apache.activemq.artemis.api.core.management.SimpleManagement;
 import org.apache.activemq.artemis.tests.soak.SoakTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.util.ServerUtil;
@@ -147,21 +146,19 @@ public class SenderSoakTest extends SoakTestBase {
             } else {
                message = session.createTextMessage(smallBody);
                large = false;
-               message = session.createTextMessage(largeBody);
-               large = true;
             }
             message.setIntProperty("i", i);
             message.setBooleanProperty("large", large);
             producer.send(message);
             if (i % 100 == 0) {
-               logger.info("commit {}", i);
+               logger.debug("commit {}", i);
                session.commit();
             }
          }
          session.commit();
       }
 
-      logger.info("All messages were sent");
+      logger.debug("All messages were sent");
 
       try (Connection connection = connectionFactoryDC2A.createConnection()) {
          connection.start();
@@ -172,15 +169,10 @@ public class SenderSoakTest extends SoakTestBase {
          for (int i = 0; i < numberOfMessages; i++) {
             TextMessage message = (TextMessage) consumer.receive(5000);
             Assert.assertNotNull(message);
-            logger.info("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
+            logger.debug("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
          }
          session.commit();
       }
    }
 
-   public long getCount(SimpleManagement simpleManagement, String queue) throws Exception {
-      long value = simpleManagement.getMessageCountOnQueue(queue);
-      System.err.println("Value::" + value);
-      return value;
-   }
 }

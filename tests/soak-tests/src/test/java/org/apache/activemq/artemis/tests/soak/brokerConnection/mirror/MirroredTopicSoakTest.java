@@ -94,7 +94,6 @@ public class MirroredTopicSoakTest extends SoakTestBase {
       brokerProperties.put("AMQPConnections." + connectionName + ".uri", mirrorURI);
       brokerProperties.put("AMQPConnections." + connectionName + ".retryInterval", "1000");
       brokerProperties.put("AMQPConnections." + connectionName + ".type", AMQPBrokerConnectionAddressType.MIRROR.toString());
-      brokerProperties.put("AMQPConnections." + connectionName + ".connectionElements.mirror.durable", "true");
       brokerProperties.put("AMQPConnections." + connectionName + ".connectionElements.mirror.sync", "false");
       brokerProperties.put("largeMessageSync", "false");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
