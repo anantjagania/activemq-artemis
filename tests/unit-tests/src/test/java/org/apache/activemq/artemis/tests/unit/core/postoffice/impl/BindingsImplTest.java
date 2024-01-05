@@ -153,6 +153,11 @@ public class BindingsImplTest extends ActiveMQTestBase {
       }
 
       @Override
+      public void afterWired(Runnable runnable) {
+
+      }
+
+      @Override
       public void afterStore(TransactionOperation sync) {
 
       }

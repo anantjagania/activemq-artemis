@@ -74,6 +74,8 @@ public class TransactionImpl implements Transaction {
 
    private boolean async;
 
+   private Runnable afterWired;
+
    @Override
    public boolean isAsync() {
       return async;
@@ -244,6 +246,18 @@ public class TransactionImpl implements Transaction {
    }
 
    @Override
+   public void afterWired(Runnable callback) {
+      this.afterWired = callback;
+   }
+
+   private void wired() {
+      if (afterWired != null) {
+         afterWired.run();
+         afterWired = null;
+      }
+   }
+
+   @Override
    public void commit(final boolean onePhase) throws Exception {
       logger.trace("TransactionImpl::commit::{}", this);
 
@@ -319,6 +333,7 @@ public class TransactionImpl implements Transaction {
             });
          }
 
+         wired();
       }
    }
 

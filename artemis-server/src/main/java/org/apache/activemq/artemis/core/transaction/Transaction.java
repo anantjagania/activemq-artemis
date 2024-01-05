@@ -74,6 +74,8 @@ public interface Transaction {
 
    void addOperation(TransactionOperation sync);
 
+   void afterWired(Runnable runnable);
+
    /**
     * This is an operation that will be called right after the storage is completed.
     * addOperation could only happen after paging and replication, while these operations will just be
