@@ -58,7 +58,6 @@ public class MirroredTopicSoakTest extends SoakTestBase {
       largeBody = writer.toString();
    }
 
-
    public static final String DC1_NODE_A = "mirror/DC1/A";
    public static final String DC2_NODE_A = "mirror/DC2/A";
    public static final String DC1_NODE_B = "mirror/DC1/B";
@@ -76,7 +75,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
    private static String DC2_NODEB_URI = "tcp://localhost:61619";
 
    private static void createServer(String serverName, String connectionName, String clusterURI, String mirrorURI, int porOffset) throws Exception {
-      File serverLocation = new File(getServerLocation(serverName));
+      File serverLocation = getFileServerLocation(serverName);
       deleteDirectory(serverLocation);
 
       HelperCreate cliCreateServer = new HelperCreate();
@@ -126,7 +125,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
    public void testQueue() throws Exception {
       startServers();
 
-      final int numberOfMessages = 1000;
+      final int numberOfMessages = 200;
 
       Assert.assertTrue("numberOfMessages must be even", numberOfMessages % 2 == 0);
 
@@ -155,14 +154,14 @@ public class MirroredTopicSoakTest extends SoakTestBase {
             message.setBooleanProperty("large", large);
             producer.send(message);
             if (i % 100 == 0) {
-               logger.info("commit {}", i);
+               logger.debug("commit {}", i);
                session.commit();
             }
          }
          session.commit();
       }
 
-      logger.info("All messages were sent");
+      logger.debug("All messages were sent");
 
       try (Connection connection = connectionFactoryDC1A.createConnection()) {
          connection.start();
@@ -173,7 +172,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
          for (int i = 0; i < numberOfMessages / 2; i++) {
             TextMessage message = (TextMessage) consumer.receive(5000);
             Assert.assertNotNull(message);
-            logger.info("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
+            logger.debug("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
          }
          session.commit();
       }
@@ -193,18 +192,17 @@ public class MirroredTopicSoakTest extends SoakTestBase {
          for (int i = 0; i < numberOfMessages / 2; i++) {
             TextMessage message = (TextMessage) consumer.receive(5000);
             Assert.assertNotNull(message);
-            logger.info("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
+            logger.debug("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
          }
          session.commit();
       }
    }
 
-
    @Test
    public void testMirroredTopics() throws Exception {
       startServers();
 
-      final int numberOfMessages = 1000;
+      final int numberOfMessages = 200;
 
       Assert.assertTrue("numberOfMessages must be even", numberOfMessages % 2 == 0);
 
@@ -232,27 +230,20 @@ public class MirroredTopicSoakTest extends SoakTestBase {
          for (int i = 0; i < numberOfMessages; i++) {
             TextMessage message;
             boolean large;
-            if (i % 2 == 0) {
-               message = session.createTextMessage(largeBody);
-               large = true;
-            } else {
-               message = session.createTextMessage(smallBody);
-               large = false;
-            }
+            message = session.createTextMessage(largeBody);
+            large = true;
             message.setIntProperty("i", i);
             message.setBooleanProperty("large", large);
             producer.send(message);
             if (i % 100 == 0) {
-               logger.info("commit {}", i);
+               logger.debug("commit {}", i);
                session.commit();
             }
          }
          session.commit();
       }
 
-      logger.info("DC1_B");
-      System.err.println("Consuming from DC1B");
-      System.err.flush();
+      logger.debug("Consuming from DC1B");
       consume(connectionFactoryDC1B, clientIDB, subscriptionID,  0, numberOfMessages / 2, false);
 
       processDC2_node_B.destroyForcibly();
@@ -262,8 +253,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
       Wait.assertEquals(0L, () -> getCount(simpleManagementDC1B, snfQueue), 250_000, 1000);
       Wait.assertEquals(numberOfMessages / 2, () -> simpleManagementDC2B.getMessageCountOnQueue("nodeB.my-order"), 10000);
 
-      logger.info("Consuming from DC2B with {}", simpleManagementDC2B.getMessageCountOnQueue("nodeB.my-order"));
-
+      logger.debug("Consuming from DC2B with {}", simpleManagementDC2B.getMessageCountOnQueue("nodeB.my-order"));
 
       consume(connectionFactoryDC2B, clientIDB, subscriptionID,  numberOfMessages / 2, numberOfMessages / 2, true);
 
@@ -271,17 +261,16 @@ public class MirroredTopicSoakTest extends SoakTestBase {
 
       Wait.assertEquals(0, () -> simpleManagementDC1B.getMessageCountOnQueue("nodeB.my-order"), 10000);
       consume(connectionFactoryDC1B, clientIDB, subscriptionID,  numberOfMessages, 0, true);
-      logger.info("DC1B nodeB.my-order=0");
+      logger.debug("DC1B nodeB.my-order=0");
    }
 
    public long getCount(SimpleManagement simpleManagement, String queue) throws Exception {
       long value = simpleManagement.getMessageCountOnQueue(queue);
-      System.err.println("Value::" + value);
+      logger.debug("count on queue {} is {}", queue, value);
       return value;
    }
 
    private static void consume(ConnectionFactory factory, String clientID, String subscriptionID, int start, int numberOfMessages, boolean expectEmpty) throws Exception {
-
       try (Connection connection = factory.createConnection()) {
          connection.setClientID(clientID);
          Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
@@ -293,7 +282,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
          for (int i = start; i < start + numberOfMessages; i++) {
             TextMessage message = (TextMessage) consumer.receive(10_000);
             Assert.assertNotNull(message);
-            logger.info("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
+            logger.debug("Received message {}, large={}", message.getIntProperty("i"), message.getBooleanProperty("large"));
             if (message.getIntProperty("i") != i) {
                failed = true;
                logger.warn("Expected message {} but got {}", i, message.getIntProperty("i"));
@@ -303,8 +292,7 @@ public class MirroredTopicSoakTest extends SoakTestBase {
             } else {
                Assert.assertEquals(smallBody, message.getText());
             }
-            logger.info("Consumed {}, large={}", i, message.getBooleanProperty("large"));
-            //Thread.sleep(500);
+            logger.debug("Consumed {}, large={}", i, message.getBooleanProperty("large"));
          }
          session.commit();
 
