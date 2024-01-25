@@ -22,26 +22,33 @@ import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.Session;
 import java.io.File;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.artemis.api.core.management.SimpleManagement;
+import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectionAddressType;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
 import org.apache.activemq.artemis.tests.soak.SoakTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
+import org.apache.activemq.artemis.util.ServerUtil;
 import org.apache.activemq.artemis.utils.cli.helper.HelperCreate;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.backoff.FixedBackOff;
@@ -59,36 +66,48 @@ import static org.apache.activemq.artemis.utils.TestParameters.testProperty;
 
 public class ClusterNotificationsContinuityTest extends SoakTestBase {
 
-   public static final String SERVER_NAME_BASE = "cncBroker-";
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+   public static final String SERVER_NAME_BASE = "clusterNotifications/cncBroker-";
    public static final int SERVER_PORT_BASE = 61616;
    private static final String TEST_NAME = "CLUSTER_NOTIFICATIONS_CONTINUITY";
    private static final boolean TEST_ENABLED = Boolean.parseBoolean(testProperty(TEST_NAME, "TEST_ENABLED", "true"));
 
    private static final int NUMBER_OF_SERVERS = testProperty(TEST_NAME, "NUMBER_OF_SERVERS", 3);
-   private final int NUMBER_OF_QUEUES = testProperty(TEST_NAME, "NUMBER_OF_QUEUES", 500);
-   private final int NUMBER_OF_CONSUMERS = testProperty(TEST_NAME, "NUMBER_OF_CONSUMERS", 20);;
+   private static final int NUMBER_OF_QUEUES = testProperty(TEST_NAME, "NUMBER_OF_QUEUES", 500);
+   private static final int NUMBER_OF_CONSUMERS = testProperty(TEST_NAME, "NUMBER_OF_CONSUMERS", 20);;
+   private static final String QUEUE_NAME_PREFIX = "TEST.QUEUE.";
    private final Process[] serverProcesses = new Process[NUMBER_OF_SERVERS];
 
    @BeforeClass
    public static void createServers() throws Exception {
-      String configTemplate = Files.readString(
-         Path.of("./src/main/resources/servers/clusterNotificationsContinuity/template.broker.xml"));
 
-      for (int i = 0; i < NUMBER_OF_SERVERS; i++) {
-         String serverName = SERVER_NAME_BASE + i;
-         String serverPort = String.valueOf(SERVER_PORT_BASE + i);
+      for (int s = 0; s < NUMBER_OF_SERVERS; s++) {
+         String serverName = SERVER_NAME_BASE + s;
 
-         String brokerConfig = configTemplate
-            .replaceAll("BROKER_NAME", serverName)
-            .replaceAll("BROKER_PORT", serverPort);
+         String staticClusterURI;
+
+         {
+            StringBuffer urlBuffer = new StringBuffer();
+            //urlBuffer.append("static://(");
+            boolean first = true;
+            for (int i = 0; i < NUMBER_OF_SERVERS; i++) {
+               if (i != s) {
+                  if (!first) {
+                     urlBuffer.append(",");
+                  }
+                  first = false;
+                  urlBuffer.append("tcp://localhost:" + (SERVER_PORT_BASE + i));
+               }
+            }
+
+            //urlBuffer.append(")");
+            staticClusterURI = urlBuffer.toString();
+         }
 
          File serverLocation = getFileServerLocation(serverName);
          deleteDirectory(serverLocation);
 
-         String serverConfDir = serverLocation.getPath() + "/config";
-         Files.createDirectories(Path.of(serverConfDir));
-
-         Files.writeString(Path.of(serverConfDir + "/broker.xml"), brokerConfig);
 
          HelperCreate cliCreateServer = new HelperCreate();
          cliCreateServer
@@ -98,10 +117,23 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
             .setAllowAnonymous(true)
             .setNoWeb(true)
             .setArtemisInstance(serverLocation)
-            .setConfiguration(serverConfDir);
+            .setPortOffset(s).setClustered(true);
+
+         cliCreateServer.setMessageLoadBalancing("OFF_WITH_REDISTRIBUTION");
+         cliCreateServer.setStaticCluster(staticClusterURI);
+         cliCreateServer.setArgs("--no-stomp-acceptor", "--no-hornetq-acceptor", "--no-mqtt-acceptor", "--no-amqp-acceptor", "--max-hops", "1");
 
          cliCreateServer.createServer();
+
+
+         Properties brokerProperties = new Properties();
+         //brokerProperties.put("addressesSettings.#.redeliveryDelay", "0");
+         brokerProperties.put("addressesSettings.#.redistributionDelay", "0");
+         File brokerPropertiesFile = new File(serverLocation, "broker.properties");
+         saveProperties(brokerProperties, brokerPropertiesFile);
+
       }
+
    }
 
    @Before
@@ -111,15 +143,24 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
          String serverName = SERVER_NAME_BASE + i;
 
          cleanupData(serverName);
-         serverProcesses[i] = startServer(serverName, i, 30_000);
+         File brokerPropertiesFile = new File(getServerLocation(serverName), "broker.properties");
+         serverProcesses[i] = startServer(serverName, 0, 0, brokerPropertiesFile);
+      }
+
+      for (int i = 0; i < NUMBER_OF_SERVERS; i++) {
+         ServerUtil.waitForServerToStart(i, 10_000);
+         SimpleManagement simpleManagement = new SimpleManagement("tcp://localhost:" + (SERVER_PORT_BASE + i), null, null);
+         Wait.assertEquals(NUMBER_OF_SERVERS, () -> simpleManagement.listNetworkTopology().size(), 5000);
       }
    }
 
    @Test
    public void testClusterNotificationsContinuity() throws Throwable {
       final ActiveMQConnectionFactory factory = (ActiveMQConnectionFactory) CFUtil.createConnectionFactory("CORE", "tcp://localhost:61616");
-      final String queueNamePrefix = "TEST.QUEUE.";
-      ExecutorService executorService = Executors.newCachedThreadPool();
+      ExecutorService receiverService = Executors.newFixedThreadPool(NUMBER_OF_QUEUES);
+      runAfter(receiverService::shutdownNow);
+      ExecutorService producerService = Executors.newFixedThreadPool(NUMBER_OF_QUEUES);
+      runAfter(producerService::shutdownNow);
       CountDownLatch latch = new CountDownLatch(NUMBER_OF_QUEUES * 2);
       List<DefaultMessageListenerContainer> containers = new ArrayList<>();
 
@@ -129,16 +170,21 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
       }
 
       for (int i = 0; i < NUMBER_OF_QUEUES; i++) {
-         Queue queue = ActiveMQDestination.createQueue(queueNamePrefix + i + "-");
+         Queue queue = ActiveMQDestination.createQueue(QUEUE_NAME_PREFIX + i + "-");
 
-         executorService.submit(() -> {
+         final int QUEUE_I = i;
+
+         producerService.execute(() -> {
             try (Connection connection = factory.createConnection();
                  Session session = connection.createSession(Session.SESSION_TRANSACTED)) {
 
                session.createProducer(queue).send(session.createTextMessage("Message"));
                session.commit();
+               logger.info("Sending message on {}", QUEUE_I);
                latch.countDown();
-            } catch (Exception e) { }
+            } catch (Exception e) {
+               logger.warn(e.getMessage(), e);
+            }
          });
 
          DefaultMessageListenerContainer container = new DefaultMessageListenerContainer();
@@ -150,18 +196,20 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
          container.setDestinationName(queue.getQueueName());
          container.setBackOff(new FixedBackOff(1000, 2));
          container.setReceiveTimeout(100);
+         //container.setTaskExecutor(receiverService);
          container.setMessageListener((MessageListener) msg -> {
+            logger.info("received {} ",  msg);
             latch.countDown();
          });
 
          container.initialize();
          container.start();
          containers.add(container);
+         runAfter(container::shutdown);
       }
 
       assertTrue(latch.await(30_000, TimeUnit.MILLISECONDS));
 
-      executorService.shutdown();
       containers.parallelStream().forEach(dmlc -> {
          try {
             dmlc.stop();
