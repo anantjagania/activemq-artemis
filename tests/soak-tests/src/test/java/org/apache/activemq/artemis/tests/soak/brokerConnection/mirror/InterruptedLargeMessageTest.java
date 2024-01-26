@@ -27,6 +27,8 @@ import javax.jms.TextMessage;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -94,6 +96,36 @@ public class InterruptedLargeMessageTest extends SoakTestBase {
       brokerProperties.put("largeMessageSync", "false");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
+
+      Path configPath = new File(getServerLocation(serverName), "./etc/broker.xml").toPath();
+
+      String brokerXML = Files.readString(configPath);
+
+      // the SimpleMetricsPlugin needs to be added throught the XML
+      String insert;
+      {
+         StringWriter insertWriter = new StringWriter();
+
+         insertWriter.write("\n");
+         insertWriter.write("      <metrics>\n");
+         insertWriter.write("         <jvm-memory>false</jvm-memory>\n");
+         insertWriter.write("         <jvm-gc>true</jvm-gc>\n");
+         insertWriter.write("         <jvm-threads>true</jvm-threads>\n");
+         insertWriter.write("         <netty-pool>true</netty-pool>\n");
+         insertWriter.write("         <plugin class-name=\"org.apache.activemq.artemis.core.server.metrics.plugins.SimpleMetricsPlugin\">\n");
+         insertWriter.write("            <property key=\"foo\" value=\"x\"/>\n");
+         insertWriter.write("            <property key=\"bar\" value=\"y\"/>\n");
+         insertWriter.write("            <property key=\"baz\" value=\"z\"/>\n");
+         insertWriter.write("         </plugin>\n");
+         insertWriter.write("      </metrics>\n");
+         insertWriter.write("  </core>\n");
+         insert = insertWriter.toString();
+      }
+
+      brokerXML = brokerXML.replace("</core>", insert);
+      Assert.assertTrue(brokerXML.contains("SimpleMetricsPlugin"));
+
+      Files.writeString(configPath, brokerXML);
    }
 
    @BeforeClass
@@ -102,28 +134,28 @@ public class InterruptedLargeMessageTest extends SoakTestBase {
       createServer(DC2_NODE_A, "mirror", DC1_NODEA_URI, 2);
    }
 
-   private void startDC1() throws Exception {
-      processDC1_node_A = startServer(DC1_NODE_A, -1, -1, new File(getServerLocation(DC1_NODE_A), "broker.properties"));
-      ServerUtil.waitForServerToStart(0, 10_000);
-   }
-
    @Before
    public void cleanupServers() {
       cleanupData(DC1_NODE_A);
       cleanupData(DC2_NODE_A);
    }
 
-   @Test
+   @Test(timeout = 120_000L)
    public void testAMQP() throws Exception {
-      testInterrupt("AMQP");
+      testInterrupt("AMQP", false);
    }
 
-   @Test
+   @Test(timeout = 120_000L)
    public void testCORE() throws Exception {
-      testInterrupt("CORE");
+      testInterrupt("CORE", false);
    }
 
-   private void testInterrupt(final String protocol) throws Exception {
+   @Test(timeout = 120_000L)
+   public void testInterruptSource() throws Exception {
+      testInterrupt("AMQP", true);
+   }
+
+   private void testInterrupt(final String protocol, boolean loopInterrupt) throws Exception {
       startDC1();
 
       final int numberOfMessages = 400;
@@ -154,11 +186,48 @@ public class InterruptedLargeMessageTest extends SoakTestBase {
 
          startDC2();
 
-         // Waiting for at least one large message file in the target server
-         Wait.assertTrue(() -> getNumberOfLargeMessages(DC2_NODE_A) > 0, 5000, 100);
 
-         stopDC2();
-         startDC2();
+         // the same test body is used for two different types of tests, one in which we keep interrupting the server
+         // another one we just interrupted once when all messages were sent
+         if (loopInterrupt) {
+            boolean interruptSource = true;
+            while (getNumberOfLargeMessages(DC2_NODE_A) < numberOfMessages) {
+               if (interruptSource) {
+                  stopDC1();
+               } else {
+                  stopDC2();
+               }
+               long messagesBeforeStart = getNumberOfLargeMessages(DC2_NODE_A);
+               if (interruptSource) {
+                  startDC1();
+               } else {
+                  startDC2();
+               }
+
+               interruptSource = !interruptSource; // switch which side we are interrupting next time
+
+               long currentMessages = messagesBeforeStart;
+
+               // Waiting some progress
+               while (currentMessages == messagesBeforeStart && currentMessages < numberOfMessages) {
+                  currentMessages = getNumberOfLargeMessages(DC2_NODE_A);
+                  Thread.sleep(100);
+               }
+
+               Thread.sleep(1000);
+
+               currentMessages = getNumberOfLargeMessages(DC2_NODE_A);
+               logger.info("*******************************************************************************************************************************");
+               logger.info("There are currently {} in the broker", currentMessages);
+               logger.info("*******************************************************************************************************************************");
+            }
+         } else {
+            // Waiting for at least one large message file in the target server
+            Wait.assertTrue(() -> getNumberOfLargeMessages(DC2_NODE_A) > 0, 5000, 100);
+
+            stopDC2();
+            startDC2();
+         }
       }
 
       try (Connection connection = connectionFactoryDC2A.createConnection()) {
@@ -190,6 +259,16 @@ public class InterruptedLargeMessageTest extends SoakTestBase {
       File lmFolder = new File(getServerLocation(serverName) + "/data/large-messages");
       Assert.assertTrue(lmFolder.exists());
       return lmFolder.list().length;
+   }
+
+   private void startDC1() throws Exception {
+      processDC1_node_A = startServer(DC1_NODE_A, -1, -1, new File(getServerLocation(DC1_NODE_A), "broker.properties"));
+      ServerUtil.waitForServerToStart(0, 10_000);
+   }
+
+   private void stopDC1() throws Exception {
+      processDC1_node_A.destroyForcibly();
+      Assert.assertTrue(processDC1_node_A.waitFor(10, TimeUnit.SECONDS));
    }
 
    private void stopDC2() throws Exception {
