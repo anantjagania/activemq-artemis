@@ -1080,7 +1080,7 @@ public final class PageSubscriptionImpl implements PageSubscription {
        */
       private PagePosition completePage;
 
-      // We need a separate counter as the cursor 3124'gmay be ignoring certain values because of incomplete transactions or
+      // We need a separate counter as the cursor may be ignoring certain values because of incomplete transactions or
       // expressions
       private final AtomicInteger confirmed = new AtomicInteger(0);
 

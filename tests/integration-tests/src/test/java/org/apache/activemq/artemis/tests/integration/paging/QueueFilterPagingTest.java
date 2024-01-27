@@ -104,6 +104,7 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
       ConnectionFactory factory = CFUtil.createConnectionFactory(protocol, "tcp://localhost:61616");
       try (Connection connection = factory.createConnection()) {
          connection.setClientID(clientID);
+
          Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
          Session sessionSpread = connection.createSession(true, Session.SESSION_TRANSACTED);
          Session sessionLast = connection.createSession(true, Session.SESSION_TRANSACTED);
@@ -137,6 +138,7 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
          session.commit();
 
          String subscriptionName = "SOME_ID.spread";
+         connection.start();
 
          QueueControl queueControl = (QueueControl) server.getManagementService().getResource("queue." + subscriptionName);
          Assert.assertNotNull(queueControl);
