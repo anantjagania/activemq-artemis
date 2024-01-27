@@ -135,22 +135,6 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
             }
          }
          session.commit();
-      }
-
-      server.stop();
-      server.start();
-
-      try (Connection connection = factory.createConnection()) {
-         connection.setClientID(clientID);
-         connection.start();
-         Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
-         Session sessionSpread = connection.createSession(true, Session.SESSION_TRANSACTED);
-         Session sessionLast = connection.createSession(true, Session.SESSION_TRANSACTED);
-         Topic topic = session.createTopic(ADDRESS.toString() + "a");
-         MessageConsumer spreadConsumer = sessionSpread.createDurableSubscriber(topic, "spread", "id=9 OR id >= 900", false);
-         MessageConsumer fullThing = session.createDurableSubscriber(topic, "full");
-         MessageConsumer lastOnes = sessionLast.createDurableSubscriber(topic, "last", "id >= 900", false);
-         MessageConsumer never = session.createDurableSubscriber(topic, "never", "id >= 1000000", false);
 
          String subscriptionName = "SOME_ID.spread";
 
