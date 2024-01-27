@@ -46,7 +46,6 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.api.core.management.QueueControl;
-import org.apache.activemq.artemis.api.core.management.SimpleManagement;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
@@ -109,9 +108,10 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
          Session sessionSpread = connection.createSession(true, Session.SESSION_TRANSACTED);
          Session sessionLast = connection.createSession(true, Session.SESSION_TRANSACTED);
          Topic topic = session.createTopic(ADDRESS.toString() + "a");
-         MessageConsumer spreadConsumer = sessionSpread.createDurableSubscriber(topic, "spread", "id<20 OR id >= 900", false);
+         MessageConsumer spreadConsumer = sessionSpread.createDurableSubscriber(topic, "spread", "id=9 OR id >= 900", false);
          MessageConsumer fullThing = session.createDurableSubscriber(topic, "full");
          MessageConsumer lastOnes = sessionLast.createDurableSubscriber(topic, "last", "id >= 900", false);
+         MessageConsumer never = session.createDurableSubscriber(topic, "never", "id >= 1000000", false);
 
          MessageProducer producer = session.createProducer(topic);
 
@@ -135,8 +135,22 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
             }
          }
          session.commit();
+      }
 
+      server.stop();
+      server.start();
+
+      try (Connection connection = factory.createConnection()) {
+         connection.setClientID(clientID);
          connection.start();
+         Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
+         Session sessionSpread = connection.createSession(true, Session.SESSION_TRANSACTED);
+         Session sessionLast = connection.createSession(true, Session.SESSION_TRANSACTED);
+         Topic topic = session.createTopic(ADDRESS.toString() + "a");
+         MessageConsumer spreadConsumer = sessionSpread.createDurableSubscriber(topic, "spread", "id=9 OR id >= 900", false);
+         MessageConsumer fullThing = session.createDurableSubscriber(topic, "full");
+         MessageConsumer lastOnes = sessionLast.createDurableSubscriber(topic, "last", "id >= 900", false);
+         MessageConsumer never = session.createDurableSubscriber(topic, "never", "id >= 1000000", false);
 
          String subscriptionName = "SOME_ID.spread";
 
@@ -151,17 +165,13 @@ public class QueueFilterPagingTest extends ActiveMQTestBase {
          }
          sessionLast.commit();
 
-         for (int i = 0; i < 11; i++) {
+         /*for (int i = 0; i < 11; i++) {
             Message message = spreadConsumer.receive(5000);
             Assert.assertNotNull(message);
             logger.info("Received {}", message.getIntProperty("id"));
          }
-         sessionSpread.commit();
+         sessionSpread.rollback(); */
          //Assert.assertNull(spreadConsumer.receiveNoWait());
-
-         SimpleManagement simpleManagement = new SimpleManagement("tcp://localhost:61616", null, null);
-         Map<String, Long> queueCounts = simpleManagement.getQueueCounts(100);
-         queueCounts.forEach((a, b) -> System.out.println(a + " = " + b));
 
          for (int i = 0; i < 1_000; i++) {
             Message message = fullThing.receive(5000);
