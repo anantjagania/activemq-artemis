@@ -231,7 +231,7 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
             container.setConcurrentConsumers(NUMBER_OF_CONSUMERS);
             container.setConnectionFactory(new CachingConnectionFactory(factory));
             container.setDestinationName(queueName);
-            container.setBackOff(new FixedBackOff(1000, 2));
+            container.setBackOff(new FixedBackOff(100, Long.MAX_VALUE));
             container.setReceiveTimeout(100);
             container.setTaskExecutor(executorService);
             container.setMessageListener((MessageListener) msg -> {
