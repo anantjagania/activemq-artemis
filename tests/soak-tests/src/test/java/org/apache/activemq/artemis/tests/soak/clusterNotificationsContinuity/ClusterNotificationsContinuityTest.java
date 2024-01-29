@@ -122,6 +122,7 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
 
          Properties brokerProperties = new Properties();
          brokerProperties.put("addressesSettings.#.redistributionDelay", "0");
+         brokerProperties.put("addressesSettings.#.redeliveryDelay", "0");
 
          File brokerPropertiesFile = new File(serverLocation, "broker.properties");
          saveProperties(brokerProperties, brokerPropertiesFile);
@@ -152,8 +153,8 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
       runAfter(factory::close);
 
       CountDownLatch latch = new CountDownLatch(NUMBER_OF_QUEUES);
-      ExecutorService producerService = Executors.newFixedThreadPool(NUMBER_OF_QUEUES);
-      runAfter(producerService::shutdownNow);
+      ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_QUEUES * 2);
+      runAfter(executorService::shutdownNow);
 
       //run dmlc in spawned process to more easily manage its lifecycle
       dmlcProcess = SpawnedVMSupport.spawnVM("org.apache.activemq.artemis.tests.soak.clusterNotificationsContinuity.ClusterNotificationsContinuityTest");
@@ -162,7 +163,7 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
       for (int i = 0; i < NUMBER_OF_QUEUES; i++) {
          Queue queue = ActiveMQDestination.createQueue(QUEUE_NAME_PREFIX + i);
 
-         producerService.execute(() -> {
+         executorService.execute(() -> {
             try (Connection connection = factory.createConnection();
                  Session session = connection.createSession(Session.SESSION_TRANSACTED)) {
 
@@ -214,6 +215,10 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
 
       CountDownLatch latch = new CountDownLatch(NUMBER_OF_QUEUES);
       List<DefaultMessageListenerContainer> containers = new ArrayList<>();
+      ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_QUEUES);
+
+      // I'm keeping this call here, just in case we remove spawn on the test ever.
+      runAfter(executorService::shutdownNow);
 
       for (int i = 0; i < NUMBER_OF_QUEUES; i++) {
          try {
@@ -228,7 +233,9 @@ public class ClusterNotificationsContinuityTest extends SoakTestBase {
             container.setDestinationName(queueName);
             container.setBackOff(new FixedBackOff(1000, 2));
             container.setReceiveTimeout(100);
+            container.setTaskExecutor(executorService);
             container.setMessageListener((MessageListener) msg -> {
+               System.out.println("Received " + msg);
                logger.debug("Message received on queue: {} ", queueName);
                latch.countDown();
             });
