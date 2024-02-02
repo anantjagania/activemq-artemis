@@ -34,7 +34,7 @@ import java.lang.invoke.MethodHandles;
 /**
  * This is for components with a scheduled at a fixed rate.
  */
-public abstract class ActiveMQScheduledComponent implements ActiveMQComponent, Runnable {
+public class ActiveMQScheduledComponent implements ActiveMQComponent, Runnable {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
    protected ScheduledExecutorService scheduledExecutorService;
@@ -50,6 +50,7 @@ public abstract class ActiveMQScheduledComponent implements ActiveMQComponent, R
    private final boolean onDemand;
    // The start/stop actions shouldn't interact concurrently with delay so it doesn't need to be volatile
    private AtomicBoolean bookedForRunning;
+   private Runnable scheduledTask;
 
    /**
     * It creates a scheduled component that can trigger {@link #run()} with a fixed {@code checkPeriod} on a configured {@code executor}.
@@ -143,6 +144,15 @@ public abstract class ActiveMQScheduledComponent implements ActiveMQComponent, R
     */
    public ActiveMQScheduledComponent(long checkPeriod, TimeUnit timeUnit, boolean onDemand) {
       this(null, null, checkPeriod, checkPeriod, timeUnit, onDemand);
+   }
+
+   public Runnable getScheduledTask() {
+      return scheduledTask;
+   }
+
+   public ActiveMQScheduledComponent setScheduledTask(Runnable scheduledTask) {
+      this.scheduledTask = scheduledTask;
+      return this;
    }
 
    @Override
@@ -286,6 +296,15 @@ public abstract class ActiveMQScheduledComponent implements ActiveMQComponent, R
          startedOwnScheduler = false;
       }
 
+   }
+
+   @Override
+   public void run() {
+      if (scheduledTask == null) {
+         logger.warn("Task not defined on {}", this.getClass());
+      } else {
+         scheduledTask.run();
+      }
    }
 
    @Override

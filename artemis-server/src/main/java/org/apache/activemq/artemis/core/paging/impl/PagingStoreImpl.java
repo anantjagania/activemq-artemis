@@ -65,6 +65,7 @@ import org.apache.activemq.artemis.utils.runnables.AtomicRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
+import java.util.function.Function;
 
 /**
  * @see PagingStore
@@ -811,14 +812,23 @@ public class PagingStoreImpl implements PagingStore {
 
    @Override
    public Page usePage(final long pageId, final boolean create) {
+      return usePage(pageId, create, create);
+   }
+
+   @Override
+   public Page usePage(final long pageId, final boolean createEntry, final boolean createFile) {
       synchronized (usedPages) {
          try {
             Page page = usedPages.get(pageId);
-            if (create && page == null) {
+            if (createEntry && page == null) {
                page = newPageObject(pageId);
                if (page.getFile().exists()) {
                   page.getMessages();
                   injectPage(page);
+               } else {
+                  if (!createFile) {
+                     page = null;
+                  }
                }
             }
             if (page != null) {
@@ -1146,6 +1156,14 @@ public class PagingStoreImpl implements PagingStore {
    public boolean page(Message message,
                        final Transaction tx,
                        RouteContextList listCtx) throws Exception {
+      return page(message, tx, listCtx, null);
+   }
+
+   @Override
+   public boolean page(Message message,
+                       final Transaction tx,
+                       RouteContextList listCtx,
+                       Function<Message, Message> pageDecorator) throws Exception {
 
       if (!running) {
          return false;
@@ -1207,12 +1225,13 @@ public class PagingStoreImpl implements PagingStore {
          return true;
       }
 
-      return writePage(message, tx, listCtx);
+      return writePage(message, tx, listCtx, pageDecorator);
    }
 
    private boolean writePage(Message message,
                              Transaction tx,
-                             RouteContextList listCtx) throws Exception {
+                             RouteContextList listCtx,
+                             Function<Message, Message> pageDecorator) throws Exception {
       lock.writeLock().lock();
 
       try {
@@ -1220,12 +1239,16 @@ public class PagingStoreImpl implements PagingStore {
             return false;
          }
 
-         final long transactionID = tx == null ? -1 : tx.getID();
-         PagedMessage pagedMessage = new PagedMessageImpl(message, routeQueues(tx, listCtx), transactionID);
+         // not using page transaction if transaction is declared async
+         final long transactionID = (tx == null || tx.isAsync()) ? -1 : tx.getID();
 
-         if (message.isLargeMessage()) {
-            ((LargeServerMessage) message).setPaged();
+         if (pageDecorator != null) {
+            message = pageDecorator.apply(message);
          }
+
+         message.setPaged();
+
+         PagedMessage pagedMessage = new PagedMessageImpl(message, routeQueues(tx, listCtx), transactionID);
 
          int bytesToWrite = pagedMessage.getEncodeSize() + PageReadWriter.SIZE_RECORD;
 
@@ -1236,7 +1259,7 @@ public class PagingStoreImpl implements PagingStore {
             currentPageSize += bytesToWrite;
          }
 
-         if (tx != null) {
+         if (tx != null && !tx.isAsync()) {
             installPageTransaction(tx, listCtx);
          }
 
@@ -1352,7 +1375,10 @@ public class PagingStoreImpl implements PagingStore {
          tx.addOperation(pgOper);
       }
 
-      pgOper.addStore(this);
+      if (!tx.isAsync()) {
+         pgOper.addStore(this);
+      }
+
       pgOper.pageTransaction.increment(listCtx.getNumberOfDurableQueues(), listCtx.getNumberOfNonDurableQueues());
 
       return;
@@ -1411,7 +1437,9 @@ public class PagingStoreImpl implements PagingStore {
 
       @Override
       public void beforeCommit(final Transaction tx) throws Exception {
-         syncStore();
+         if (!tx.isAsync()) {
+            syncStore();
+         }
          storePageTX(tx);
       }
 

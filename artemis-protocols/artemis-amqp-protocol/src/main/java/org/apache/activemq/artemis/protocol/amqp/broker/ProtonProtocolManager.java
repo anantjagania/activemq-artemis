@@ -33,6 +33,8 @@ import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.management.Notification;
 import org.apache.activemq.artemis.core.server.management.NotificationListener;
 import org.apache.activemq.artemis.protocol.amqp.client.ProtonClientProtocolManager;
+import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AckManager;
+import org.apache.activemq.artemis.protocol.amqp.connect.mirror.AckManagerProvider;
 import org.apache.activemq.artemis.protocol.amqp.connect.mirror.ReferenceIDSupplier;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConnectionContext;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPConstants;
@@ -73,6 +75,8 @@ public class ProtonProtocolManager extends AbstractProtocolManager<AMQPMessage, 
 
    private final ActiveMQServer server;
 
+   private AckManager ackRetryManager;
+
    private ReferenceIDSupplier referenceIDSupplier;
 
    private final ProtonProtocolManagerFactory factory;
@@ -85,6 +89,8 @@ public class ProtonProtocolManager extends AbstractProtocolManager<AMQPMessage, 
    private int amqpMinLargeMessageSize = 100 * 1024;
 
    private int amqpCredits = AmqpSupport.AMQP_CREDITS_DEFAULT;
+
+   private int ackRetryInterval = AmqpSupport.AMQP_MIRROR_ACK_RETRY_INTERVAL;
 
    private int amqpLowCredits = AmqpSupport.AMQP_LOW_CREDITS_DEFAULT;
 
@@ -121,6 +127,21 @@ public class ProtonProtocolManager extends AbstractProtocolManager<AMQPMessage, 
       this.server = server;
       this.updateInterceptors(incomingInterceptors, outgoingInterceptors);
       routingHandler = new AMQPRoutingHandler(server);
+   }
+
+
+   public synchronized AckManager getAckRetryManager() {
+      if (ackRetryManager == null) {
+         try {
+            this.ackRetryManager = AckManagerProvider.getManager(server, ackRetryInterval);
+            this.ackRetryManager.start();
+         } catch (Exception e) {
+            // the server is probably marked to stop if this exception happened
+            logger.warn(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+         }
+      }
+      return ackRetryManager;
    }
 
    public synchronized ReferenceIDSupplier getReferenceIDSupplier() {
@@ -270,6 +291,15 @@ public class ProtonProtocolManager extends AbstractProtocolManager<AMQPMessage, 
 
    public ProtonProtocolManager setAmqpCredits(int amqpCredits) {
       this.amqpCredits = amqpCredits;
+      return this;
+   }
+
+   public int getAckRetryInterval() {
+      return ackRetryInterval;
+   }
+
+   public ProtonProtocolManager setAckRetryInterval(int ackRetryInterval) {
+      this.ackRetryInterval = ackRetryInterval;
       return this;
    }
 

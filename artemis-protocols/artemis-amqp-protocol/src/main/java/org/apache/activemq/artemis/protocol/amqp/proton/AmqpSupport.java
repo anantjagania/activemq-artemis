@@ -32,6 +32,8 @@ public class AmqpSupport {
    public static final int AMQP_CREDITS_DEFAULT = 1000;
    public static final int AMQP_LOW_CREDITS_DEFAULT = 300;
 
+   public static final int AMQP_MIRROR_ACK_RETRY_INTERVAL = 10_000;
+
    // Defaults for controlling the interpretation of AMQP dispositions
    public static final boolean AMQP_TREAT_REJECT_AS_UNMODIFIED_DELIVERY_FAILURE = false;
 

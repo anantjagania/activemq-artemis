@@ -25,6 +25,8 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,8 +35,10 @@ import org.apache.activemq.artemis.tests.smoke.common.SmokeTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.activemq.artemis.util.ServerUtil;
+import org.apache.activemq.artemis.utils.cli.helper.HelperCreate;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class PagedMirrorSmokeTest extends SmokeTestBase {
@@ -44,6 +48,45 @@ public class PagedMirrorSmokeTest extends SmokeTestBase {
 
    public static final String SERVER_NAME_A = "brokerConnect/pagedA";
    public static final String SERVER_NAME_B = "brokerConnect/pagedB";
+
+   @BeforeClass
+   public static void createServers() throws Exception {
+
+      File server0Location = getFileServerLocation(SERVER_NAME_A);
+      File server1Location = getFileServerLocation(SERVER_NAME_B);
+      deleteDirectory(server1Location);
+      deleteDirectory(server0Location);
+
+      if (!server0Location.exists()) {
+         HelperCreate cliCreateServer = new HelperCreate();
+         cliCreateServer.setAllowAnonymous(true).setRole("amq").setUser("artemis").setPassword("artemis").setNoWeb(true).setConfiguration("./src/main/resources/servers/brokerConnect/pagedA").setArtemisInstance(server0Location);
+         cliCreateServer.createServer();
+         configureAcceptor(SERVER_NAME_A);
+      }
+
+      if (!server1Location.exists()) {
+         HelperCreate cliCreateServer = new HelperCreate();
+         cliCreateServer.setAllowAnonymous(true).setRole("amq").setUser("artemis").setPassword("artemis").setNoWeb(true).setConfiguration("./src/main/resources/servers/brokerConnect/pagedB").setArtemisInstance(server1Location);
+         cliCreateServer.createServer();
+         configureAcceptor(SERVER_NAME_B);
+      }
+
+
+   }
+
+   private static void configureAcceptor(String serverName) throws Exception {
+
+      Path configPath = new File(getServerLocation(serverName), "./etc/broker.xml").toPath();
+
+      String brokerXML = Files.readString(configPath);
+
+      brokerXML = brokerXML.replace(";amqpDuplicateDetection=true", ";amqpDuplicateDetection=true;ackRetryInterval=100");
+      Assert.assertTrue(brokerXML.contains("ackRetryInterval"));
+
+      Files.writeString(configPath, brokerXML);
+
+   }
+
 
    Process processB;
    Process processA;
