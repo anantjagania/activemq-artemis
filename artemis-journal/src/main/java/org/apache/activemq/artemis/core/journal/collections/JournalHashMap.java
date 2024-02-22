@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -302,5 +303,92 @@ public class JournalHashMap<K, V, C> implements Map<K, V> {
    public synchronized void forEach(BiConsumer<? super K, ? super V> action) {
       Objects.requireNonNull(action);
       map.forEach((a, b) -> action.accept(b.key, b.value));
+   }
+
+   private class CollectionDelegate implements Collection<V> {
+      final Collection<MapRecord<K, V>> delegate;
+
+      CollectionDelegate(Collection<MapRecord<K, V>> delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      public int size() {
+         return delegate.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return delegate.isEmpty();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         for (MapRecord<K, V> value : delegate) {
+            if (o.equals(value.getValue())) {
+               return true;
+            }
+         }
+         return false;
+      }
+
+      @Override
+      public Iterator<V> iterator() {
+         return null;
+      }
+
+      @Override
+      public Object[] toArray() {
+         Object[] returnArray = new Object[delegate.size()];
+         int i = 0;
+         for (MapRecord<K, V> value : delegate) {
+            returnArray[i] = value.getValue();
+         }
+         return returnArray;
+      }
+
+      @Override
+      public <T> T[] toArray(T[] a) {
+         int i = 0;
+         for (MapRecord<K, V> value : delegate) {
+            a[i] = (T)value.getValue();
+         }
+         return a;
+      }
+
+      @Override
+      public boolean add(V v) {
+         return false;
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         return false;
+      }
+
+      @Override
+      public boolean containsAll(Collection<?> c) {
+         return false;
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends V> c) {
+         return false;
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return false;
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return false;
+      }
+
+      @Override
+      public void clear() {
+
+      }
    }
 }
