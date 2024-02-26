@@ -280,7 +280,7 @@ public class JournalHashMap<K, V, C> implements Map<K, V> {
    /** Not implemented yet, you may use valuesCopy.*/
    @Override
    public Collection<V> values() {
-      throw new UnsupportedOperationException("not implemented yet. You may use valuesCopy");
+      return new CollectionDelegate(map.values());
    }
 
    public synchronized Collection<V> valuesCopy() {
@@ -358,11 +358,20 @@ public class JournalHashMap<K, V, C> implements Map<K, V> {
 
       @Override
       public boolean add(V v) {
-         return false;
+         throw new UnsupportedOperationException();
       }
 
       @Override
       public boolean remove(Object o) {
+         Iterator<Entry<K, MapRecord<K, V>>> iterator = map.entrySet().iterator();
+         while (iterator.hasNext()) {
+            MapRecord<K, V> value = iterator.next().getValue();
+            if (o.equals(value.getValue())) {
+               iterator.remove();
+               removed(value);
+               return true;
+            }
+         }
          return false;
       }
 
