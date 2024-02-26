@@ -89,27 +89,32 @@ public class SNFPagedMirrorTest extends ActiveMQTestBase {
 
    @Test
    public void testPagedEverything() throws Throwable {
-      testSNFPaged("CORE", true, true, false);
+      testSNFPaged("CORE", true, true, false, 1024);
    }
 
    @Test
    public void testPageQueueOnly() throws Throwable {
-      testSNFPaged("CORE", false, true, false);
+      testSNFPaged("CORE", false, true, false, 1024);
    }
 
    @Test
    public void testPageSNF() throws Throwable {
-      testSNFPaged("CORE", true, false, false);
+      testSNFPaged("CORE", true, false, false, 1024);
    }
 
    @Test
    public void testNothingPaged() throws Throwable {
-      testSNFPaged("CORE", false, true, false);
+      testSNFPaged("CORE", false, true, false, 1024);
    }
 
    @Test
    public void testPageTargetQueue() throws Throwable {
-      testSNFPaged("CORE", false, false, true);
+      testSNFPaged("CORE", false, false, true, 1024);
+   }
+
+   @Test
+   public void testPageTargetQueueAMQPLarge() throws Throwable {
+      testSNFPaged("AMQP", false, false, true, 250 * 1024);
    }
 
    @Test
@@ -161,7 +166,7 @@ public class SNFPagedMirrorTest extends ActiveMQTestBase {
 
    }
 
-   public void testSNFPaged(String protocol, boolean pageSNF, boolean pageQueue, boolean pageTarget) throws Throwable {
+   public void testSNFPaged(String protocol, boolean pageSNF, boolean pageQueue, boolean pageTarget, int messageSize) throws Throwable {
 
       server1.setIdentity("server1");
       server2.setIdentity("server2");
@@ -200,7 +205,7 @@ public class SNFPagedMirrorTest extends ActiveMQTestBase {
       String bodyBuffer;
       {
          StringBuffer buffer = new StringBuffer();
-         for (int i = 0; i < 1024; i++) {
+         for (int i = 0; i < messageSize; i++) {
             buffer.append("*");
          }
          bodyBuffer = buffer.toString();
@@ -295,6 +300,10 @@ public class SNFPagedMirrorTest extends ActiveMQTestBase {
       Wait.assertEquals(0, queueOnServer2::getMessageCount, 5000);
       Wait.assertEquals(0, queueOnServer1::getMessageCount, 5000);
       Wait.assertEquals(0, queueOnServer1::getMessageCount, 5000);
+
+      Wait.assertEquals(0, () -> server1.getConfiguration().getLargeMessagesLocation().listFiles().length);
+      Wait.assertEquals(0, () -> server2.getConfiguration().getLargeMessagesLocation().listFiles().length);
+
    }
 
    private int getCounter(byte typeRecord, HashMap<Integer, AtomicInteger> values) {
