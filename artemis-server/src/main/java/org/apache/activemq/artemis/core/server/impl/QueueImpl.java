@@ -3919,7 +3919,10 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
             SimpleString destinationQueueName = prefix.concat(getAddress()).concat(suffix);
             SimpleString filter = new SimpleString(String.format("%s = '%s'", Message.HDR_ORIGINAL_ADDRESS, getAddress()));
             try {
-               server.createQueue(new QueueConfiguration(destinationQueueName).setAddress(destinationAddress).setFilterString(filter).setAutoCreated(true).setAutoCreateAddress(true), true);
+               Queue destinationQueue = server.createQueue(new QueueConfiguration(destinationQueueName).setAddress(destinationAddress).setFilterString(filter).setAutoCreated(true).setAutoCreateAddress(true), true);
+               if (destinationQueue != null && destinationQueue.isSwept()) {
+                  destinationQueue.setSwept(false);
+               }
             } catch (ActiveMQQueueExistsException e) {
                // ignore
             }
