@@ -67,6 +67,11 @@ class NullStorageLargeServerMessage extends CoreMessage implements CoreLargeServ
    }
 
    @Override
+   public void validateFile() throws ActiveMQException {
+
+   }
+
+   @Override
    public void setStorageManager(StorageManager storageManager) {
       this.storageManager = storageManager;
    }

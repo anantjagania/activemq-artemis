@@ -82,34 +82,55 @@ public class AMQPLargeMessageReader implements MessageReader {
          throw new IllegalStateException("AMQP Large Message Reader is closed and read cannot proceed");
       }
 
-      final Receiver receiver = ((Receiver) delivery.getLink());
-      final ReadableBuffer dataBuffer = receiver.recv();
+      try {
+         serverReceiver.connection.requireInHandler();
 
-      if (currentMessage == null) {
+         final Receiver receiver = ((Receiver) delivery.getLink());
+         final ReadableBuffer dataBuffer = receiver.recv();
+
          final AMQPSessionCallback sessionSPI = serverReceiver.getSessionContext().getSessionSPI();
-         final long id = sessionSPI.getStorageManager().generateID();
-         currentMessage = new AMQPLargeMessage(id, delivery.getMessageFormat(), null,
-                                               sessionSPI.getCoreMessageObjectPools(),
-                                               sessionSPI.getStorageManager());
-         currentMessage.parseHeader(dataBuffer);
 
-         sessionSPI.getStorageManager().onLargeMessageCreate(id, currentMessage);
+         if (currentMessage == null) {
+            final long id = sessionSPI.getStorageManager().generateID();
+            currentMessage = new AMQPLargeMessage(id, delivery.getMessageFormat(), null, sessionSPI.getCoreMessageObjectPools(), sessionSPI.getStorageManager());
+            currentMessage.parseHeader(dataBuffer);
+
+            sessionSPI.getStorageManager().onLargeMessageCreate(id, currentMessage);
+         }
+
+         serverReceiver.getConnection().disableAutoRead();
+
+         byte[] bytes = new byte[dataBuffer.remaining()];
+         dataBuffer.get(bytes);
+
+         boolean partial = delivery.isPartial();
+
+         sessionSPI.execute(() -> addBytes(delivery, bytes, partial));
+
+         return null;
+      } catch (Exception e) {
+         // if an exception happened we must enable it back
+         serverReceiver.getConnection().enableAutoRead();
+         throw e;
       }
+   }
 
-      currentMessage.addBytes(dataBuffer);
+   private void addBytes(Delivery delivery, byte[] bytes, boolean isPartial) {
+      ReadableBuffer dataBuffer = ReadableBuffer.ByteBufferReader.wrap(bytes);
+      try {
+         currentMessage.addBytes(dataBuffer);
 
-      final AMQPLargeMessage result;
-
-      if (!delivery.isPartial()) {
-         currentMessage.releaseResources(serverReceiver.getConnection().isLargeMessageSync(), true);
-         result = currentMessage;
-         // We don't want a close to delete the file now, we've released the resources.
-         currentMessage = null;
-         deliveryAnnotations = result.getDeliveryAnnotations();
-      } else {
-         result = null;
+         if (!isPartial) {
+            final AMQPLargeMessage message = currentMessage;
+            message.releaseResources(serverReceiver.getConnection().isLargeMessageSync(), true);
+            // We don't want a close to delete the file now, we've released the resources.
+            currentMessage = null;
+            serverReceiver.connection.runNow(() -> serverReceiver.onMessageComplete(delivery, message, message.getDeliveryAnnotations()));
+         }
+      } catch (Throwable e) {
+         serverReceiver.onExceptionWhileReading(e);
+      } finally {
+         serverReceiver.connection.runNow(serverReceiver.getConnection()::enableAutoRead);
       }
-
-      return result;
    }
 }
