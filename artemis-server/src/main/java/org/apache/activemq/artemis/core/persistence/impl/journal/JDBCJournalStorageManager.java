@@ -22,15 +22,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.storage.DatabaseStorageConfiguration;
 import org.apache.activemq.artemis.core.io.IOCriticalErrorListener;
+import org.apache.activemq.artemis.core.io.SequentialFile;
 import org.apache.activemq.artemis.core.io.nio.NIOSequentialFileFactory;
+import org.apache.activemq.artemis.core.persistence.OperationContext;
 import org.apache.activemq.artemis.jdbc.store.drivers.JDBCConnectionProvider;
 import org.apache.activemq.artemis.jdbc.store.file.JDBCSequentialFileFactory;
 import org.apache.activemq.artemis.jdbc.store.journal.JDBCJournalImpl;
 import org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider;
 import org.apache.activemq.artemis.jdbc.store.sql.SQLProvider;
+import org.apache.activemq.artemis.utils.ArtemisCloseable;
 import org.apache.activemq.artemis.utils.ExecutorFactory;
 import org.apache.activemq.artemis.utils.critical.CriticalAnalyzer;
 import org.slf4j.Logger;
@@ -95,6 +99,31 @@ public class JDBCJournalStorageManager extends JournalStorageManager {
       } catch (Exception e) {
          logger.warn(e.getMessage(), e);
          criticalErrorListener.onIOException(e, e.getMessage(), null);
+      }
+   }
+
+
+   @Override
+   public final void addBytesToLargeMessage(final SequentialFile file,
+                                            final long messageId,
+                                            final byte[] bytes) throws Exception {
+      try (ArtemisCloseable lock = closeableReadLock()) {
+         file.position(file.size());
+
+         OperationContext context = getContext(false);
+         context.storeLineUp();
+         file.writeDirect(ByteBuffer.wrap(bytes), false, context);
+      }
+   }
+
+   @Override
+   public final void addBytesToLargeMessage(final SequentialFile file,
+                                            final long messageId,
+                                            final ActiveMQBuffer bytes) throws Exception {
+      try (ArtemisCloseable lock = closeableReadLock()) {
+         final byte[] bytesCopy = new byte[bytes.readableBytes()];
+         bytes.readBytes(bytesCopy);
+         addBytesToLargeMessage(file, messageId, bytesCopy);
       }
    }
 
