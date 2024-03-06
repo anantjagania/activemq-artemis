@@ -110,7 +110,7 @@ public class JDBCJournalStorageManager extends JournalStorageManager {
       try (ArtemisCloseable lock = closeableReadLock()) {
          file.position(file.size());
 
-         OperationContext context = getContext(false);
+         OperationContext context = getContext(true);
          context.storeLineUp();
          file.writeDirect(ByteBuffer.wrap(bytes), false, context);
       }
