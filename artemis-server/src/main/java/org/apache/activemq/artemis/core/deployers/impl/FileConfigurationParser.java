@@ -2829,8 +2829,6 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
 
       ComponentConfigurationRoutingType routingType = ComponentConfigurationRoutingType.valueOf(getString(e, "routing-type", ActiveMQDefaultConfiguration.getDefaultDivertRoutingType(), COMPONENT_ROUTING_TYPE));
 
-      boolean reuseUserSession = getBoolean(e, "reuse-user-session", ActiveMQDefaultConfiguration.isDefaultDivertReuseUserSession());
-
       TransformerConfiguration transformerConfiguration = null;
 
       String filterString = null;
@@ -2851,7 +2849,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          transformerConfiguration = getTransformerConfiguration(transformerClassName);
       }
 
-      DivertConfiguration config = new DivertConfiguration().setName(name).setRoutingName(routingName).setAddress(address).setForwardingAddress(forwardingAddress).setExclusive(exclusive).setFilterString(filterString).setTransformerConfiguration(transformerConfiguration).setRoutingType(routingType).setReuseUserSession(reuseUserSession);
+      DivertConfiguration config = new DivertConfiguration().setName(name).setRoutingName(routingName).setAddress(address).setForwardingAddress(forwardingAddress).setExclusive(exclusive).setFilterString(filterString).setTransformerConfiguration(transformerConfiguration).setRoutingType(routingType);
 
       mainConfig.getDivertConfigurations().add(config);
    }

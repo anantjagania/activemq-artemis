@@ -2934,8 +2934,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
 
       Divert divert = new DivertImpl(sName, sAddress, new SimpleString(config.getForwardingAddress()),
                                      new SimpleString(config.getRoutingName()), config.isExclusive(),
-                                     filter, transformer, postOffice, storageManager, config.getRoutingType(),
-                                     config.isReuseUserSession());
+                                     filter, transformer, postOffice, storageManager, config.getRoutingType());
 
       Binding binding = new DivertBinding(storageManager.generateID(), sAddress, divert);
 

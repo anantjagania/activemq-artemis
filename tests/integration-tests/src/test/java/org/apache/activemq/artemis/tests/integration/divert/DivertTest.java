@@ -1809,8 +1809,7 @@ public class DivertTest extends ActiveMQTestBase {
                              .setAddress(queueName)
                              .setRoutingType(ComponentConfigurationRoutingType.ANYCAST)
                              .setForwardingAddress(dummyQueueName)
-                             .setExclusive(true)
-                             .setReuseUserSession(true));
+                             .setExclusive(true));
 
       ServerLocator locator = createInVMNonHALocator();
       ClientSessionFactory sf = createSessionFactory(locator);
@@ -1858,8 +1857,7 @@ public class DivertTest extends ActiveMQTestBase {
          .setRoutingType(ComponentConfigurationRoutingType.ANYCAST)
          .setExclusive(true)
          .setAddress(testAddress)
-         .setForwardingAddress(forwardAddress)
-         .setReuseUserSession(true);
+         .setForwardingAddress(forwardAddress);
 
       AddressSettings addressSettings = new AddressSettings()
          .setAutoCreateAddresses(true)

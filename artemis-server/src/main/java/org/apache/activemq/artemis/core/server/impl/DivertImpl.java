@@ -59,8 +59,6 @@ public class DivertImpl implements Divert {
 
    private volatile ComponentConfigurationRoutingType routingType;
 
-   private final boolean reuseUserSession;
-
    public DivertImpl(final SimpleString uniqueName,
                      final SimpleString address,
                      final SimpleString forwardAddress,
@@ -70,8 +68,7 @@ public class DivertImpl implements Divert {
                      final Transformer transformer,
                      final PostOffice postOffice,
                      final StorageManager storageManager,
-                     final ComponentConfigurationRoutingType routingType,
-                     final boolean reuseUserSession) {
+                     final ComponentConfigurationRoutingType routingType) {
       this.address = address;
 
       this.setForwardAddress(forwardAddress);
@@ -91,8 +88,6 @@ public class DivertImpl implements Divert {
       this.storageManager = storageManager;
 
       this.routingType = routingType;
-
-      this.reuseUserSession = reuseUserSession;
    }
 
    @Override
@@ -242,10 +237,6 @@ public class DivertImpl implements Divert {
          filter +
          ", transformer=" +
          transformer +
-         ", routingType=" +
-         routingType +
-         ", reuseUserSession=" +
-         reuseUserSession +
          "]";
    }
 
