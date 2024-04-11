@@ -50,7 +50,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProducerBlockedLeakTest extends ActiveMQTestBase {
+public class ProducerBlockedLeakTest extends AbstractLeakTest {
 
    private static final int OK = 100;
 

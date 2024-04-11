@@ -47,7 +47,7 @@ import static org.apache.activemq.artemis.tests.leak.MemoryAssertions.assertMemo
 
 // This test spawns the server as a separate VM
 // as we need to count exclusively client objects from qpid-proton
-public class ClientLeakTest extends ActiveMQTestBase {
+public class ClientLeakTest extends AbstractLeakTest {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 

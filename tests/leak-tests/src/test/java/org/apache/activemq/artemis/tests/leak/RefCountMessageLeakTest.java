@@ -28,7 +28,7 @@ import org.apache.activemq.artemis.utils.ReusableLatch;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class RefCountMessageLeakTest extends ActiveMQTestBase {
+public class RefCountMessageLeakTest extends AbstractLeakTest {
 
    static class DebugMessage extends RefCountMessage {
       final String string;

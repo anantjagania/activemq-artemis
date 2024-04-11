@@ -99,11 +99,6 @@ public abstract class ProcessorBase<T> extends HandlerBase {
 
    public void shutdown(long timeout, TimeUnit unit) {
       requestedShutdown = true;
-
-      if (!inHandler()) {
-         // if it's in handler.. we just return
-         flush(timeout, unit);
-      }
    }
 
    public void yield() {
@@ -116,13 +111,6 @@ public abstract class ProcessorBase<T> extends HandlerBase {
       requestedForcedShutdown = true;
       requestedShutdown = true;
       yielded = false;
-
-      if (!inHandler()) {
-         // We don't have an option where we could do an immediate timeout
-         // I just need to make one roundtrip to make sure there's no pending tasks on the loop
-         // for that I ellected one second
-         flush(timeout, unit);
-      }
 
       stateUpdater.set(this, STATE_FORCED_SHUTDOWN);
       int pendingItems = 0;

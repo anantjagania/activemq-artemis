@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
 import static org.apache.activemq.artemis.tests.leak.MemoryAssertions.assertMemory;
 import static org.apache.activemq.artemis.tests.leak.MemoryAssertions.basicMemoryAsserts;
 
-public class ConnectionLeakTest extends ActiveMQTestBase {
+public class ConnectionLeakTest extends AbstractLeakTest {
 
    private ConnectionFactory createConnectionFactory(String protocol) {
       if (protocol.equals("AMQP")) {
