@@ -42,6 +42,7 @@ import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.codec.EncoderImpl;
 import org.apache.qpid.proton.codec.ReadableBuffer;
 import org.apache.qpid.proton.codec.WritableBuffer;
+import org.apache.qpid.proton.message.impl.MessageImpl;
 
 // see https://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format
 public class AMQPStandardMessage extends AMQPMessage {
@@ -183,6 +184,17 @@ public class AMQPStandardMessage extends AMQPMessage {
    @Override
    protected ReadableBuffer getData() {
       return data;
+   }
+
+   @Override
+   public String debugStuff() {
+      try {
+         MessageImpl impl = getProtonMessage();
+         return impl.toString() + " app = " + impl.getApplicationProperties().toString();
+      } catch (Exception e2) {
+         logger.warn(e2.toString(), e2);
+         return "error";
+      }
    }
 
    @Override

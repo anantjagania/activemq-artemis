@@ -634,6 +634,7 @@ public final class DescribeJournal {
          }
          case ADD_MESSAGE_PROTOCOL: {
             Message message = MessagePersister.getInstance().decode(buffer, null, null, storageManager);
+            logger.info("debug stuff {}", message.debugStuff());
             return new MessageDescribe(message);
          }
          case ADD_REF: {

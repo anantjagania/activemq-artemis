@@ -74,6 +74,10 @@ import org.apache.activemq.artemis.core.persistence.Persister;
  */
 public interface Message {
 
+   default String debugStuff() {
+      return "nothing to see";
+   }
+
    // This is an estimate of how much memory a Message takes up, excluding body and properties
    // Note, it is only an estimate, it's not possible to be entirely sure with Java
    // This figure is calculated using the test utilities in org.apache.activemq.tests.unit.util.sizeof
