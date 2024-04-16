@@ -89,6 +89,12 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.apache.qpid</groupId>
+         <artifactId>protonj2-client</artifactId>
+         <version>1.0.0-M21-SNAPSHOT</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.apache.activemq</groupId>
          <artifactId>artemis-openwire-protocol</artifactId>
          <scope>test</scope>
