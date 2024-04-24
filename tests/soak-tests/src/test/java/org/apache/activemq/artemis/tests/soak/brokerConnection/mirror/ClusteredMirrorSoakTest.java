@@ -503,7 +503,7 @@ public class ClusteredMirrorSoakTest extends SoakTestBase {
 
    @Test
    public void testMirroredTopics() throws Exception {
-      createRealServers(false);
+      createRealServers(true);
       startServers();
 
       final int numberOfMessages = 200;
@@ -566,6 +566,74 @@ public class ClusteredMirrorSoakTest extends SoakTestBase {
       Wait.assertEquals(0, () -> simpleManagementDC1B.getMessageCountOnQueue("nodeB.my-order"), 10000);
       consume(connectionFactoryDC1B, clientIDB, subscriptionID, numberOfMessages, 0, true);
       logger.debug("DC1B nodeB.my-order=0");
+   }
+
+   @Test
+   public void testCounters() throws Exception {
+      createRealServers(true);
+      startServers();
+
+      final int numberOfMessages = 200;
+
+      Assert.assertTrue("numberOfMessages must be even", numberOfMessages % 2 == 0);
+
+      ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", "tcp://localhost:61616");
+      ConnectionFactory connectionFactoryDC1B = CFUtil.createConnectionFactory("amqp", "tcp://localhost:61617");
+      ConnectionFactory connectionFactoryDC2A = CFUtil.createConnectionFactory("amqp", "tcp://localhost:61618");
+      ConnectionFactory connectionFactoryDC2B = CFUtil.createConnectionFactory("amqp", "tcp://localhost:61619");
+
+      SimpleManagement simpleManagementDC1B = new SimpleManagement(DC1_NODEB_URI, null, null);
+      SimpleManagement simpleManagementDC2B = new SimpleManagement(DC2_NODEB_URI, null, null);
+
+
+      ExecutorService service = Executors.newFixedThreadPool(10);
+      runAfter(service::shutdownNow);
+
+      service.execute(() -> {
+         try {
+            try (Connection connection = connectionFactoryDC1A.createConnection()) {
+               Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
+               MessageProducer producer = session.createProducer(session.createTopic("order"));
+               int sent = 0;
+               while (true) {
+                  producer.send(session.createTextMessage("hello"));
+                  if (sent++ > 1000) {
+                     sent = 0;
+                     session.commit();
+                     Thread.sleep(100);
+                  }
+               }
+            }
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      });
+
+      for (int i = 0; i < 5; i++) {
+         final int sequenceClient = i;
+         service.execute(() -> {
+            try {
+               try (Connection connection = connectionFactoryDC1A.createConnection()) {
+                  connection.setClientID("client" + sequenceClient);
+                  connection.start();
+                  Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+                  MessageConsumer consumer = session.createDurableConsumer(session.createTopic("order"), "topic" + sequenceClient);
+                  while (true) {
+                     TextMessage message = (TextMessage) consumer.receive(5000);
+                     System.out.println("Received " + message + " on client" + sequenceClient);
+                  }
+               }
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+
+         });
+      }
+
+      while (true) {
+         System.out.println("ping...");
+         Thread.sleep(10_000);
+      }
    }
 
    public long getCount(SimpleManagement simpleManagement, String queue) throws Exception {
