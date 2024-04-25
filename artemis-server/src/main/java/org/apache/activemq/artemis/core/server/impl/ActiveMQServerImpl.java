@@ -679,6 +679,12 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          return;
       }
 
+      logger.info("\n" +
+                  "*******************************************************************************************************************************\n" +
+                  "This is an internal build test created by Clebert Suconic, not intended for production! Keep it for testing only.\n\n" +
+                  "This is to validate a scenario with large messages flow control and resume deliveries\n" +
+                  "*******************************************************************************************************************************");
+
       configuration.parseProperties(propertiesFileUrl);
       updateStatus(ServerStatus.CONFIGURATION_COMPONENT, configuration.getStatus());
 
