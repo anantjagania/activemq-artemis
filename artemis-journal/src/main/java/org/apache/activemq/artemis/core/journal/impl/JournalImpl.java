@@ -222,6 +222,8 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
 
    private final JournalFilesRepository filesRepository;
 
+   private boolean ignoreVersionMismatch;
+
    private File journalRetentionFolder;
 
    private long journalRetentionPeriod = -1;
@@ -3168,14 +3170,23 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
          }
 
          if (!isCompatible) {
-            throw ActiveMQJournalBundle.BUNDLE.journalFileMisMatch();
+            if (ignoreVersionMismatch) {
+               journalVersion = JournalImpl.FORMAT_VERSION;
+               ActiveMQJournalLogger.LOGGER.journalFileMisMatch();
+            } else {
+               throw ActiveMQJournalBundle.BUNDLE.journalFileMisMatch();
+            }
          }
       }
 
       int readUserVersion = bb.getInt();
 
       if (readUserVersion != userVersion) {
-         throw ActiveMQJournalBundle.BUNDLE.journalDifferentVersion();
+         if (ignoreVersionMismatch) {
+            ActiveMQJournalLogger.LOGGER.journalDifferentVersion();
+         } else {
+            throw ActiveMQJournalBundle.BUNDLE.journalDifferentVersion();
+         }
       }
 
       long fileID = bb.getLong();
@@ -3634,5 +3645,16 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
     */
    public int getCompactCount() {
       return compactCount;
+   }
+
+   @Override
+   public boolean isIgnoreVersionMismatch() {
+      return ignoreVersionMismatch;
+   }
+
+   @Override
+   public JournalImpl setIgnoreVersionMismatch(boolean ignoreVersionMismatch) {
+      this.ignoreVersionMismatch = ignoreVersionMismatch;
+      return this;
    }
 }

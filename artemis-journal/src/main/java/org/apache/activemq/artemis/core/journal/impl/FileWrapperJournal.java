@@ -392,4 +392,15 @@ public final class FileWrapperJournal extends JournalBase {
    public void replicationSyncFinished() {
       throw new UnsupportedOperationException();
    }
+
+   @Override
+   public Journal setIgnoreVersionMismatch(boolean ignoreVersionMismatch) {
+      journal.setIgnoreVersionMismatch(ignoreVersionMismatch);
+      return this;
+   }
+
+   @Override
+   public boolean isIgnoreVersionMismatch() {
+      return journal.isIgnoreVersionMismatch();
+   }
 }

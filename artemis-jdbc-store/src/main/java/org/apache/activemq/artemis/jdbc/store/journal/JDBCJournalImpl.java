@@ -1017,4 +1017,16 @@ public class JDBCJournalImpl extends AbstractJDBCDriver implements Journal {
          }
       }
    }
+
+   @Override
+   public Journal setIgnoreVersionMismatch(boolean ignoreVersionMismatch) {
+      // ignored on the JDBC journal, not used!
+      return this;
+   }
+
+   @Override
+   public boolean isIgnoreVersionMismatch() {
+      // ignored on the JDBC journal, not used!
+      return false;
+   }
 }

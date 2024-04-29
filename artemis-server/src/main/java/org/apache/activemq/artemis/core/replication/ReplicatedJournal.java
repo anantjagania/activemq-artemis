@@ -664,4 +664,15 @@ public class ReplicatedJournal implements Journal {
    public long getWarningRecordSize() {
       return localJournal.getWarningRecordSize();
    }
+
+   @Override
+   public Journal setIgnoreVersionMismatch(boolean ignoreVersionMismatch) {
+      localJournal.setIgnoreVersionMismatch(ignoreVersionMismatch);
+      return this;
+   }
+
+   @Override
+   public boolean isIgnoreVersionMismatch() {
+      return localJournal.isIgnoreVersionMismatch();
+   }
 }

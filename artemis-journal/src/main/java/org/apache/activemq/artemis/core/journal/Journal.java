@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.activemq.artemis.core.io.IOCriticalErrorListener;
 import org.apache.activemq.artemis.core.io.SequentialFileFactory;
 import org.apache.activemq.artemis.core.journal.impl.JournalFile;
+import org.apache.activemq.artemis.core.journal.impl.JournalImpl;
 import org.apache.activemq.artemis.core.persistence.Persister;
 import org.apache.activemq.artemis.core.server.ActiveMQComponent;
 import org.apache.activemq.artemis.utils.collections.SparseArrayLinkedList;
@@ -390,4 +391,8 @@ public interface Journal extends ActiveMQComponent {
    long getMaxRecordSize();
 
    long getWarningRecordSize();
+
+   Journal setIgnoreVersionMismatch(boolean ignoreVersionMismatch);
+
+   boolean isIgnoreVersionMismatch();
 }

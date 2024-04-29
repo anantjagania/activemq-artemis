@@ -16,10 +16,12 @@
  */
 package org.apache.activemq.artemis.journal;
 
+import org.apache.activemq.artemis.api.core.ActiveMQIOErrorException;
 import org.apache.activemq.artemis.core.journal.impl.JournalFile;
 import org.apache.activemq.artemis.logs.annotation.LogBundle;
 import org.apache.activemq.artemis.logs.annotation.LogMessage;
 import org.apache.activemq.artemis.logs.BundleFactory;
+import org.apache.activemq.artemis.logs.annotation.Message;
 
 /**
  * Logger Code 14
@@ -207,6 +209,10 @@ public interface ActiveMQJournalLogger {
    @LogMessage(id = 144012, value = "Journal Record sized at {}, which is too close to the max record Size at {}. Record = {}. Internal broker operations such as redistribution and DLQ may be compromised. Move large headers into the body of messages.", level = LogMessage.Level.WARN)
    void largeHeaderWarning(long recordSize, long maxRecordSize, Object originalData);
 
+   @LogMessage(id = 144013, value = "Journal Record sized at {}, which is too close to the max record Size at {}. Record = {}. Internal broker operations such as redistribution and DLQ may be compromised. Move large headers into the body of messages.", level = LogMessage.Level.WARN)
+   void journalFileMisMatch();
 
+   @LogMessage(id = 144014, value = "Journal data belong to a different version", level = LogMessage.Level.WARN)
+   void journalDifferentVersion();
 
 }

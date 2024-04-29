@@ -1073,6 +1073,16 @@ public final class ReplicationTest extends ActiveMQTestBase {
       public long getWarningRecordSize() {
          return getMaxRecordSize() - 2048;
       }
+
+      @Override
+      public Journal setIgnoreVersionMismatch(boolean ignoreVersionMismatch) {
+         return null;
+      }
+
+      @Override
+      public boolean isIgnoreVersionMismatch() {
+         return false;
+      }
    }
 
    private interface ExtraConfigurer {
