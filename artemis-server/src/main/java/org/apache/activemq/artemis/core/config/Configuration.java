@@ -1509,4 +1509,24 @@ public interface Configuration {
 
    void setManagementRbacPrefix(String prefix);
 
+   /** This configures the Mirror Ack Manager number of attempts on queues before trying page acks.
+    *  It is not intended to be configured through the XML.
+    *  The default value here is 5. */
+   int getMirrorAckManagerMinQueueAttempts();
+
+   Configuration setMirrorAckManagerMinQueueAttempts(int minQueueAttempts);
+
+   /** This configures the Mirror Ack Manager number of attempts on page acks.
+    *  It is not intended to be configured through the XML.
+    *  The default value here is 2. */
+   int getMirrorAckManagerMaxPageAttempts();
+
+   Configuration setMirrorAckManagerMaxPageAttempts(int maxPageAttempts);
+
+   /** This configures the interval in which the Mirror AckManager will retry acks when
+    *  It is not intended to be configured through the XML.
+    *  The default value here is 100, and this is in milliseconds. */
+   int getMirrorAckManagerRetryDelay();
+
+   Configuration setMirrorAckManagerRetryDelay(int delay);
 }
