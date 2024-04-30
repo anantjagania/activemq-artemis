@@ -53,6 +53,7 @@ import org.apache.activemq.artemis.utils.FileUtil;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.activemq.artemis.utils.actors.OrderedExecutor;
 import org.apache.activemq.artemis.utils.cli.helper.HelperCreate;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -61,6 +62,9 @@ import org.slf4j.LoggerFactory;
 public class SimpleMirrorSoakTest extends SoakTestBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+   // Set this to true and log4j will be configured with some relevant log.trace for the AckManager at the server's
+   private static final boolean TRACE_LOGS = true;
 
    private static final String TOPIC_NAME = "topicTest";
    private static final String QUEUE_NAME = "myQueue";
@@ -86,10 +90,25 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
    volatile Process processDC1;
    volatile Process processDC2;
 
+   @After
+   public void destroyServers() {
+      if (processDC1 != null) {
+         processDC1.destroyForcibly();
+      }
+      if (processDC2 != null) {
+         processDC2.destroyForcibly();
+      }
+
+   }
+
    private static String DC1_NODEA_URI = "tcp://localhost:61616";
    private static String DC2_NODEA_URI = "tcp://localhost:61618";
 
-   private static void createServer(String serverName, String connectionName, String mirrorURI, int porOffset, boolean paging) throws Exception {
+   private static void createServer(String serverName,
+                                    String connectionName,
+                                    String mirrorURI,
+                                    int porOffset,
+                                    boolean paging) throws Exception {
       File serverLocation = getFileServerLocation(serverName);
       deleteDirectory(serverLocation);
 
@@ -124,10 +143,20 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
          Assert.assertTrue(FileUtil.findReplace(brokerXml, "<max-read-page-bytes>20M</max-read-page-bytes>", "<max-read-page-bytes>-1</max-read-page-bytes>"));
          Assert.assertTrue(FileUtil.findReplace(brokerXml, "<max-read-page-messages>-1</max-read-page-messages>", "<max-read-page-messages>100000</max-read-page-messages>\n" + "            <prefetch-page-messages>10000</prefetch-page-messages>"));
       }
+
+      if (TRACE_LOGS) {
+         File log4j = new File(serverLocation, "/etc/log4j2.properties");
+         Assert.assertTrue(FileUtil.findReplace(log4j, "logger.artemis_utils.level=INFO", "logger.artemis_utils.level=INFO\n" +
+            "\n" + "logger.ack.name=org.apache.activemq.artemis.protocol.amqp.connect.mirror.AckManager\n"
+            + "logger.ack.level=TRACE\n"
+            + "appender.console.filter.threshold.type = ThresholdFilter\n"
+            + "appender.console.filter.threshold.level = info"));
+      }
+
    }
 
    public static void createRealServers(boolean paging) throws Exception {
-      createServer(DC1_NODE_A, "mirror",  DC2_NODEA_URI, 0, paging);
+      createServer(DC1_NODE_A, "mirror", DC2_NODEA_URI, 0, paging);
       createServer(DC2_NODE_A, "mirror", DC1_NODEA_URI, 2, paging);
    }
 
@@ -141,16 +170,15 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
 
    @Test
    public void testMirroredTopics() throws Exception {
+      disableCheckThread();
       createRealServers(true);
       startServers();
 
-      final int numberOfMessages = 10_000;
-      final int receiveCommitInterval = 100;
-      final int sendCommitInterval = 100;
-      final int killInterval = 500;
+      final int numberOfMessages = 2_000;
+      final int receiveCommitInterval = 10;
+      final int sendCommitInterval = 10;
+      final int killInterval = 100;
       Assert.assertTrue(killInterval > sendCommitInterval);
-
-      Assert.assertTrue("numberOfMessages must be even", numberOfMessages % 2 == 0);
 
       String clientIDA = "nodeA";
       String clientIDB = "nodeB";
@@ -165,6 +193,10 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
 
       SimpleManagement managementDC1 = new SimpleManagement(DC1_NODEA_URI, null, null);
       SimpleManagement managementDC2 = new SimpleManagement(DC2_NODEA_URI, null, null);
+
+      runAfter(() -> managementDC1.close());
+      runAfter(() -> managementDC2.close());
+
 
       Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID));
       Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID));
@@ -224,26 +256,44 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
          running.set(false);
       }
 
-      while (true) {
-         try {
-            System.out.println("SNF DC1 count = " + managementDC1.getMessageCountOnQueue(snfQueue));
-            System.out.println("SNF DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
-            System.out.println("DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
+      try {
+         Wait.assertEquals(0, () -> getCount(managementDC1, snfQueue), 60_000);
+         Wait.assertEquals(0, () -> getCount(managementDC2, snfQueue), 60_000);
+         Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID), 10_000);
+         Wait.assertEquals(0, () -> getCount(managementDC1, clientIDB + "." + subscriptionID), 10_000);
+         Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID), 10_000);
+         Wait.assertEquals(0, () -> getCount(managementDC2, clientIDB + "." + subscriptionID), 10_000);
+      } catch (Throwable e) {
+         logger.warn(e.getMessage(), e);
 
-            System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDA + "." + subscriptionID));
-            System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDB + "." + subscriptionID));
-            System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDA + "." + subscriptionID));
-            System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDB + "." + subscriptionID));
-            System.out.println("looping...");
-         } catch (Throwable e) {
-            logger.warn(e.getMessage(), e);
+         while (true) {
+            try {
+               System.out.println("SNF DC1 count = " + managementDC1.getMessageCountOnQueue(snfQueue));
+               System.out.println("SNF DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
+               System.out.println("DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
+
+               System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDA + "." + subscriptionID));
+               System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDB + "." + subscriptionID));
+               System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDA + "." + subscriptionID));
+               System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDB + "." + subscriptionID));
+               System.out.println("looping...");
+            } catch (Throwable e2) {
+               logger.warn(e2.getMessage(), e);
+            }
+            Thread.sleep(10_000);
          }
-         Thread.sleep(10_000);
+
       }
    }
 
-
-   private static void consume(ConnectionFactory factory, String clientID, String subscriptionID, int start, int numberOfMessages, boolean expectEmpty, boolean assertBody, int batchCommit) throws Exception {
+   private static void consume(ConnectionFactory factory,
+                               String clientID,
+                               String subscriptionID,
+                               int start,
+                               int numberOfMessages,
+                               boolean expectEmpty,
+                               boolean assertBody,
+                               int batchCommit) throws Exception {
       try (Connection connection = factory.createConnection()) {
          connection.setClientID(clientID);
          Session session = connection.createSession(true, Session.SESSION_TRANSACTED);

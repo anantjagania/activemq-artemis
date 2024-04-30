@@ -104,7 +104,6 @@ public class AckManager implements ActiveMQComponent {
 
    @Override
    public synchronized void start() {
-      logger.info("Starting AckManager", new Exception());
       if (logger.isDebugEnabled()) {
          logger.debug("Starting ACKManager on {} with period = {}, minQueueAttempts={}, maxPageAttempts={}", server, configuration.getMirrorAckManagerRetryDelay(), configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts());
       }
@@ -253,7 +252,6 @@ public class AckManager implements ActiveMQComponent {
       for (AckRetry retry : retries.valuesCopy()) {
          if (retry.getQueueAttempts() >= configuration.getMirrorAckManagerMinQueueAttempts()) {
             if (retry.attemptedPage() >= configuration.getMirrorAckManagerMaxPageAttempts()) {
-               logger.info("Retried {} {} times, giving up on the entry now", retry, retry.getPageAttempts());
                if (logger.isDebugEnabled()) {
                   logger.debug("Retried {} {} times, giving up on the entry now", retry, retry.getPageAttempts());
                }
@@ -380,8 +378,6 @@ public class AckManager implements ActiveMQComponent {
       MessageReference reference = targetQueue.removeWithSuppliedID(nodeID, messageID, referenceIDSupplier);
 
       if (reference == null) {
-         logger.info("ACK Manager could not find reference nodeID={} (while localID={}), messageID={} on queue {}, server={}. Adding retry with minQueue={}, maxPage={}, delay={}", nodeID, referenceIDSupplier.getDefaultNodeID(), messageID, targetQueue.getName(), server, configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts(), configuration.getMirrorAckManagerRetryDelay());
-         printQueueDebug(targetQueue);
          if (logger.isDebugEnabled()) {
             logger.debug("ACK Manager could not find reference nodeID={} (while localID={}), messageID={} on queue {}, server={}. Adding retry with minQueue={}, maxPage={}, delay={}", nodeID, referenceIDSupplier.getDefaultNodeID(), messageID, targetQueue.getName(), server, configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts(), configuration.getMirrorAckManagerRetryDelay());
             printQueueDebug(targetQueue);
@@ -392,7 +388,7 @@ public class AckManager implements ActiveMQComponent {
          return false;
       } else  {
          if (logger.isTraceEnabled()) {
-            logger.trace("ack {} worked well for messageID={} nodeID={} queue={}, targetQueue={}", server, messageID, nodeID, reference.getQueue(), targetQueue);
+            logger.trace("ack {} worked well for messageID={} nodeID={} queue={}, targetQueue={}, reference={}", server, messageID, nodeID, reference.getQueue(), targetQueue, reference);
          }
          doACK(targetQueue, reference, reason);
          return true;
@@ -400,7 +396,7 @@ public class AckManager implements ActiveMQComponent {
    }
 
    private void printQueueDebug(Queue targetQueue) {
-      logger.info("... queue {}/{} had {} consumers, {} messages, {} scheduled messages, {} delivering messages, paging={}", targetQueue.getID(), targetQueue.getName(), targetQueue.getConsumerCount(), targetQueue.getMessageCount(), targetQueue.getScheduledCount(), targetQueue.getDeliveringCount(), targetQueue.getPagingStore().isPaging());
+      logger.debug("... queue {}/{} had {} consumers, {} messages, {} scheduled messages, {} delivering messages, paging={}", targetQueue.getID(), targetQueue.getName(), targetQueue.getConsumerCount(), targetQueue.getMessageCount(), targetQueue.getScheduledCount(), targetQueue.getDeliveringCount(), targetQueue.getPagingStore().isPaging());
    }
 
    private void doACK(Queue targetQueue, MessageReference reference, AckReason reason) {
@@ -410,7 +406,7 @@ public class AckManager implements ActiveMQComponent {
                targetQueue.expire(reference, null, false);
                break;
             default:
-               TransactionImpl transaction = new TransactionImpl(server.getStorageManager()).setAsync(true);
+               TransactionImpl transaction = new TransactionImpl(server.getStorageManager());
                targetQueue.acknowledge(transaction, reference, reason, null, false);
                transaction.commit();
                break;
