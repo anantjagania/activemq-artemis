@@ -388,7 +388,10 @@ public class AckManager implements ActiveMQComponent {
          return false;
       } else  {
          if (logger.isTraceEnabled()) {
-            logger.trace("ack {} worked well for messageID={} nodeID={} queue={}, targetQueue={}, reference={}", server, messageID, nodeID, reference.getQueue(), targetQueue, reference);
+            logger.trace("ack worked well for messageID={} nodeID={} queue={}, reference={}", messageID, nodeID, reference.getQueue().getName(), reference);
+            if (reference.isPaged()) {
+               logger.trace("position for messageID={} = {}", messageID, ((PagedReference)reference).getPosition());
+            }
          }
          doACK(targetQueue, reference, reason);
          return true;
