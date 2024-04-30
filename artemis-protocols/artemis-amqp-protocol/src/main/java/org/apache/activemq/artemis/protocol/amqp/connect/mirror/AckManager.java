@@ -104,6 +104,7 @@ public class AckManager implements ActiveMQComponent {
 
    @Override
    public synchronized void start() {
+      logger.info("Starting AckManager", new Exception());
       if (logger.isDebugEnabled()) {
          logger.debug("Starting ACKManager on {} with period = {}, minQueueAttempts={}, maxPageAttempts={}", server, configuration.getMirrorAckManagerRetryDelay(), configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts());
       }
@@ -252,6 +253,7 @@ public class AckManager implements ActiveMQComponent {
       for (AckRetry retry : retries.valuesCopy()) {
          if (retry.getQueueAttempts() >= configuration.getMirrorAckManagerMinQueueAttempts()) {
             if (retry.attemptedPage() >= configuration.getMirrorAckManagerMaxPageAttempts()) {
+               logger.info("Retried {} {} times, giving up on the entry now", retry, retry.getPageAttempts());
                if (logger.isDebugEnabled()) {
                   logger.debug("Retried {} {} times, giving up on the entry now", retry, retry.getPageAttempts());
                }
@@ -378,6 +380,8 @@ public class AckManager implements ActiveMQComponent {
       MessageReference reference = targetQueue.removeWithSuppliedID(nodeID, messageID, referenceIDSupplier);
 
       if (reference == null) {
+         logger.info("ACK Manager could not find reference nodeID={} (while localID={}), messageID={} on queue {}, server={}. Adding retry with minQueue={}, maxPage={}, delay={}", nodeID, referenceIDSupplier.getDefaultNodeID(), messageID, targetQueue.getName(), server, configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts(), configuration.getMirrorAckManagerRetryDelay());
+         printQueueDebug(targetQueue);
          if (logger.isDebugEnabled()) {
             logger.debug("ACK Manager could not find reference nodeID={} (while localID={}), messageID={} on queue {}, server={}. Adding retry with minQueue={}, maxPage={}, delay={}", nodeID, referenceIDSupplier.getDefaultNodeID(), messageID, targetQueue.getName(), server, configuration.getMirrorAckManagerMinQueueAttempts(), configuration.getMirrorAckManagerMaxPageAttempts(), configuration.getMirrorAckManagerRetryDelay());
             printQueueDebug(targetQueue);
@@ -396,7 +400,7 @@ public class AckManager implements ActiveMQComponent {
    }
 
    private void printQueueDebug(Queue targetQueue) {
-      logger.debug("... queue {}/{} had {} consumers, {} messages, {} scheduled messages, {} delivering messages, paging={}", targetQueue.getID(), targetQueue.getName(), targetQueue.getConsumerCount(), targetQueue.getMessageCount(), targetQueue.getScheduledCount(), targetQueue.getDeliveringCount(), targetQueue.getPagingStore().isPaging());
+      logger.info("... queue {}/{} had {} consumers, {} messages, {} scheduled messages, {} delivering messages, paging={}", targetQueue.getID(), targetQueue.getName(), targetQueue.getConsumerCount(), targetQueue.getMessageCount(), targetQueue.getScheduledCount(), targetQueue.getDeliveringCount(), targetQueue.getPagingStore().isPaging());
    }
 
    private void doACK(Queue targetQueue, MessageReference reference, AckReason reason) {
@@ -435,11 +439,6 @@ public class AckManager implements ActiveMQComponent {
       public void nextStep() {
          try {
             if (!retryIterator.hasNext()) {
-               if (retriedPaging) {
-                  logger.trace("Retried acks on paging, better to rebuild the page counters");
-                  server.getPagingManager().rebuildCounters(null);
-               }
-
                logger.trace("Iterator is done on retry, server={}", server);
                AckManager.this.endRetry();
             } else {

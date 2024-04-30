@@ -97,7 +97,7 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       cliCreateServer.setAllowAnonymous(true).setArtemisInstance(serverLocation);
       cliCreateServer.setMessageLoadBalancing("ON_DEMAND");
       cliCreateServer.setClustered(false);
-      cliCreateServer.setNoWeb(true);
+      cliCreateServer.setNoWeb(false);
       cliCreateServer.setArgs("--no-stomp-acceptor", "--no-hornetq-acceptor", "--no-mqtt-acceptor", "--no-amqp-acceptor", "--max-hops", "1", "--name", DC1_NODE_A);
       cliCreateServer.addArgs("--addresses", TOPIC_NAME);
       cliCreateServer.addArgs("--queues", QUEUE_NAME);
@@ -110,7 +110,7 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       brokerProperties.put("AMQPConnections." + connectionName + ".type", AMQPBrokerConnectionAddressType.MIRROR.toString());
       brokerProperties.put("AMQPConnections." + connectionName + ".connectionElements.mirror.sync", "false");
       brokerProperties.put("largeMessageSync", "false");
-      brokerProperties.put("mirrorAckManagerMaxPageAttempts", "100");
+      brokerProperties.put("mirrorAckManagerMaxPageAttempts", "10");
       brokerProperties.put("mirrorAckManagerRetryDelay", "1000");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
@@ -118,9 +118,11 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       File brokerXml = new File(serverLocation, "/etc/broker.xml");
       Assert.assertTrue(brokerXml.exists());
       // Adding redistribution delay to broker configuration
-      Assert.assertTrue(FileUtil.findReplace(brokerXml, "<address-setting match=\"#\">", "<address-setting match=\"#\">\n\n" + "            <redistribution-delay>0</redistribution-delay> <!-- added by ClusteredMirrorSoakTest.java --> \n"));
+      Assert.assertTrue(FileUtil.findReplace(brokerXml, "<address-setting match=\"#\">", "<address-setting match=\"#\">\n\n" + "            <redistribution-delay>0</redistribution-delay> <!-- added by SimpleMirrorSoakTest.java --> \n"));
       if (paging) {
          Assert.assertTrue(FileUtil.findReplace(brokerXml, "<max-size-messages>-1</max-size-messages>", "<max-size-messages>1</max-size-messages>"));
+         Assert.assertTrue(FileUtil.findReplace(brokerXml, "<max-read-page-bytes>20M</max-read-page-bytes>", "<max-read-page-bytes>-1</max-read-page-bytes>"));
+         Assert.assertTrue(FileUtil.findReplace(brokerXml, "<max-read-page-messages>-1</max-read-page-messages>", "<max-read-page-messages>100000</max-read-page-messages>\n" + "            <prefetch-page-messages>10000</prefetch-page-messages>"));
       }
    }
 
@@ -142,7 +144,11 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       createRealServers(true);
       startServers();
 
-      final int numberOfMessages = 50_000;
+      final int numberOfMessages = 10_000;
+      final int receiveCommitInterval = 100;
+      final int sendCommitInterval = 100;
+      final int killInterval = 500;
+      Assert.assertTrue(killInterval > sendCommitInterval);
 
       Assert.assertTrue("numberOfMessages must be even", numberOfMessages % 2 == 0);
 
@@ -154,8 +160,8 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", DC1_NODEA_URI);
       ConnectionFactory connectionFactoryDC2A = CFUtil.createConnectionFactory("amqp", DC2_NODEA_URI);
 
-      consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, 100);
-      consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, 100);
+      consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, receiveCommitInterval);
+      consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, receiveCommitInterval);
 
       SimpleManagement managementDC1 = new SimpleManagement(DC1_NODEA_URI, null, null);
       SimpleManagement managementDC2 = new SimpleManagement(DC2_NODEA_URI, null, null);
@@ -169,20 +175,22 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       runAfter(executorService::shutdownNow);
       executorService.execute(() -> {
          try {
-            consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, numberOfMessages, true, false, 100);
+            consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, numberOfMessages, true, false, receiveCommitInterval);
          } catch (Exception e) {
             logger.warn(e.getMessage(), e);
          }
       });
       executorService.execute(() -> {
          try {
-            consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, numberOfMessages, true, false, 100);
+            consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, numberOfMessages, true, false, receiveCommitInterval);
          } catch (Exception e) {
             logger.warn(e.getMessage(), e);
          }
       });
 
       OrderedExecutor restartExeuctor = new OrderedExecutor(executorService);
+      AtomicBoolean running = new AtomicBoolean(true);
+      runAfter(() -> running.set(false));
 
       try (Connection connection = connectionFactoryDC1A.createConnection()) {
          Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
@@ -192,29 +200,44 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
             message.setIntProperty("i", i);
             message.setBooleanProperty("large", false);
             producer.send(message);
-            if (i % 1000 == 0) {
+            if (i > 0 && i % sendCommitInterval == 0) {
                logger.info("Sent {} messages", i);
                session.commit();
             }
-            if (i > 0 && i % 10_000 == 0) {
+            if (i > 0 && i % killInterval == 0) {
                restartExeuctor.execute(() -> {
-                  try {
-                     System.out.println("Restarting target");
-                     if (processDC2 != null) {
-                        processDC2.destroyForcibly();
+                  if (running.get()) {
+                     try {
+                        System.out.println("Restarting target");
+                        if (processDC2 != null) {
+                           processDC2.destroyForcibly();
+                        }
+                        processDC2 = startServer(DC2_NODE_A, 2, 10_000, new File(getServerLocation(DC2_NODE_A), "broker.properties"));
+                     } catch (Exception e) {
+                        logger.warn(e.getMessage(), e);
                      }
-                     processDC2 = startServer(DC2_NODE_A, 2, 10_000, new File(getServerLocation(DC2_NODE_A), "broker.properties"));
-                  } catch (Exception e) {
-                     logger.warn(e.getMessage(), e);
                   }
                });
             }
          }
          session.commit();
+         running.set(false);
       }
 
       while (true) {
-         System.out.println("looping...");
+         try {
+            System.out.println("SNF DC1 count = " + managementDC1.getMessageCountOnQueue(snfQueue));
+            System.out.println("SNF DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
+            System.out.println("DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
+
+            System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDA + "." + subscriptionID));
+            System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDB + "." + subscriptionID));
+            System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDA + "." + subscriptionID));
+            System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDB + "." + subscriptionID));
+            System.out.println("looping...");
+         } catch (Throwable e) {
+            logger.warn(e.getMessage(), e);
+         }
          Thread.sleep(10_000);
       }
    }
