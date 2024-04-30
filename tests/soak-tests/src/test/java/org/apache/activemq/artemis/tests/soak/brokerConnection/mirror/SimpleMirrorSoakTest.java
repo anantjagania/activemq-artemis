@@ -111,6 +111,7 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       brokerProperties.put("AMQPConnections." + connectionName + ".connectionElements.mirror.sync", "false");
       brokerProperties.put("largeMessageSync", "false");
       brokerProperties.put("mirrorAckManagerMaxPageAttempts", "100");
+      brokerProperties.put("mirrorAckManagerRetryDelay", "1000");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
 
