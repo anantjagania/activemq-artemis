@@ -23,6 +23,7 @@ import org.apache.activemq.artemis.api.core.ActiveMQNonExistentQueueException;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.SimpleString;
+import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.io.IOCallback;
 import org.apache.activemq.artemis.core.persistence.OperationContext;
 import org.apache.activemq.artemis.core.persistence.impl.journal.OperationContextImpl;
@@ -161,6 +162,8 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
 
    final ActiveMQServer server;
 
+   final Configuration configuration;
+
    DuplicateIDCache lruduplicateIDCache;
    String lruDuplicateIDKey;
 
@@ -183,6 +186,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
       this.basicController = new BasicMirrorController(server);
       this.basicController.setLink(receiver);
       this.server = server;
+      this.configuration = server.getConfiguration();
       this.referenceNodeStore = sessionSPI.getProtocolManager().getReferenceIDSupplier();
       mirrorContext = protonSession.getSessionSPI().getSessionContext();
    }
@@ -473,7 +477,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
          message.setAddress(internalAddress);
       }
 
-      final TransactionImpl transaction = new MirrorTransaction(server.getStorageManager()).setAsync(true);
+      final TransactionImpl transaction = new MirrorTransaction(server.getStorageManager()).setIgnorePageTransaction(configuration.isMirrorIgnorePageTransactions()).setAsync(true);
       transaction.addOperation(messageCompletionAck.tx);
       routingContext.setTransaction(transaction);
       duplicateIDCache.addToCache(duplicateIDBytes, transaction);

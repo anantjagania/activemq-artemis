@@ -444,6 +444,8 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    private int mirrorAckManagerRetryDelay = ActiveMQDefaultConfiguration.getMirrorAckManagerRetryDelay();
 
+   private boolean mirrorIgnorePageTransactions = ActiveMQDefaultConfiguration.getDefaultMirrorIgnorePageTransactions();
+
 
    /**
     * Parent folder for all data folders.
@@ -3380,7 +3382,7 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    @Override
    public ConfigurationImpl setMirrorAckManagerMaxPageAttempts(int maxPageAttempts) {
-      logger.info("Setting mirrorAckManagerMaxPageAttempts = {}", maxPageAttempts);
+      logger.debug("Setting mirrorAckManagerMaxPageAttempts = {}", maxPageAttempts);
       this.mirrorAckManagerMaxPageAttempts = maxPageAttempts;
       return this;
    }
@@ -3392,8 +3394,19 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    @Override
    public ConfigurationImpl setMirrorAckManagerRetryDelay(int delay) {
-      logger.info("Setting mirrorAckManagerRetryDelay = {}", delay);
+      logger.debug("Setting mirrorAckManagerRetryDelay = {}", delay);
       this.mirrorAckManagerRetryDelay = delay;
+      return this;
+   }
+
+   @Override
+   public boolean isMirrorIgnorePageTransactions() {
+      return mirrorIgnorePageTransactions;
+   }
+
+   @Override
+   public Configuration setMirrorIgnorePageTransactions(boolean ignorePageTransactions) {
+      this.mirrorIgnorePageTransactions = ignorePageTransactions;
       return this;
    }
 
