@@ -412,6 +412,9 @@ public class AckManager implements ActiveMQComponent {
                TransactionImpl transaction = new TransactionImpl(server.getStorageManager());
                targetQueue.acknowledge(transaction, reference, reason, null, false);
                transaction.commit();
+               if (logger.isTraceEnabled()) {
+                  logger.trace("Transaction {} committed on acking reference {}", transaction.getID(), reference);
+               }
                break;
          }
       } catch (Exception e) {
