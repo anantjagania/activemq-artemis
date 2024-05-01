@@ -1254,7 +1254,7 @@ public class PagingStoreImpl implements PagingStore {
          }
 
          // not using page transaction if transaction is declared async
-         final long transactionID = (tx == null || tx.isAsync()) ? -1 : tx.getID();
+         final long transactionID = (tx == null) ? -1 : tx.getID();
 
          if (pageDecorator != null) {
             message = pageDecorator.apply(message);
@@ -1273,7 +1273,7 @@ public class PagingStoreImpl implements PagingStore {
             currentPageSize += bytesToWrite;
          }
 
-         if (tx != null && !tx.isAsync()) {
+         if (tx != null) {
             installPageTransaction(tx, listCtx);
          }
 
