@@ -53,7 +53,7 @@ public class SingleMirrorSoakTest extends SoakTestBase {
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    // Set this to true and log4j will be configured with some relevant log.trace for the AckManager at the server's
-   private static final boolean TRACE_LOGS = false;
+   private static final boolean TRACE_LOGS = true;
 
    private static final String TOPIC_NAME = "topicTest";
    private static final String QUEUE_NAME = "myQueue";
