@@ -212,15 +212,19 @@ public abstract class ActiveMQScheduledComponent implements ActiveMQComponent, R
    }
 
    public synchronized ActiveMQScheduledComponent setPeriod(long period) {
-      this.period = period;
-      restartIfNeeded();
+      if (this.period != period) {
+         this.period = period;
+         restartIfNeeded();
+      }
       return this;
    }
 
    public synchronized ActiveMQScheduledComponent setPeriod(long period, TimeUnit unit) {
-      this.period = period;
-      this.timeUnit = unit;
-      restartIfNeeded();
+      if (this.period != period && this.timeUnit != unit) {
+         this.period = period;
+         this.timeUnit = unit;
+         restartIfNeeded();
+      }
       return this;
    }
 

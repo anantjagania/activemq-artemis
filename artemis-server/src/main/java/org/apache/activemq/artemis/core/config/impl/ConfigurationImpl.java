@@ -438,6 +438,13 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    private boolean managementMessagesRbac = ActiveMQDefaultConfiguration.getManagementMessagesRbac();
 
+   private int mirrorAckManagerMinQueueAttempts = ActiveMQDefaultConfiguration.getMirrorAckManagerMinQueueAttempts();
+
+   private int mirrorAckManagerMaxPageAttempts = ActiveMQDefaultConfiguration.getMirrorAckManagerMaxPageAttempts();
+
+   private int mirrorAckManagerRetryDelay = ActiveMQDefaultConfiguration.getMirrorAckManagerRetryDelay();
+
+
    /**
     * Parent folder for all data folders.
     */
@@ -3351,6 +3358,43 @@ public class ConfigurationImpl implements Configuration, Serializable {
    @Override
    public void setManagementRbacPrefix(String prefix) {
       this.managementRbacPrefix = prefix;
+   }
+
+
+   @Override
+   public int getMirrorAckManagerMinQueueAttempts() {
+      return mirrorAckManagerMinQueueAttempts;
+   }
+
+   @Override
+   public ConfigurationImpl setMirrorAckManagerMinQueueAttempts(int minQueueAttempts) {
+      logger.info("Setting mirrorAckManagerMinQueueAttempts = {}", minQueueAttempts);
+      this.mirrorAckManagerMinQueueAttempts = minQueueAttempts;
+      return this;
+   }
+
+   @Override
+   public int getMirrorAckManagerMaxPageAttempts() {
+      return this.mirrorAckManagerMaxPageAttempts;
+   }
+
+   @Override
+   public ConfigurationImpl setMirrorAckManagerMaxPageAttempts(int maxPageAttempts) {
+      logger.info("Setting mirrorAckManagerMaxPageAttempts = {}", maxPageAttempts);
+      this.mirrorAckManagerMaxPageAttempts = maxPageAttempts;
+      return this;
+   }
+
+   @Override
+   public int getMirrorAckManagerRetryDelay() {
+      return mirrorAckManagerRetryDelay;
+   }
+
+   @Override
+   public ConfigurationImpl setMirrorAckManagerRetryDelay(int delay) {
+      logger.info("Setting mirrorAckManagerRetryDelay = {}", delay);
+      this.mirrorAckManagerRetryDelay = delay;
+      return this;
    }
 
    // extend property utils with ability to auto-fill and locate from collections

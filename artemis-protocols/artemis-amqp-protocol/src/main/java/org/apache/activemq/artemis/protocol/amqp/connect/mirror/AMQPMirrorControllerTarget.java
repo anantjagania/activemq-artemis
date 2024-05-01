@@ -389,8 +389,8 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
       }
 
       if (logger.isTraceEnabled()) {
-         logger.trace("Server {} with queue = {} being acked for {} coming from {} targetQueue = {}",
-                      server.getIdentity(), queue, messageID, messageID, targetQueue);
+         logger.trace("Server {} with queue = {} being acked for {} from {} targetQueue = {} reason = {}",
+                      server.getIdentity(), queue, messageID, ackMessage, targetQueue, reason);
       }
 
       performAck(nodeID, targetQueue, messageID, ackMessage, reason);
