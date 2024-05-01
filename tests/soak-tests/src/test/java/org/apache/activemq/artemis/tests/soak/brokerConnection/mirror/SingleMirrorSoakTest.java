@@ -19,35 +19,24 @@ package org.apache.activemq.artemis.tests.soak.brokerConnection.mirror;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
-import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.activemq.artemis.api.core.QueueConfiguration;
-import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.management.SimpleManagement;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectionAddressType;
-import org.apache.activemq.artemis.core.server.ActiveMQServer;
-import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.tests.soak.SoakTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
-import org.apache.activemq.artemis.tests.util.RandomUtil;
 import org.apache.activemq.artemis.util.ServerUtil;
 import org.apache.activemq.artemis.utils.FileUtil;
 import org.apache.activemq.artemis.utils.Wait;
@@ -59,7 +48,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SimpleMirrorSoakTest extends SoakTestBase {
+public class SingleMirrorSoakTest extends SoakTestBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -84,8 +73,8 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       largeBody = writer.toString();
    }
 
-   public static final String DC1_NODE_A = "SimpleMirrorSoakTest/DC1";
-   public static final String DC2_NODE_A = "SimpleMirrorSoakTest/DC2";
+   public static final String DC1_NODE = "SingleMirrorSoakTest/DC1";
+   public static final String DC2_NODE = "SingleMirrorSoakTest/DC2";
 
    volatile Process processDC1;
    volatile Process processDC2;
@@ -101,8 +90,8 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
 
    }
 
-   private static String DC1_NODEA_URI = "tcp://localhost:61616";
-   private static String DC2_NODEA_URI = "tcp://localhost:61618";
+   private static String DC1_URI = "tcp://localhost:61616";
+   private static String DC2_URI = "tcp://localhost:61618";
 
    private static void createServer(String serverName,
                                     String connectionName,
@@ -117,7 +106,7 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       cliCreateServer.setMessageLoadBalancing("ON_DEMAND");
       cliCreateServer.setClustered(false);
       cliCreateServer.setNoWeb(false);
-      cliCreateServer.setArgs("--no-stomp-acceptor", "--no-hornetq-acceptor", "--no-mqtt-acceptor", "--no-amqp-acceptor", "--max-hops", "1", "--name", DC1_NODE_A);
+      cliCreateServer.setArgs("--no-stomp-acceptor", "--no-hornetq-acceptor", "--no-mqtt-acceptor", "--no-amqp-acceptor", "--max-hops", "1", "--name", DC1_NODE);
       cliCreateServer.addArgs("--addresses", TOPIC_NAME);
       cliCreateServer.addArgs("--queues", QUEUE_NAME);
       cliCreateServer.setPortOffset(porOffset);
@@ -131,6 +120,7 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       brokerProperties.put("largeMessageSync", "false");
       brokerProperties.put("mirrorAckManagerMaxPageAttempts", "10");
       brokerProperties.put("mirrorAckManagerRetryDelay", "1000");
+      brokerProperties.put("mirrorIgnorePageTransaction", "false");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
 
@@ -156,21 +146,20 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
    }
 
    public static void createRealServers(boolean paging) throws Exception {
-      createServer(DC1_NODE_A, "mirror", DC2_NODEA_URI, 0, paging);
-      createServer(DC2_NODE_A, "mirror", DC1_NODEA_URI, 2, paging);
+      createServer(DC1_NODE, "mirror", DC2_URI, 0, paging);
+      createServer(DC2_NODE, "mirror", DC1_URI, 2, paging);
    }
 
    private void startServers() throws Exception {
-      processDC1 = startServer(DC1_NODE_A, -1, -1, new File(getServerLocation(DC1_NODE_A), "broker.properties"));
-      processDC2 = startServer(DC2_NODE_A, -1, -1, new File(getServerLocation(DC2_NODE_A), "broker.properties"));
+      processDC1 = startServer(DC1_NODE, -1, -1, new File(getServerLocation(DC1_NODE), "broker.properties"));
+      processDC2 = startServer(DC2_NODE, -1, -1, new File(getServerLocation(DC2_NODE), "broker.properties"));
 
       ServerUtil.waitForServerToStart(0, 10_000);
       ServerUtil.waitForServerToStart(2, 10_000);
    }
 
    @Test
-   public void testMirroredTopics() throws Exception {
-      disableCheckThread();
+   public void testInterruptedMirrorTransfer() throws Exception {
       createRealServers(true);
       startServers();
 
@@ -185,14 +174,14 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
       String subscriptionID = "my-order";
       String snfQueue = "$ACTIVEMQ_ARTEMIS_MIRROR_mirror";
 
-      ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", DC1_NODEA_URI);
-      ConnectionFactory connectionFactoryDC2A = CFUtil.createConnectionFactory("amqp", DC2_NODEA_URI);
+      ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", DC1_URI);
+      ConnectionFactory connectionFactoryDC2A = CFUtil.createConnectionFactory("amqp", DC2_URI);
 
       consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, receiveCommitInterval);
       consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, receiveCommitInterval);
 
-      SimpleManagement managementDC1 = new SimpleManagement(DC1_NODEA_URI, null, null);
-      SimpleManagement managementDC2 = new SimpleManagement(DC2_NODEA_URI, null, null);
+      SimpleManagement managementDC1 = new SimpleManagement(DC1_URI, null, null);
+      SimpleManagement managementDC2 = new SimpleManagement(DC2_URI, null, null);
 
       runAfter(() -> managementDC1.close());
       runAfter(() -> managementDC2.close());
@@ -243,8 +232,10 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
                         System.out.println("Restarting target");
                         if (processDC2 != null) {
                            processDC2.destroyForcibly();
+                           processDC2.waitFor(1, TimeUnit.MINUTES);
+                           processDC2 = null;
                         }
-                        processDC2 = startServer(DC2_NODE_A, 2, 10_000, new File(getServerLocation(DC2_NODE_A), "broker.properties"));
+                        processDC2 = startServer(DC2_NODE, 2, 10_000, new File(getServerLocation(DC2_NODE), "broker.properties"));
                      } catch (Exception e) {
                         logger.warn(e.getMessage(), e);
                      }
@@ -282,7 +273,6 @@ public class SimpleMirrorSoakTest extends SoakTestBase {
             }
             Thread.sleep(10_000);
          }
-
       }
    }
 
