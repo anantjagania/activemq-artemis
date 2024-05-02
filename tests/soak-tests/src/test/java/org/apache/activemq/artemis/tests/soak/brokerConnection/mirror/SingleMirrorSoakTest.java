@@ -39,6 +39,7 @@ import org.apache.activemq.artemis.tests.soak.SoakTestBase;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.util.ServerUtil;
 import org.apache.activemq.artemis.utils.FileUtil;
+import org.apache.activemq.artemis.utils.TestParameters;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.activemq.artemis.utils.actors.OrderedExecutor;
 import org.apache.activemq.artemis.utils.cli.helper.HelperCreate;
@@ -50,27 +51,28 @@ import org.slf4j.LoggerFactory;
 
 public class SingleMirrorSoakTest extends SoakTestBase {
 
+   private static final String TEST_NAME = "SINGLE_MIRROR_SOAK";
+
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    // Set this to true and log4j will be configured with some relevant log.trace for the AckManager at the server's
-   private static final boolean TRACE_LOGS = false;
+   private static final boolean TRACE_LOGS = Boolean.parseBoolean(TestParameters.testProperty(TEST_NAME, "TRACE_LOGS", "false"));
+   private static final int NUMBER_MESSAGES = TestParameters.testProperty(TEST_NAME, "NUMBER_MESSAGES", 2_500);
+   private static final int RECEIVE_COMMIT = TestParameters.testProperty(TEST_NAME, "RECEIVE_COMMIT", 100);
+   private static final int SEND_COMMIT = TestParameters.testProperty(TEST_NAME, "SEND_COMMIT", 100);
+   private static final int KILL_INTERNAL =  TestParameters.testProperty(TEST_NAME, "KILL_INTERVAL", 500);
 
    private static final String TOPIC_NAME = "topicTest";
    private static final String QUEUE_NAME = "myQueue";
 
-   private static String largeBody;
-   private static String mediumBody;
-   private static String smallBody = "This is a small body";
+   private static String body;
 
    static {
       StringWriter writer = new StringWriter();
-      while (writer.getBuffer().length() < 1024 * 1024) {
-         writer.append("This is a large string ..... ");
-         if (mediumBody == null && writer.getBuffer().length() > 30 * 1024) {
-            mediumBody = writer.toString();
-         }
+      while (writer.getBuffer().length() < 30 * 1024) {
+         writer.append("The sky is blue, ..... ");
       }
-      largeBody = writer.toString();
+      body = writer.toString();
    }
 
    public static final String DC1_NODE = "SingleMirrorSoakTest/DC1";
@@ -166,12 +168,8 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       createRealServers(true);
       startServers();
 
-      final int numberOfMessages = 2_500;
-      final int receiveCommitInterval = 100;
-      final int sendCommitInterval = 100;
-      final int killInterval = 500;
 
-      Assert.assertTrue(killInterval > sendCommitInterval);
+      Assert.assertTrue(KILL_INTERNAL > SEND_COMMIT);
 
       String clientIDA = "nodeA";
       String clientIDB = "nodeB";
@@ -180,8 +178,8 @@ public class SingleMirrorSoakTest extends SoakTestBase {
 
       ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", DC1_URI);
 
-      consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, receiveCommitInterval);
-      consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, receiveCommitInterval);
+      consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, RECEIVE_COMMIT);
+      consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, RECEIVE_COMMIT);
 
       SimpleManagement managementDC1 = new SimpleManagement(DC1_URI, null, null);
       SimpleManagement managementDC2 = new SimpleManagement(DC2_URI, null, null);
@@ -198,14 +196,14 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       runAfter(executorService::shutdownNow);
       executorService.execute(() -> {
          try {
-            consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, numberOfMessages, true, false, receiveCommitInterval);
+            consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, NUMBER_MESSAGES, true, false, RECEIVE_COMMIT);
          } catch (Exception e) {
             logger.warn(e.getMessage(), e);
          }
       });
       executorService.execute(() -> {
          try {
-            consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, numberOfMessages, true, false, receiveCommitInterval);
+            consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, NUMBER_MESSAGES, true, false, RECEIVE_COMMIT);
          } catch (Exception e) {
             logger.warn(e.getMessage(), e);
          }
@@ -218,16 +216,16 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       try (Connection connection = connectionFactoryDC1A.createConnection()) {
          Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
          MessageProducer producer = session.createProducer(session.createTopic(TOPIC_NAME));
-         for (int i = 0; i < numberOfMessages; i++) {
-            TextMessage message = session.createTextMessage(mediumBody);
+         for (int i = 0; i < NUMBER_MESSAGES; i++) {
+            TextMessage message = session.createTextMessage(body);
             message.setIntProperty("i", i);
             message.setBooleanProperty("large", false);
             producer.send(message);
-            if (i > 0 && i % sendCommitInterval == 0) {
+            if (i > 0 && i % SEND_COMMIT == 0) {
                logger.info("Sent {} messages", i);
                session.commit();
             }
-            if (i > 0 && i % killInterval == 0) {
+            if (i > 0 && i % KILL_INTERNAL == 0) {
                restartExeuctor.execute(() -> {
                   if (running.get()) {
                      try {
@@ -249,33 +247,12 @@ public class SingleMirrorSoakTest extends SoakTestBase {
          running.set(false);
       }
 
-      //try {
       Wait.assertEquals(0, () -> getCount(managementDC1, snfQueue), 60_000);
       Wait.assertEquals(0, () -> getCount(managementDC2, snfQueue), 60_000);
       Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID), 10_000);
       Wait.assertEquals(0, () -> getCount(managementDC1, clientIDB + "." + subscriptionID), 10_000);
       Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID), 10_000);
       Wait.assertEquals(0, () -> getCount(managementDC2, clientIDB + "." + subscriptionID), 10_000);
-      /*} catch (Throwable e) {
-         logger.warn(e.getMessage(), e);
-
-         while (true) {
-            try {
-               System.out.println("SNF DC1 count = " + managementDC1.getMessageCountOnQueue(snfQueue));
-               System.out.println("SNF DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
-               System.out.println("DC2 count = " + managementDC2.getMessageCountOnQueue(snfQueue));
-
-               System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDA + "." + subscriptionID));
-               System.out.println("DC1 ClientA - " + getCount(managementDC1, clientIDB + "." + subscriptionID));
-               System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDA + "." + subscriptionID));
-               System.out.println("DC2 ClientA - " + getCount(managementDC2, clientIDB + "." + subscriptionID));
-               System.out.println("looping...");
-            } catch (Throwable e2) {
-               logger.warn(e2.getMessage(), e);
-            }
-            Thread.sleep(10_000);
-         }
-      } */
    }
 
    private static void consume(ConnectionFactory factory,
@@ -303,13 +280,6 @@ public class SingleMirrorSoakTest extends SoakTestBase {
             if (message.getIntProperty("i") != i) {
                failed = true;
                logger.warn("Expected message {} but got {}", i, message.getIntProperty("i"));
-            }
-            if (assertBody) {
-               if (message.getBooleanProperty("large")) {
-                  Assert.assertEquals(largeBody, message.getText());
-               } else {
-                  Assert.assertEquals(smallBody, message.getText());
-               }
             }
             logger.debug("Consumed {}, large={}", i, message.getBooleanProperty("large"));
             pendingCommit++;
