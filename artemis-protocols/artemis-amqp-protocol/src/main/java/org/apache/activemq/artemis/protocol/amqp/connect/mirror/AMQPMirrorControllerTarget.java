@@ -477,7 +477,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
          message.setAddress(internalAddress);
       }
 
-      final TransactionImpl transaction = new MirrorTransaction(server.getStorageManager()).setIgnorePageTransaction(configuration.isMirrorIgnorePageTransactions()).setAsync(true);
+      final TransactionImpl transaction = new MirrorTransaction(server.getStorageManager()).setIgnorePageTransaction(configuration.isMirrorPageTransaction()).setAsync(true);
       transaction.addOperation(messageCompletionAck.tx);
       routingContext.setTransaction(transaction);
       duplicateIDCache.addToCache(duplicateIDBytes, transaction);

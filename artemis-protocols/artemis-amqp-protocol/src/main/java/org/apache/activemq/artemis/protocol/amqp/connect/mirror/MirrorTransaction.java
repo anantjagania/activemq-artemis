@@ -52,7 +52,7 @@ public class MirrorTransaction extends TransactionImpl {
    }
 
    @Override
-   public boolean isIgnorePageTransaction() {
+   public boolean isAllowPageTransaction() {
       return ignorePageTransaction;
    }
 

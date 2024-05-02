@@ -444,7 +444,7 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    private int mirrorAckManagerRetryDelay = ActiveMQDefaultConfiguration.getMirrorAckManagerRetryDelay();
 
-   private boolean mirrorIgnorePageTransactions = ActiveMQDefaultConfiguration.getDefaultMirrorIgnorePageTransactions();
+   private boolean mirrorPageTransaction = ActiveMQDefaultConfiguration.getDefaultMirrorPageTransaction();
 
 
    /**
@@ -3400,14 +3400,14 @@ public class ConfigurationImpl implements Configuration, Serializable {
    }
 
    @Override
-   public boolean isMirrorIgnorePageTransactions() {
-      return mirrorIgnorePageTransactions;
+   public boolean isMirrorPageTransaction() {
+      return mirrorPageTransaction;
    }
 
    @Override
-   public Configuration setMirrorIgnorePageTransactions(boolean ignorePageTransactions) {
+   public Configuration setMirrorPageTransaction(boolean ignorePageTransactions) {
       logger.debug("Setting mirrorIgnorePageTransactions={}", ignorePageTransactions);
-      this.mirrorIgnorePageTransactions = ignorePageTransactions;
+      this.mirrorPageTransaction = ignorePageTransactions;
       return this;
    }
 

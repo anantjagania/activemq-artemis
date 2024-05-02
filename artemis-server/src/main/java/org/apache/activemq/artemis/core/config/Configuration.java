@@ -1530,11 +1530,11 @@ public interface Configuration {
 
    Configuration setMirrorAckManagerRetryDelay(int delay);
 
-   /** Should Page Transactions be ignored on the target? By default yes, as the default is TRUE.
+   /** Should Mirror use Page Transactions When target destinations is paging?
     *  When a target queue on the mirror is paged, the mirror will not record a page transaction for every message.
-    *  The default is true, and the overhead of paged messages will be smaller, but there is a possibility of eventual duplicates in case of interupted communication between the mirror source and target.
+    *  The default is false, and the overhead of paged messages will be smaller, but there is a possibility of eventual duplicates in case of interrupted communication between the mirror source and target.
     *  If you set this to false there will be extra syncs and a record stored on the journal for the page-transaction additionally to the record in the page store. */
-   boolean isMirrorIgnorePageTransactions();
+   boolean isMirrorPageTransaction();
 
-   Configuration setMirrorIgnorePageTransactions(boolean ignorePageTransactions);
+   Configuration setMirrorPageTransaction(boolean ignorePageTransactions);
 }
