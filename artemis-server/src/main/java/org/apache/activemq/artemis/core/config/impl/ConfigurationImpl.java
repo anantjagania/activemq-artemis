@@ -3406,6 +3406,7 @@ public class ConfigurationImpl implements Configuration, Serializable {
 
    @Override
    public Configuration setMirrorIgnorePageTransactions(boolean ignorePageTransactions) {
+      logger.debug("Setting mirrorIgnorePageTransactions={}", ignorePageTransactions);
       this.mirrorIgnorePageTransactions = ignorePageTransactions;
       return this;
    }

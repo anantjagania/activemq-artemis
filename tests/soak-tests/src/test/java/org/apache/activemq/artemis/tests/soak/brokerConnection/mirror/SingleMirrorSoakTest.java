@@ -53,7 +53,7 @@ public class SingleMirrorSoakTest extends SoakTestBase {
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    // Set this to true and log4j will be configured with some relevant log.trace for the AckManager at the server's
-   private static final boolean TRACE_LOGS = true;
+   private static final boolean TRACE_LOGS = false;
 
    private static final String TOPIC_NAME = "topicTest";
    private static final String QUEUE_NAME = "myQueue";
@@ -120,7 +120,7 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       brokerProperties.put("largeMessageSync", "false");
       brokerProperties.put("mirrorAckManagerMaxPageAttempts", "10");
       brokerProperties.put("mirrorAckManagerRetryDelay", "1000");
-      brokerProperties.put("mirrorIgnorePageTransaction", "false");
+      brokerProperties.put("mirrorIgnorePageTransactions", "true");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
 
@@ -139,6 +139,8 @@ public class SingleMirrorSoakTest extends SoakTestBase {
          Assert.assertTrue(FileUtil.findReplace(log4j, "logger.artemis_utils.level=INFO", "logger.artemis_utils.level=INFO\n" +
             "\n" + "logger.ack.name=org.apache.activemq.artemis.protocol.amqp.connect.mirror.AckManager\n"
             + "logger.ack.level=TRACE\n"
+            + "logger.config.name=org.apache.activemq.artemis.core.config.impl.ConfigurationImpl\n"
+            + "logger.config.level=TRACE\n"
             + "appender.console.filter.threshold.type = ThresholdFilter\n"
             + "appender.console.filter.threshold.level = info"));
       }
@@ -163,10 +165,11 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       createRealServers(true);
       startServers();
 
-      final int numberOfMessages = 2_000;
-      final int receiveCommitInterval = 10;
-      final int sendCommitInterval = 10;
-      final int killInterval = 100;
+      final int numberOfMessages = 2_500;
+      final int receiveCommitInterval = 100;
+      final int sendCommitInterval = 100;
+      final int killInterval = 500;
+
       Assert.assertTrue(killInterval > sendCommitInterval);
 
       String clientIDA = "nodeA";
