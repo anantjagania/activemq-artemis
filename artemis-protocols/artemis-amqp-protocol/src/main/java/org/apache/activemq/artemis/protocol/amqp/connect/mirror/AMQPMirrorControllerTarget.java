@@ -411,7 +411,7 @@ public class AMQPMirrorControllerTarget extends ProtonAbstractReceiver implement
       }
 
       if (ackManager == null) {
-         ackManager = AckManagerProvider.getManager(server, true);
+         ackManager = AckManagerProvider.getManager(server);
       }
 
       ackManager.ack(nodeID, targetQueue, messageID, reason, true);
