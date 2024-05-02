@@ -120,7 +120,8 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       brokerProperties.put("largeMessageSync", "false");
       brokerProperties.put("mirrorAckManagerMaxPageAttempts", "10");
       brokerProperties.put("mirrorAckManagerRetryDelay", "1000");
-      brokerProperties.put("mirrorIgnorePageTransactions", "true");
+      // if we don't use pageTransactions we may eventually get a few duplicates
+      brokerProperties.put("mirrorPageTransaction", "true");
       File brokerPropertiesFile = new File(serverLocation, "broker.properties");
       saveProperties(brokerProperties, brokerPropertiesFile);
 
@@ -178,7 +179,6 @@ public class SingleMirrorSoakTest extends SoakTestBase {
       String snfQueue = "$ACTIVEMQ_ARTEMIS_MIRROR_mirror";
 
       ConnectionFactory connectionFactoryDC1A = CFUtil.createConnectionFactory("amqp", DC1_URI);
-      ConnectionFactory connectionFactoryDC2A = CFUtil.createConnectionFactory("amqp", DC2_URI);
 
       consume(connectionFactoryDC1A, clientIDA, subscriptionID, 0, 0, false, false, receiveCommitInterval);
       consume(connectionFactoryDC1A, clientIDB, subscriptionID, 0, 0, false, false, receiveCommitInterval);
@@ -188,7 +188,6 @@ public class SingleMirrorSoakTest extends SoakTestBase {
 
       runAfter(() -> managementDC1.close());
       runAfter(() -> managementDC2.close());
-
 
       Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID));
       Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID));
@@ -250,14 +249,14 @@ public class SingleMirrorSoakTest extends SoakTestBase {
          running.set(false);
       }
 
-      try {
-         Wait.assertEquals(0, () -> getCount(managementDC1, snfQueue), 60_000);
-         Wait.assertEquals(0, () -> getCount(managementDC2, snfQueue), 60_000);
-         Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID), 10_000);
-         Wait.assertEquals(0, () -> getCount(managementDC1, clientIDB + "." + subscriptionID), 10_000);
-         Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID), 10_000);
-         Wait.assertEquals(0, () -> getCount(managementDC2, clientIDB + "." + subscriptionID), 10_000);
-      } catch (Throwable e) {
+      //try {
+      Wait.assertEquals(0, () -> getCount(managementDC1, snfQueue), 60_000);
+      Wait.assertEquals(0, () -> getCount(managementDC2, snfQueue), 60_000);
+      Wait.assertEquals(0, () -> getCount(managementDC1, clientIDA + "." + subscriptionID), 10_000);
+      Wait.assertEquals(0, () -> getCount(managementDC1, clientIDB + "." + subscriptionID), 10_000);
+      Wait.assertEquals(0, () -> getCount(managementDC2, clientIDA + "." + subscriptionID), 10_000);
+      Wait.assertEquals(0, () -> getCount(managementDC2, clientIDB + "." + subscriptionID), 10_000);
+      /*} catch (Throwable e) {
          logger.warn(e.getMessage(), e);
 
          while (true) {
@@ -276,7 +275,7 @@ public class SingleMirrorSoakTest extends SoakTestBase {
             }
             Thread.sleep(10_000);
          }
-      }
+      } */
    }
 
    private static void consume(ConnectionFactory factory,
