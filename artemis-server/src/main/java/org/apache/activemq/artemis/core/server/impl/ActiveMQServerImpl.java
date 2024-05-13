@@ -679,6 +679,11 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          return;
       }
 
+
+      logger.info("\n*******************************************************************************************************************************\n" +
+                  "Internal test for sync calls on paging. Do not use it in production\n" +
+                  "*******************************************************************************************************************************");
+
       configuration.parseProperties(propertiesFileUrl);
       updateStatus(ServerStatus.CONFIGURATION_COMPONENT, configuration.getStatus());
 
