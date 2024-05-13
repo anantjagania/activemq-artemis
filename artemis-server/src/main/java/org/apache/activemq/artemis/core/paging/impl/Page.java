@@ -16,6 +16,7 @@
  */
 package org.apache.activemq.artemis.core.paging.impl;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -194,6 +195,16 @@ public final class Page  {
 
    public void sync() throws Exception {
       file.sync();
+   }
+
+   public void trySync() {
+      try {
+         if (file.isOpen()) {
+            file.sync();
+         }
+      } catch (IOException e) {
+         logger.warn("This is for now an expected warn, but please inform Clebert of how many times it is happening. This will be ignored as something else closed the file and it is ok. I'm reporting this on the hack branch now just to count how many times it happened.", e);
+      }
    }
 
    public boolean isOpen() {
