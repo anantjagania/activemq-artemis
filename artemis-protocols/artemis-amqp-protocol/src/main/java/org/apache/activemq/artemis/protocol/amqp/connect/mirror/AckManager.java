@@ -202,9 +202,8 @@ public class AckManager implements ActiveMQComponent {
 
 
    // to be used with the same executor as the PagingStore executor
-   public boolean retryAddress(SimpleString address, LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> acksToRetry) {
+   public void retryAddress(SimpleString address, LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> acksToRetry) {
       MirrorController previousController = AMQPMirrorControllerTarget.getControllerInUse();
-      boolean retriedPaging = false;
       logger.trace("retrying address {} on server {}", address, server);
       try {
          AMQPMirrorControllerTarget.setControllerInUse(disabledAckMirrorController);
@@ -224,9 +223,7 @@ public class AckManager implements ActiveMQComponent {
                   continue;
                }
                try {
-                  if (retryPage(acksToRetry, page, key)) {
-                     retriedPaging = true;
-                  }
+                  retryPage(acksToRetry, page, key);
                } finally {
                   page.usageDown();
                }
@@ -241,7 +238,6 @@ public class AckManager implements ActiveMQComponent {
       } finally {
          AMQPMirrorControllerTarget.setControllerInUse(previousController);
       }
-      return retriedPaging;
    }
 
    private void validateExpiredSet(LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> queuesToRetry) {
@@ -265,10 +261,9 @@ public class AckManager implements ActiveMQComponent {
       }
    }
 
-   private boolean retryPage(LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> queuesToRetry,
+   private void retryPage(LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> queuesToRetry,
                           Page page,
                           AckRetry key) throws Exception {
-      AtomicBoolean retriedPaging = new AtomicBoolean(false);
       TransactionImpl transaction = new TransactionImpl(server.getStorageManager()).setAsync(true);
       // scan each page for acks
       page.getMessages().forEach(pagedMessage -> {
@@ -297,8 +292,8 @@ public class AckManager implements ActiveMQComponent {
                      if (!subscription.isAcked(pagedMessage)) {
                         PagedReference reference = retries.getContext().getPagingStore().getCursorProvider().newReference(pagedMessage, subscription);
                         try {
-                           subscription.ackTx(transaction, reference);
-                           retriedPaging.set(true);
+                           subscription.ackTx(transaction, reference, false);
+                           subscription.getQueue().postAcknowledge(reference, ackRetry.getReason(), false);
                         } catch (Exception e) {
                            logger.warn(e.getMessage(), e);
                            if (ioCriticalErrorListener != null) {
@@ -325,8 +320,6 @@ public class AckManager implements ActiveMQComponent {
             ioCriticalErrorListener.onIOException(e, e.getMessage(), null);
          }
       }
-
-      return retriedPaging.get();
    }
 
    /** returns true if there are retries ready to be scanned on paging */
@@ -430,8 +423,6 @@ public class AckManager implements ActiveMQComponent {
 
       Iterator<Map.Entry<SimpleString, LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>>>> retryIterator;
 
-      boolean retriedPaging = false;
-
 
       MultiStepProgress(HashMap<SimpleString, LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>>> retryList) {
          this.retryList = retryList;
@@ -453,9 +444,7 @@ public class AckManager implements ActiveMQComponent {
 
                PagingStore pagingStore = server.getPagingManager().getPageStore(entry.getKey());
                pagingStore.execute(() -> {
-                  if (AckManager.this.retryAddress(entry.getKey(), entry.getValue())) {
-                     retriedPaging = true;
-                  }
+                  AckManager.this.retryAddress(entry.getKey(), entry.getValue());
                   nextStep();
                });
             }
