@@ -135,6 +135,8 @@ public class PagingStoreImpl implements PagingStore {
 
    private final ArtemisExecutor executor;
 
+   private final ArtemisExecutor ioExecutor;
+
    // Bytes consumed by the queue on the memory
    private final SizeAwareMetric size;
 
@@ -193,6 +195,8 @@ public class PagingStoreImpl implements PagingStore {
       applySetting(addressSettings);
 
       this.executor = executor;
+
+      this.ioExecutor = ioExecutor;
 
       this.pagingManager = pagingManager;
 
@@ -1513,8 +1517,14 @@ public class PagingStoreImpl implements PagingStore {
 
          final Page oldPage = currentPage;
          if (oldPage != null) {
-            oldPage.close(true);
-            oldPage.usageDown();
+            ioExecutor.execute(() -> {
+               try {
+                  oldPage.close(true);
+                  oldPage.usageDown();
+               } catch (Exception e) {
+                  logger.warn(e.getMessage(), e);
+               }
+            });
             currentPage = null;
          }
 
