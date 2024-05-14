@@ -223,7 +223,7 @@ public class AckManager implements ActiveMQComponent {
                   continue;
                }
                try {
-                  retryPage(acksToRetry, page, key);
+                  retryPage(acksToRetry, address, page, key);
                } finally {
                   page.usageDown();
                }
@@ -262,8 +262,10 @@ public class AckManager implements ActiveMQComponent {
    }
 
    private void retryPage(LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> queuesToRetry,
+                          SimpleString address,
                           Page page,
                           AckRetry key) throws Exception {
+      logger.debug("scanning for acks on page {} on address {}", page.getPageId(), address);
       TransactionImpl transaction = new TransactionImpl(server.getStorageManager()).setAsync(true);
       // scan each page for acks
       page.getMessages().forEach(pagedMessage -> {
