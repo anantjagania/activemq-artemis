@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -1501,6 +1502,7 @@ public class PagingStoreImpl implements PagingStore {
 
    }
 
+   static AtomicInteger pendingCloses = new AtomicInteger(0);
    private void openNewPage() throws Exception {
       lock.writeLock().lock();
 
@@ -1517,8 +1519,11 @@ public class PagingStoreImpl implements PagingStore {
 
          final Page oldPage = currentPage;
          if (oldPage != null) {
+            pendingCloses.incrementAndGet();
             ioExecutor.execute(() -> {
                try {
+                  int currentPending = pendingCloses.decrementAndGet();
+                  logger.info("There are {} closes pending", currentPending);
                   oldPage.close(true);
                   oldPage.usageDown();
                } catch (Exception e) {
