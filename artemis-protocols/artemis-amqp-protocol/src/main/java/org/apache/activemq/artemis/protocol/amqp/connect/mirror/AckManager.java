@@ -218,7 +218,7 @@ public class AckManager implements ActiveMQComponent {
                   logger.trace("Retry stopped while reading page {} on address {} as the outcome is now empty, server={}", pageId, address, server);
                   break;
                }
-               Page page = store.usePage(pageId, true, false);
+               Page page = openPage(store, pageId);
                if (page == null) {
                   continue;
                }
@@ -238,6 +238,17 @@ public class AckManager implements ActiveMQComponent {
       } finally {
          AMQPMirrorControllerTarget.setControllerInUse(previousController);
       }
+   }
+
+   private Page openPage(PagingStore store, long pageID) throws Throwable {
+      Page page = store.newPageObject(pageID);
+      if (page.getFile().exists()) {
+         page.getMessages();
+         return page;
+      } else {
+         return null;
+      }
+
    }
 
    private void validateExpiredSet(LongObjectHashMap<JournalHashMap<AckRetry, AckRetry, Queue>> queuesToRetry) {
