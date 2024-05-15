@@ -27,6 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -166,6 +167,9 @@ public class PagingStoreImpl implements PagingStore {
    private volatile boolean blockedViaAddressControl = false;
 
    private long rejectThreshold;
+
+   private static final int ARTEMIS_PAGING_COUNTER_SNAPSHOT_INTERVAL = Integer.parseInt(System.getProperty("artemis.paging.maxPendingClose", "5"));
+   private final Semaphore maxPendingAsyncClose = new Semaphore(ARTEMIS_PAGING_COUNTER_SNAPSHOT_INTERVAL);
 
    public PagingStoreImpl(final SimpleString address,
                           final ScheduledExecutorService scheduledExecutor,
@@ -1502,7 +1506,6 @@ public class PagingStoreImpl implements PagingStore {
 
    }
 
-   static AtomicInteger pendingCloses = new AtomicInteger(0);
    private void openNewPage() throws Exception {
       lock.writeLock().lock();
 
@@ -1519,15 +1522,17 @@ public class PagingStoreImpl implements PagingStore {
 
          final Page oldPage = currentPage;
          if (oldPage != null) {
-            pendingCloses.incrementAndGet();
+            while (!maxPendingAsyncClose.tryAcquire(1, TimeUnit.SECONDS)) {
+               logger.info("retrying to acquire close! Please inform this to Clebert. It is expected but ");
+            }
             ioExecutor.execute(() -> {
                try {
-                  int currentPending = pendingCloses.decrementAndGet();
-                  logger.info("There are {} closes pending", currentPending);
                   oldPage.close(true);
                   oldPage.usageDown();
                } catch (Exception e) {
                   logger.warn(e.getMessage(), e);
+               } finally {
+                  maxPendingAsyncClose.release();
                }
             });
             currentPage = null;
