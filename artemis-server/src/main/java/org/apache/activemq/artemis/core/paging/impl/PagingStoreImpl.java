@@ -27,9 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -137,8 +135,6 @@ public class PagingStoreImpl implements PagingStore {
 
    private final ArtemisExecutor executor;
 
-   private final ArtemisExecutor ioExecutor;
-
    // Bytes consumed by the queue on the memory
    private final SizeAwareMetric size;
 
@@ -167,9 +163,6 @@ public class PagingStoreImpl implements PagingStore {
    private volatile boolean blockedViaAddressControl = false;
 
    private long rejectThreshold;
-
-   private static final int ARTEMIS_PAGING_COUNTER_SNAPSHOT_INTERVAL = Integer.parseInt(System.getProperty("artemis.paging.maxPendingClose", "5"));
-   private final Semaphore maxPendingAsyncClose = new Semaphore(ARTEMIS_PAGING_COUNTER_SNAPSHOT_INTERVAL);
 
    public PagingStoreImpl(final SimpleString address,
                           final ScheduledExecutorService scheduledExecutor,
@@ -200,8 +193,6 @@ public class PagingStoreImpl implements PagingStore {
       applySetting(addressSettings);
 
       this.executor = executor;
-
-      this.ioExecutor = ioExecutor;
 
       this.pagingManager = pagingManager;
 
@@ -1522,19 +1513,8 @@ public class PagingStoreImpl implements PagingStore {
 
          final Page oldPage = currentPage;
          if (oldPage != null) {
-            while (!maxPendingAsyncClose.tryAcquire(1, TimeUnit.SECONDS)) {
-               logger.info("retrying to acquire close! Please inform this to Clebert. It is expected but ");
-            }
-            ioExecutor.execute(() -> {
-               try {
-                  oldPage.close(true);
-                  oldPage.usageDown();
-               } catch (Exception e) {
-                  logger.warn(e.getMessage(), e);
-               } finally {
-                  maxPendingAsyncClose.release();
-               }
-            });
+            oldPage.close(true);
+            oldPage.usageDown();
             currentPage = null;
          }
 
