@@ -6208,9 +6208,17 @@ public class PagingTest extends ParameterDBTestBase {
       producer.close();
       assertTrue(Arrays.asList(server.getPagingManager().getStoreNames()).contains(PagingTest.ADDRESS));
       assertTrue(server.getPagingManager().getPageStore(PagingTest.ADDRESS).isPaging());
+      Queue queue = server.locateQueue(PagingTest.ADDRESS);
+
+      PagingStore store = queue.getPagingStore();
+
+      Wait.assertEquals(numberOfMessages, queue::getMessageCount);
 
       session.deleteQueue(PagingTest.ADDRESS);
       session.close();
+
+      Wait.assertFalse(store::isStarted);
+
       sf.close();
       locator.close();
       locator = null;

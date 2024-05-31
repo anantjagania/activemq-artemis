@@ -58,6 +58,7 @@ import org.apache.activemq.artemis.core.settings.impl.PageFullMessagePolicy;
 import org.apache.activemq.artemis.core.transaction.Transaction;
 import org.apache.activemq.artemis.core.transaction.TransactionOperation;
 import org.apache.activemq.artemis.core.transaction.TransactionPropertyIndexes;
+import org.apache.activemq.artemis.utils.ArtemisCloseable;
 import org.apache.activemq.artemis.utils.FutureLatch;
 import org.apache.activemq.artemis.utils.SizeAwareMetric;
 import org.apache.activemq.artemis.utils.actors.ArtemisExecutor;
@@ -1401,9 +1402,34 @@ public class PagingStoreImpl implements PagingStore {
 
    @Override
    public void destroy() throws Exception {
-      SequentialFileFactory factory = fileFactory;
-      if (factory != null) {
-         storeFactory.removeFileFactory(factory);
+      execute(this::internalDestroy);
+   }
+
+   private void internalDestroy() {
+      try (ArtemisCloseable readLock = storageManager.closeableReadLock()) {
+         while (true) {
+            if (lock(100)) {
+               break;
+            }
+         }
+
+         try {
+            SequentialFileFactory factory = fileFactory;
+            if (factory != null) {
+               try {
+                  storeFactory.removeFileFactory(factory);
+               } catch (Exception e) {
+                  logger.warn(e.getMessage(), e);
+               }
+            }
+         } finally {
+            unlock();
+            try {
+               stop();
+            } catch (Exception e2) {
+               logger.debug(e2.getMessage(), e2);
+            }
+         }
       }
    }
 
