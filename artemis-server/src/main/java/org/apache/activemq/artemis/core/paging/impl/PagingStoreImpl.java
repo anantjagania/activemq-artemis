@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -1402,7 +1403,13 @@ public class PagingStoreImpl implements PagingStore {
 
    @Override
    public void destroy() throws Exception {
+      CountDownLatch latch = new CountDownLatch(1);
+      // the destroy has to be executed in the same executors
       execute(this::internalDestroy);
+      execute(latch::countDown);
+      if (!latch.await(60, TimeUnit.SECONDS)) {
+         logger.debug("Could' not finish destroy in 60 seconds for destination {}", storeName);
+      }
    }
 
    private void internalDestroy() {
