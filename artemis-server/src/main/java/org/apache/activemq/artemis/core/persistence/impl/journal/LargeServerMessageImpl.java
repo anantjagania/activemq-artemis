@@ -175,6 +175,10 @@ public final class LargeServerMessageImpl extends CoreMessage implements CoreLar
       return this;
    }
 
+   public Message getMessage() {
+      return this;
+   }
+
    @Override
    public Message getMessage() {
       return this;

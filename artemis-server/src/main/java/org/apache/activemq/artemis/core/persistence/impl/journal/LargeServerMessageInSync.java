@@ -95,6 +95,10 @@ public final class LargeServerMessageInSync implements ReplicatedLargeMessage {
       return mainLM.toMessage();
    }
 
+   public Message getMessage() {
+      return mainLM.toMessage();
+   }
+
    @Override
    public Message getMessage() {
       return mainLM.toMessage();

@@ -634,6 +634,7 @@ public final class ReplicationEndpoint implements ChannelHandler, ActiveMQCompon
             if (logger.isTraceEnabled()) {
                logger.trace("Closing LargeMessage {} on the executor @ handleLargeMessageEnd", packet.getMessageId());
             }
+            logger.info("Closing large message {}", message.getMessage().getMessageID());
             message.releaseResources(true, false);
          } else {
             executor.execute(new Runnable() {
