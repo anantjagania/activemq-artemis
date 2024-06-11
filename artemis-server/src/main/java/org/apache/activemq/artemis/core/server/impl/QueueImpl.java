@@ -3372,6 +3372,10 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       final int prefetchMessages = pageSubscription.getPagingStore().getPrefetchPageMessages();
       final int prefetchBytes = pageSubscription.getPagingStore().getPrefetchPageBytes();
 
+      if (consumers.isEmpty()) {
+         return false;
+      }
+
       if (maxReadMessages <= 0 && maxReadBytes <= 0 && prefetchBytes <= 0 && prefetchBytes <= 0) {
          // if all values are disabled, we will protect the broker using an older semantic
          // where we don't look for deliveringMetrics..
